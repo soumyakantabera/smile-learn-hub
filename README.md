@@ -1,73 +1,49 @@
-# Welcome to your Lovable project
+# Learn with Smile Moodle
 
-## Project info
+A static learning management system built with React, TypeScript, and Material UI for GitHub Pages deployment.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- 📚 Course/Module/Resource hierarchy
+- 🔐 Batch passcode authentication (SHA-256 hashed, client-side)
+- 📄 PDF, video, document viewers
+- 📝 Homework submission via WhatsApp/Email
+- 🔍 Search & filter by type/tags
+- 🌙 Light/Dark theme toggle
+- 📱 Responsive Material Design
 
-There are several ways of editing your application.
+## Quick Start
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm install
+npm run dev        # Development at http://localhost:8080
+npm run build      # Production build
 ```
 
-**Edit a file directly in GitHub**
+**Demo passcodes**: `123`, `456`, or `demo`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## GitHub Pages Deployment
 
-**Use GitHub Codespaces**
+1. Update `vite.config.ts` base path to `"/your-repo-name/"`
+2. Push to `main` branch
+3. Enable GitHub Pages with "GitHub Actions" source
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The included `.github/workflows/deploy.yml` handles automatic deployment.
 
-## What technologies are used for this project?
+## Adding Content
 
-This project is built with:
+Edit `public/content/index.json` with batches → courses → modules → items structure.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Adding Passcodes
 
-## How can I deploy this project?
+1. Hash your passcode (SHA-256, lowercase): Use any SHA-256 tool
+2. Add to `public/passcodes.json` with batchKey and label
+3. Add matching batch to content JSON
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## ⚠️ Security Note
 
-## Can I connect a custom domain to my Lovable project?
+Client-side passcode validation is NOT secure for sensitive data. Suitable for basic educational content access control only. All hashes are visible in browser. For proper security, use a backend with server-side authentication.
 
-Yes, you can!
+## Tech Stack
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+React 18 • TypeScript • Vite • Material UI • Tailwind CSS • React Router
