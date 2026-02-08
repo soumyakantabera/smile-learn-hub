@@ -14,6 +14,12 @@
       "hash": "35a9e381b1a27567549b5f8a6f783c167ebf809f1c4d6a9e367240484d8ce281",
       "batchKey": "batch-demo",
       "label": "Demo Batch"
+    },
+    {
+      "hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+      "batchKey": "batch-admin",
+      "label": "Administrator",
+      "isAdmin": true
     }
   ]
 }

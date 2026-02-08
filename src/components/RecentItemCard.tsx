@@ -17,6 +17,9 @@ import {
   Link as LinkIcon,
   Assignment as HomeworkIcon,
   AccessTime as TimeIcon,
+  YouTube as YouTubeIcon,
+  Audiotrack as AudioIcon,
+  Quiz as QuizIcon,
 } from '@mui/icons-material';
 import type { ContentItem, ItemType } from '@/types/content';
 
@@ -28,6 +31,9 @@ const typeConfig: Record<ItemType, { icon: React.ReactNode; color: string; label
   spreadsheet: { icon: <SpreadsheetIcon />, color: '#4CAF50', label: 'Spreadsheet' },
   link: { icon: <LinkIcon />, color: '#9C27B0', label: 'Link' },
   homework: { icon: <HomeworkIcon />, color: '#FF9800', label: 'Homework' },
+  youtube: { icon: <YouTubeIcon />, color: '#FF0000', label: 'YouTube' },
+  audio: { icon: <AudioIcon />, color: '#E91E63', label: 'Audio' },
+  quiz: { icon: <QuizIcon />, color: '#673AB7', label: 'Quiz' },
 };
 
 interface RecentItemCardProps {

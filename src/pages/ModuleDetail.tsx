@@ -26,6 +26,9 @@ import {
   TableChart as SpreadsheetIcon,
   Link as LinkIcon,
   Assignment as HomeworkIcon,
+  YouTube as YouTubeIcon,
+  Audiotrack as AudioIcon,
+  Quiz as QuizIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getModule, getCourse, getModuleItems } from '@/lib/content';
@@ -40,6 +43,9 @@ const typeIcons: Record<ItemType, React.ReactNode> = {
   spreadsheet: <SpreadsheetIcon />,
   link: <LinkIcon />,
   homework: <HomeworkIcon />,
+  youtube: <YouTubeIcon />,
+  audio: <AudioIcon />,
+  quiz: <QuizIcon />,
 };
 
 const typeColors: Record<ItemType, string> = {
@@ -50,6 +56,9 @@ const typeColors: Record<ItemType, string> = {
   spreadsheet: '#4CAF50',
   link: '#9C27B0',
   homework: '#FF9800',
+  youtube: '#FF0000',
+  audio: '#E91E63',
+  quiz: '#673AB7',
 };
 
 export default function ModuleDetailPage() {

@@ -1,6 +1,14 @@
 // Content types for the learning platform
 
-export type ItemType = 'pdf' | 'doc' | 'ppt' | 'spreadsheet' | 'video' | 'link' | 'homework';
+export type ItemType = 'pdf' | 'doc' | 'ppt' | 'spreadsheet' | 'video' | 'link' | 'homework' | 'youtube' | 'audio' | 'quiz';
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation?: string;
+}
 
 export interface ContentItem {
   id: string;
@@ -9,10 +17,13 @@ export interface ContentItem {
   description: string;
   type: ItemType;
   url?: string;
+  embedUrl?: string; // For YouTube/Vimeo embeds
   instructions?: string;
   dueDate?: string;
   tags: string[];
   publishedAt: string;
+  quizQuestions?: QuizQuestion[]; // For quiz type
+  audioDuration?: string; // For audio type
 }
 
 export interface Module {
@@ -32,6 +43,8 @@ export interface Course {
   instructor: string;
   duration: string;
   modules: string[];
+  category?: string;
+  level?: 'Beginner' | 'Intermediate' | 'Advanced';
 }
 
 export interface Batch {
@@ -44,6 +57,7 @@ export interface PasscodeEntry {
   hash: string;
   batchKey: string;
   label: string;
+  isAdmin?: boolean; // Admin flag for editor access
 }
 
 export interface ContentData {
@@ -57,4 +71,11 @@ export interface SessionData {
   batchKey: string;
   batchLabel: string;
   expiresAt: number;
+  isAdmin?: boolean;
+}
+
+// Draft content for editor
+export interface DraftContentData extends ContentData {
+  lastModified: number;
+  isDraft: boolean;
 }

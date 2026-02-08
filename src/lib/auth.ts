@@ -26,6 +26,7 @@ export function createSession(entry: PasscodeEntry): SessionData {
     batchKey: entry.batchKey,
     batchLabel: entry.label,
     expiresAt,
+    isAdmin: entry.isAdmin || false,
   };
   localStorage.setItem(appConfig.session.storageKey, JSON.stringify(session));
   return session;
