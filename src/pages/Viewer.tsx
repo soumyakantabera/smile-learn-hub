@@ -32,12 +32,16 @@ import {
   TableChart as SpreadsheetIcon,
   Link as LinkIcon,
   Assignment as HomeworkIcon,
+  YouTube as YouTubeIcon,
+  Audiotrack as AudioIcon,
+  Quiz as QuizIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getItem, getModule, getCourse } from '@/lib/content';
 import { AppLayout } from '@/components/AppLayout';
 import { appConfig } from '@/config/app.config';
+import { QuizViewer } from '@/components/viewer/QuizViewer';
 import type { ItemType } from '@/types/content';
 
 const typeIcons: Record<ItemType, React.ReactNode> = {
@@ -48,6 +52,9 @@ const typeIcons: Record<ItemType, React.ReactNode> = {
   spreadsheet: <SpreadsheetIcon />,
   link: <LinkIcon />,
   homework: <HomeworkIcon />,
+  youtube: <YouTubeIcon />,
+  audio: <AudioIcon />,
+  quiz: <QuizIcon />,
 };
 
 const typeColors: Record<ItemType, string> = {
@@ -58,6 +65,9 @@ const typeColors: Record<ItemType, string> = {
   spreadsheet: '#4CAF50',
   link: '#9C27B0',
   homework: '#FF9800',
+  youtube: '#FF0000',
+  audio: '#E91E63',
+  quiz: '#673AB7',
 };
 
 const typeLabels: Record<ItemType, string> = {
@@ -68,6 +78,9 @@ const typeLabels: Record<ItemType, string> = {
   spreadsheet: 'Spreadsheet',
   link: 'External Link',
   homework: 'Homework',
+  youtube: 'YouTube Video',
+  audio: 'Audio Recording',
+  quiz: 'Interactive Quiz',
 };
 
 export default function ViewerPage() {
@@ -173,6 +186,70 @@ export default function ViewerPage() {
             </video>
           </Box>
         );
+
+      case 'youtube':
+        return (
+          <Box sx={{ position: 'relative', paddingTop: '56.25%', borderRadius: 2, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
+            <iframe
+              src={item.embedUrl}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none',
+              }}
+              title={item.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </Box>
+        );
+
+      case 'audio':
+        return (
+          <Card>
+            <CardContent sx={{ textAlign: 'center', py: 4 }}>
+              <Box
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  bgcolor: `${typeColors.audio}15`,
+                  color: typeColors.audio,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 3,
+                }}
+              >
+                {typeIcons.audio}
+              </Box>
+              <Typography variant="h6" gutterBottom>
+                {item.title}
+              </Typography>
+              {item.audioDuration && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Duration: {item.audioDuration}
+                </Typography>
+              )}
+              <Box sx={{ maxWidth: 500, mx: 'auto' }}>
+                <audio
+                  controls
+                  style={{ width: '100%' }}
+                  src={item.url}
+                >
+                  Your browser does not support the audio element.
+                </audio>
+              </Box>
+            </CardContent>
+          </Card>
+        );
+
+      case 'quiz':
+        return <QuizViewer item={item} />;
 
       case 'pdf':
         return (

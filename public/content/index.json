@@ -2,389 +2,378 @@
   "batches": {
     "batch-2026-a": {
       "name": "Batch 2026 - Section A",
-      "description": "Computer Science Foundation Course",
-      "courses": ["cs101", "math201"]
+      "description": "English Learning Program 2026 - Section A",
+      "courses": ["course-communicative", "course-business"]
     },
     "batch-2026-b": {
       "name": "Batch 2026 - Section B",
-      "description": "Computer Science Foundation Course",
-      "courses": ["cs101", "web-dev"]
+      "description": "English Learning Program 2026 - Section B",
+      "courses": ["course-communicative"]
     },
     "batch-demo": {
       "name": "Demo Batch",
-      "description": "Sample content for demonstration",
-      "courses": ["cs101", "math201", "web-dev"]
+      "description": "Demo access for preview",
+      "courses": ["course-communicative", "course-business"]
+    },
+    "batch-admin": {
+      "name": "Administrator",
+      "description": "Full admin access",
+      "courses": ["course-communicative", "course-business"]
     }
   },
   "courses": {
-    "cs101": {
-      "id": "cs101",
-      "title": "Introduction to Computer Science",
-      "description": "Fundamental concepts of computer science including algorithms, data structures, and programming basics.",
-      "thumbnail": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400",
-      "instructor": "Dr. Sarah Johnson",
+    "course-communicative": {
+      "id": "course-communicative",
+      "title": "Communicative English",
+      "description": "Master everyday English communication skills through interactive lessons, real-world conversations, and practical exercises. Perfect for building confidence in speaking and listening.",
+      "thumbnail": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800",
+      "instructor": "Prof. Sarah Mitchell",
       "duration": "12 weeks",
-      "modules": ["cs101-m1", "cs101-m2", "cs101-m3"]
+      "modules": ["mod-comm-1", "mod-comm-2", "mod-comm-3"],
+      "category": "Communication",
+      "level": "Beginner"
     },
-    "math201": {
-      "id": "math201",
-      "title": "Discrete Mathematics",
-      "description": "Mathematical foundations for computer science including logic, sets, relations, and graph theory.",
-      "thumbnail": "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400",
-      "instructor": "Prof. Michael Chen",
+    "course-business": {
+      "id": "course-business",
+      "title": "Business English",
+      "description": "Develop professional English skills for the workplace. Learn business vocabulary, email writing, presentations, negotiations, and corporate communication.",
+      "thumbnail": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800",
+      "instructor": "Dr. James Anderson",
       "duration": "10 weeks",
-      "modules": ["math201-m1", "math201-m2", "math201-m3"]
-    },
-    "web-dev": {
-      "id": "web-dev",
-      "title": "Web Development Fundamentals",
-      "description": "Learn HTML, CSS, and JavaScript to build modern, responsive websites from scratch.",
-      "thumbnail": "https://images.unsplash.com/photo-1547658719-da2b51169166?w=400",
-      "instructor": "Ms. Emily Rodriguez",
-      "duration": "8 weeks",
-      "modules": ["web-m1", "web-m2", "web-m3"]
+      "modules": ["mod-biz-1", "mod-biz-2", "mod-biz-3"],
+      "category": "Business",
+      "level": "Intermediate"
     }
   },
   "modules": {
-    "cs101-m1": {
-      "id": "cs101-m1",
-      "courseId": "cs101",
-      "title": "Introduction to Programming",
-      "description": "Getting started with programming concepts and your first code",
+    "mod-comm-1": {
+      "id": "mod-comm-1",
+      "courseId": "course-communicative",
+      "title": "Unit 1: Greetings & Introductions",
+      "description": "Learn essential greetings and how to introduce yourself",
       "order": 1,
-      "items": ["cs101-m1-item1", "cs101-m1-item2", "cs101-m1-item3", "cs101-m1-hw1"]
+      "items": ["item-comm-1-1", "item-comm-1-2", "item-comm-1-3", "item-comm-1-4", "item-comm-1-5"]
     },
-    "cs101-m2": {
-      "id": "cs101-m2",
-      "courseId": "cs101",
-      "title": "Data Types and Variables",
-      "description": "Understanding different data types and how to use variables",
+    "mod-comm-2": {
+      "id": "mod-comm-2",
+      "courseId": "course-communicative",
+      "title": "Unit 2: Daily Conversations",
+      "description": "Practice everyday English in common situations",
       "order": 2,
-      "items": ["cs101-m2-item1", "cs101-m2-item2", "cs101-m2-hw1"]
+      "items": ["item-comm-2-1", "item-comm-2-2", "item-comm-2-3", "item-comm-2-4"]
     },
-    "cs101-m3": {
-      "id": "cs101-m3",
-      "courseId": "cs101",
-      "title": "Control Structures",
-      "description": "Conditionals, loops, and flow control in programming",
+    "mod-comm-3": {
+      "id": "mod-comm-3",
+      "courseId": "course-communicative",
+      "title": "Unit 3: Expressing Opinions",
+      "description": "Learn to share your thoughts and ideas confidently",
       "order": 3,
-      "items": ["cs101-m3-item1", "cs101-m3-item2", "cs101-m3-item3"]
+      "items": ["item-comm-3-1", "item-comm-3-2", "item-comm-3-3"]
     },
-    "math201-m1": {
-      "id": "math201-m1",
-      "courseId": "math201",
-      "title": "Propositional Logic",
-      "description": "Introduction to logical statements and truth tables",
+    "mod-biz-1": {
+      "id": "mod-biz-1",
+      "courseId": "course-business",
+      "title": "Unit 1: Professional Communication",
+      "description": "Fundamentals of business communication",
       "order": 1,
-      "items": ["math201-m1-item1", "math201-m1-item2", "math201-m1-hw1"]
+      "items": ["item-biz-1-1", "item-biz-1-2", "item-biz-1-3", "item-biz-1-4"]
     },
-    "math201-m2": {
-      "id": "math201-m2",
-      "courseId": "math201",
-      "title": "Set Theory",
-      "description": "Fundamentals of sets, operations, and Venn diagrams",
+    "mod-biz-2": {
+      "id": "mod-biz-2",
+      "courseId": "course-business",
+      "title": "Unit 2: Email & Written Communication",
+      "description": "Master professional email and document writing",
       "order": 2,
-      "items": ["math201-m2-item1", "math201-m2-item2"]
+      "items": ["item-biz-2-1", "item-biz-2-2", "item-biz-2-3"]
     },
-    "math201-m3": {
-      "id": "math201-m3",
-      "courseId": "math201",
-      "title": "Graph Theory Basics",
-      "description": "Introduction to graphs, trees, and their applications",
+    "mod-biz-3": {
+      "id": "mod-biz-3",
+      "courseId": "course-business",
+      "title": "Unit 3: Presentations & Meetings",
+      "description": "Deliver impactful presentations and lead meetings",
       "order": 3,
-      "items": ["math201-m3-item1", "math201-m3-hw1"]
-    },
-    "web-m1": {
-      "id": "web-m1",
-      "courseId": "web-dev",
-      "title": "HTML Fundamentals",
-      "description": "Structure of web pages using HTML5",
-      "order": 1,
-      "items": ["web-m1-item1", "web-m1-item2", "web-m1-hw1"]
-    },
-    "web-m2": {
-      "id": "web-m2",
-      "courseId": "web-dev",
-      "title": "CSS Styling",
-      "description": "Styling web pages with CSS and modern layouts",
-      "order": 2,
-      "items": ["web-m2-item1", "web-m2-item2", "web-m2-item3"]
-    },
-    "web-m3": {
-      "id": "web-m3",
-      "courseId": "web-dev",
-      "title": "JavaScript Basics",
-      "description": "Adding interactivity with JavaScript",
-      "order": 3,
-      "items": ["web-m3-item1", "web-m3-item2", "web-m3-hw1"]
+      "items": ["item-biz-3-1", "item-biz-3-2", "item-biz-3-3"]
     }
   },
   "items": {
-    "cs101-m1-item1": {
-      "id": "cs101-m1-item1",
-      "moduleId": "cs101-m1",
-      "title": "Welcome to Programming",
-      "description": "An introduction video explaining what programming is and why it matters",
-      "type": "video",
-      "url": "https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4",
-      "tags": ["introduction", "basics"],
-      "publishedAt": "2024-01-15T10:00:00Z"
+    "item-comm-1-1": {
+      "id": "item-comm-1-1",
+      "moduleId": "mod-comm-1",
+      "title": "Welcome to Communicative English",
+      "description": "Introduction video explaining course objectives and learning outcomes",
+      "type": "youtube",
+      "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "tags": ["introduction", "video"],
+      "publishedAt": "2026-01-15T10:00:00Z"
     },
-    "cs101-m1-item2": {
-      "id": "cs101-m1-item2",
-      "moduleId": "cs101-m1",
-      "title": "Programming Concepts Slides",
-      "description": "Presentation covering key programming concepts",
-      "type": "ppt",
-      "url": "https://scholar.harvard.edu/files/torber/files/samplepptx.pptx",
-      "tags": ["slides", "concepts"],
-      "publishedAt": "2024-01-16T10:00:00Z"
-    },
-    "cs101-m1-item3": {
-      "id": "cs101-m1-item3",
-      "moduleId": "cs101-m1",
-      "title": "Getting Started Guide",
-      "description": "PDF guide for setting up your development environment",
+    "item-comm-1-2": {
+      "id": "item-comm-1-2",
+      "moduleId": "mod-comm-1",
+      "title": "Greetings Vocabulary PDF",
+      "description": "Essential vocabulary for formal and informal greetings",
       "type": "pdf",
       "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
-      "tags": ["guide", "setup"],
-      "publishedAt": "2024-01-17T10:00:00Z"
+      "tags": ["vocabulary", "greetings", "pdf"],
+      "publishedAt": "2026-01-15T10:00:00Z"
     },
-    "cs101-m1-hw1": {
-      "id": "cs101-m1-hw1",
-      "moduleId": "cs101-m1",
-      "title": "Homework 1: Hello World",
-      "description": "Write your first program that prints 'Hello World' in any programming language",
+    "item-comm-1-3": {
+      "id": "item-comm-1-3",
+      "moduleId": "mod-comm-1",
+      "title": "Pronunciation Practice: Greetings",
+      "description": "Audio guide for correct pronunciation of common greetings",
+      "type": "audio",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "audioDuration": "3:45",
+      "tags": ["pronunciation", "audio", "practice"],
+      "publishedAt": "2026-01-16T10:00:00Z"
+    },
+    "item-comm-1-4": {
+      "id": "item-comm-1-4",
+      "moduleId": "mod-comm-1",
+      "title": "Greetings Quiz",
+      "description": "Test your knowledge of English greetings",
+      "type": "quiz",
+      "quizQuestions": [
+        {
+          "id": "q1",
+          "question": "Which greeting is most appropriate for a formal business meeting?",
+          "options": ["Hey, what's up?", "Good morning, how are you?", "Yo!", "Hi buddy!"],
+          "correctIndex": 1,
+          "explanation": "'Good morning, how are you?' is the most appropriate formal greeting for business settings."
+        },
+        {
+          "id": "q2",
+          "question": "What is the correct response to 'How do you do?'",
+          "options": ["I'm fine, thanks", "How do you do?", "Nothing much", "Good"],
+          "correctIndex": 1,
+          "explanation": "The formal response to 'How do you do?' is to repeat 'How do you do?' back."
+        },
+        {
+          "id": "q3",
+          "question": "Which phrase is used when meeting someone for the first time?",
+          "options": ["Long time no see", "Nice to meet you", "See you later", "Take care"],
+          "correctIndex": 1,
+          "explanation": "'Nice to meet you' is the standard phrase when being introduced to someone new."
+        }
+      ],
+      "tags": ["quiz", "greetings", "assessment"],
+      "publishedAt": "2026-01-17T10:00:00Z"
+    },
+    "item-comm-1-5": {
+      "id": "item-comm-1-5",
+      "moduleId": "mod-comm-1",
+      "title": "Homework: Self-Introduction Recording",
+      "description": "Record a 2-minute self-introduction video",
       "type": "homework",
-      "instructions": "1. Choose a programming language (Python recommended)\\n2. Write a program that prints 'Hello World'\\n3. Take a screenshot of your code and output\\n4. Submit via WhatsApp or Email",
-      "dueDate": "2024-01-24T23:59:00Z",
-      "tags": ["homework", "exercise"],
-      "publishedAt": "2024-01-17T12:00:00Z"
+      "instructions": "Create a 2-minute video introducing yourself in English.\n\nInclude:\n1. Your name and where you're from\n2. Your hobbies and interests\n3. Why you want to learn English\n4. Your goals for this course\n\nSpeak clearly and naturally. Don't read from a script!",
+      "dueDate": "2026-01-24",
+      "tags": ["homework", "speaking", "introduction"],
+      "publishedAt": "2026-01-15T10:00:00Z"
     },
-    "cs101-m2-item1": {
-      "id": "cs101-m2-item1",
-      "moduleId": "cs101-m2",
-      "title": "Data Types Explained",
-      "description": "Video lecture on different data types in programming",
-      "type": "video",
-      "url": "https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_2mb.mp4",
-      "tags": ["video", "data-types"],
-      "publishedAt": "2024-01-22T10:00:00Z"
+    "item-comm-2-1": {
+      "id": "item-comm-2-1",
+      "moduleId": "mod-comm-2",
+      "title": "Ordering Food & Drinks",
+      "description": "Video lesson on restaurant vocabulary and phrases",
+      "type": "youtube",
+      "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "tags": ["video", "restaurant", "vocabulary"],
+      "publishedAt": "2026-01-22T10:00:00Z"
     },
-    "cs101-m2-item2": {
-      "id": "cs101-m2-item2",
-      "moduleId": "cs101-m2",
-      "title": "Variables Reference Sheet",
-      "description": "Quick reference document for variable declarations",
+    "item-comm-2-2": {
+      "id": "item-comm-2-2",
+      "moduleId": "mod-comm-2",
+      "title": "Shopping Conversations",
+      "description": "Common phrases used while shopping",
+      "type": "pdf",
+      "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
+      "tags": ["pdf", "shopping", "vocabulary"],
+      "publishedAt": "2026-01-23T10:00:00Z"
+    },
+    "item-comm-2-3": {
+      "id": "item-comm-2-3",
+      "moduleId": "mod-comm-2",
+      "title": "Asking for Directions",
+      "description": "Audio lesson on navigation and direction vocabulary",
+      "type": "audio",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      "audioDuration": "5:20",
+      "tags": ["audio", "directions", "listening"],
+      "publishedAt": "2026-01-24T10:00:00Z"
+    },
+    "item-comm-2-4": {
+      "id": "item-comm-2-4",
+      "moduleId": "mod-comm-2",
+      "title": "Daily Conversations Quiz",
+      "description": "Test your knowledge of everyday English",
+      "type": "quiz",
+      "quizQuestions": [
+        {
+          "id": "q1",
+          "question": "How do you politely ask for the bill at a restaurant?",
+          "options": ["Give me the bill!", "Could I have the check, please?", "Money now!", "Bill me later"],
+          "correctIndex": 1,
+          "explanation": "'Could I have the check, please?' is the polite way to ask for the bill."
+        },
+        {
+          "id": "q2",
+          "question": "What does 'How much is this?' mean?",
+          "options": ["How heavy is this?", "What is the price?", "How many are there?", "What size is this?"],
+          "correctIndex": 1,
+          "explanation": "'How much is this?' is asking about the price of an item."
+        }
+      ],
+      "tags": ["quiz", "daily", "assessment"],
+      "publishedAt": "2026-01-25T10:00:00Z"
+    },
+    "item-comm-3-1": {
+      "id": "item-comm-3-1",
+      "moduleId": "mod-comm-3",
+      "title": "Expressing Agreement & Disagreement",
+      "description": "Learn phrases to agree and disagree politely",
+      "type": "youtube",
+      "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "tags": ["video", "opinions", "speaking"],
+      "publishedAt": "2026-01-29T10:00:00Z"
+    },
+    "item-comm-3-2": {
+      "id": "item-comm-3-2",
+      "moduleId": "mod-comm-3",
+      "title": "Opinion Vocabulary Worksheet",
+      "description": "Practice exercises for expressing opinions",
       "type": "doc",
       "url": "https://calibre-ebook.com/downloads/demos/demo.docx",
-      "tags": ["reference", "variables"],
-      "publishedAt": "2024-01-23T10:00:00Z"
+      "tags": ["worksheet", "vocabulary", "opinions"],
+      "publishedAt": "2026-01-30T10:00:00Z"
     },
-    "cs101-m2-hw1": {
-      "id": "cs101-m2-hw1",
-      "moduleId": "cs101-m2",
-      "title": "Homework 2: Calculator",
-      "description": "Create a simple calculator that performs basic operations",
+    "item-comm-3-3": {
+      "id": "item-comm-3-3",
+      "moduleId": "mod-comm-3",
+      "title": "Homework: Opinion Essay",
+      "description": "Write a short essay expressing your opinion",
       "type": "homework",
-      "instructions": "1. Create a program that takes two numbers as input\\n2. Implement addition, subtraction, multiplication, and division\\n3. Display the results\\n4. Submit your code file",
-      "dueDate": "2024-01-31T23:59:00Z",
-      "tags": ["homework", "calculator"],
-      "publishedAt": "2024-01-24T10:00:00Z"
+      "instructions": "Write a 300-word essay on one of these topics:\n\n1. Should students wear school uniforms?\n2. Is social media good for society?\n3. Should homework be banned?\n\nUse opinion phrases from the lesson:\n- In my opinion...\n- I strongly believe that...\n- From my point of view...",
+      "dueDate": "2026-02-05",
+      "tags": ["homework", "writing", "essay"],
+      "publishedAt": "2026-01-29T10:00:00Z"
     },
-    "cs101-m3-item1": {
-      "id": "cs101-m3-item1",
-      "moduleId": "cs101-m3",
-      "title": "If-Else Statements",
-      "description": "Understanding conditional statements",
+    "item-biz-1-1": {
+      "id": "item-biz-1-1",
+      "moduleId": "mod-biz-1",
+      "title": "Introduction to Business English",
+      "description": "Overview of professional English in the workplace",
+      "type": "youtube",
+      "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "tags": ["video", "introduction", "business"],
+      "publishedAt": "2026-01-15T10:00:00Z"
+    },
+    "item-biz-1-2": {
+      "id": "item-biz-1-2",
+      "moduleId": "mod-biz-1",
+      "title": "Corporate Vocabulary Guide",
+      "description": "Essential business terminology and jargon",
       "type": "pdf",
       "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
-      "tags": ["conditionals", "if-else"],
-      "publishedAt": "2024-01-29T10:00:00Z"
+      "tags": ["pdf", "vocabulary", "corporate"],
+      "publishedAt": "2026-01-16T10:00:00Z"
     },
-    "cs101-m3-item2": {
-      "id": "cs101-m3-item2",
-      "moduleId": "cs101-m3",
-      "title": "Loops Tutorial Video",
-      "description": "Learn about for and while loops",
-      "type": "video",
-      "url": "https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4",
-      "tags": ["loops", "iteration"],
-      "publishedAt": "2024-01-30T10:00:00Z"
+    "item-biz-1-3": {
+      "id": "item-biz-1-3",
+      "moduleId": "mod-biz-1",
+      "title": "Professional Phone Calls",
+      "description": "Audio examples of professional phone conversations",
+      "type": "audio",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+      "audioDuration": "4:15",
+      "tags": ["audio", "phone", "professional"],
+      "publishedAt": "2026-01-17T10:00:00Z"
     },
-    "cs101-m3-item3": {
-      "id": "cs101-m3-item3",
-      "moduleId": "cs101-m3",
-      "title": "Control Flow Cheatsheet",
-      "description": "Excel spreadsheet with control flow examples",
-      "type": "spreadsheet",
-      "url": "https://go.microsoft.com/fwlink/?LinkID=521962",
-      "tags": ["reference", "cheatsheet"],
-      "publishedAt": "2024-01-31T10:00:00Z"
+    "item-biz-1-4": {
+      "id": "item-biz-1-4",
+      "moduleId": "mod-biz-1",
+      "title": "Professional Communication Quiz",
+      "description": "Test your business English basics",
+      "type": "quiz",
+      "quizQuestions": [
+        {
+          "id": "q1",
+          "question": "Which is the most professional email greeting?",
+          "options": ["Hey there!", "Dear Mr. Smith,", "Yo!", "Hiya"],
+          "correctIndex": 1,
+          "explanation": "'Dear Mr. Smith,' is the most professional email greeting."
+        },
+        {
+          "id": "q2",
+          "question": "What does 'ASAP' stand for?",
+          "options": ["As Soon As Possible", "Always Send A Package", "After Several Attempts Please", "Ask Someone About Problems"],
+          "correctIndex": 0,
+          "explanation": "ASAP means 'As Soon As Possible' - a common business abbreviation."
+        }
+      ],
+      "tags": ["quiz", "business", "assessment"],
+      "publishedAt": "2026-01-18T10:00:00Z"
     },
-    "math201-m1-item1": {
-      "id": "math201-m1-item1",
-      "moduleId": "math201-m1",
-      "title": "Introduction to Logic",
-      "description": "Video explaining propositional logic basics",
-      "type": "video",
-      "url": "https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4",
-      "tags": ["logic", "introduction"],
-      "publishedAt": "2024-02-01T10:00:00Z"
+    "item-biz-2-1": {
+      "id": "item-biz-2-1",
+      "moduleId": "mod-biz-2",
+      "title": "Professional Email Writing",
+      "description": "Structure and tone of business emails",
+      "type": "youtube",
+      "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "tags": ["video", "email", "writing"],
+      "publishedAt": "2026-01-22T10:00:00Z"
     },
-    "math201-m1-item2": {
-      "id": "math201-m1-item2",
-      "moduleId": "math201-m1",
-      "title": "Truth Tables Guide",
-      "description": "PDF guide on constructing truth tables",
-      "type": "pdf",
-      "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
-      "tags": ["truth-tables", "guide"],
-      "publishedAt": "2024-02-02T10:00:00Z"
-    },
-    "math201-m1-hw1": {
-      "id": "math201-m1-hw1",
-      "moduleId": "math201-m1",
-      "title": "Homework: Logic Problems",
-      "description": "Solve propositional logic problems",
-      "type": "homework",
-      "instructions": "1. Download the problem set\\n2. Solve all 10 logic problems\\n3. Show your work for truth tables\\n4. Submit your solutions",
-      "dueDate": "2024-02-09T23:59:00Z",
-      "tags": ["homework", "logic"],
-      "publishedAt": "2024-02-03T10:00:00Z"
-    },
-    "math201-m2-item1": {
-      "id": "math201-m2-item1",
-      "moduleId": "math201-m2",
-      "title": "Set Theory Basics",
-      "description": "Introduction to sets and set notation",
-      "type": "pdf",
-      "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
-      "tags": ["sets", "theory"],
-      "publishedAt": "2024-02-08T10:00:00Z"
-    },
-    "math201-m2-item2": {
-      "id": "math201-m2-item2",
-      "moduleId": "math201-m2",
-      "title": "Venn Diagrams Workshop",
-      "description": "Interactive presentation on Venn diagrams",
-      "type": "ppt",
-      "url": "https://scholar.harvard.edu/files/torber/files/samplepptx.pptx",
-      "tags": ["venn-diagrams", "visual"],
-      "publishedAt": "2024-02-09T10:00:00Z"
-    },
-    "math201-m3-item1": {
-      "id": "math201-m3-item1",
-      "moduleId": "math201-m3",
-      "title": "Graph Theory Introduction",
-      "description": "Video lecture on graph theory fundamentals",
-      "type": "video",
-      "url": "https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_2mb.mp4",
-      "tags": ["graphs", "introduction"],
-      "publishedAt": "2024-02-15T10:00:00Z"
-    },
-    "math201-m3-hw1": {
-      "id": "math201-m3-hw1",
-      "moduleId": "math201-m3",
-      "title": "Homework: Graph Problems",
-      "description": "Solve graph theory problems",
-      "type": "homework",
-      "instructions": "1. Draw the graphs described in problems 1-5\\n2. Find shortest paths in problem 6\\n3. Identify tree structures in problem 7\\n4. Submit photos of your work",
-      "dueDate": "2024-02-22T23:59:00Z",
-      "tags": ["homework", "graphs"],
-      "publishedAt": "2024-02-16T10:00:00Z"
-    },
-    "web-m1-item1": {
-      "id": "web-m1-item1",
-      "moduleId": "web-m1",
-      "title": "HTML5 Basics",
-      "description": "Introduction to HTML5 structure and tags",
-      "type": "video",
-      "url": "https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4",
-      "tags": ["html", "basics"],
-      "publishedAt": "2024-02-01T10:00:00Z"
-    },
-    "web-m1-item2": {
-      "id": "web-m1-item2",
-      "moduleId": "web-m1",
-      "title": "HTML Reference Guide",
-      "description": "Comprehensive HTML tag reference",
-      "type": "pdf",
-      "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
-      "tags": ["html", "reference"],
-      "publishedAt": "2024-02-02T10:00:00Z"
-    },
-    "web-m1-hw1": {
-      "id": "web-m1-hw1",
-      "moduleId": "web-m1",
-      "title": "Homework: Personal Page",
-      "description": "Create a basic HTML personal page",
-      "type": "homework",
-      "instructions": "1. Create an HTML file with your name as title\\n2. Include headings, paragraphs, and a list\\n3. Add at least one image\\n4. Submit your HTML file",
-      "dueDate": "2024-02-08T23:59:00Z",
-      "tags": ["homework", "html"],
-      "publishedAt": "2024-02-03T10:00:00Z"
-    },
-    "web-m2-item1": {
-      "id": "web-m2-item1",
-      "moduleId": "web-m2",
-      "title": "CSS Fundamentals",
-      "description": "Learn CSS selectors and properties",
-      "type": "video",
-      "url": "https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_2mb.mp4",
-      "tags": ["css", "fundamentals"],
-      "publishedAt": "2024-02-08T10:00:00Z"
-    },
-    "web-m2-item2": {
-      "id": "web-m2-item2",
-      "moduleId": "web-m2",
-      "title": "Flexbox Guide",
-      "description": "Master CSS Flexbox layout",
-      "type": "pdf",
-      "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
-      "tags": ["css", "flexbox", "layout"],
-      "publishedAt": "2024-02-09T10:00:00Z"
-    },
-    "web-m2-item3": {
-      "id": "web-m2-item3",
-      "moduleId": "web-m2",
-      "title": "CSS Properties Cheatsheet",
-      "description": "Quick reference for common CSS properties",
-      "type": "spreadsheet",
-      "url": "https://go.microsoft.com/fwlink/?LinkID=521962",
-      "tags": ["css", "reference"],
-      "publishedAt": "2024-02-10T10:00:00Z"
-    },
-    "web-m3-item1": {
-      "id": "web-m3-item1",
-      "moduleId": "web-m3",
-      "title": "JavaScript Intro",
-      "description": "Getting started with JavaScript",
-      "type": "video",
-      "url": "https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4",
-      "tags": ["javascript", "intro"],
-      "publishedAt": "2024-02-15T10:00:00Z"
-    },
-    "web-m3-item2": {
-      "id": "web-m3-item2",
-      "moduleId": "web-m3",
-      "title": "DOM Manipulation Guide",
-      "description": "Working with the Document Object Model",
+    "item-biz-2-2": {
+      "id": "item-biz-2-2",
+      "moduleId": "mod-biz-2",
+      "title": "Email Templates & Examples",
+      "description": "Collection of professional email templates",
       "type": "doc",
       "url": "https://calibre-ebook.com/downloads/demos/demo.docx",
-      "tags": ["javascript", "dom"],
-      "publishedAt": "2024-02-16T10:00:00Z"
+      "tags": ["document", "templates", "email"],
+      "publishedAt": "2026-01-23T10:00:00Z"
     },
-    "web-m3-hw1": {
-      "id": "web-m3-hw1",
-      "moduleId": "web-m3",
-      "title": "Homework: Interactive Page",
-      "description": "Add JavaScript interactivity to your page",
+    "item-biz-2-3": {
+      "id": "item-biz-2-3",
+      "moduleId": "mod-biz-2",
+      "title": "Homework: Write a Business Email",
+      "description": "Compose a professional email based on a scenario",
       "type": "homework",
-      "instructions": "1. Take your HTML page from Module 1\\n2. Add a button that changes text when clicked\\n3. Add form validation\\n4. Submit your HTML and JS files",
-      "dueDate": "2024-02-22T23:59:00Z",
-      "tags": ["homework", "javascript"],
-      "publishedAt": "2024-02-17T10:00:00Z"
+      "instructions": "Write a professional email for the following scenario:\n\nYou need to request a meeting with your manager to discuss a project deadline extension.\n\nYour email should include:\n1. A professional greeting\n2. Clear purpose statement\n3. Reason for the request\n4. Proposed new deadline\n5. Professional closing\n\nWord limit: 150-200 words",
+      "dueDate": "2026-01-30",
+      "tags": ["homework", "email", "writing"],
+      "publishedAt": "2026-01-22T10:00:00Z"
+    },
+    "item-biz-3-1": {
+      "id": "item-biz-3-1",
+      "moduleId": "mod-biz-3",
+      "title": "Effective Presentations",
+      "description": "Tips for delivering impactful presentations",
+      "type": "ppt",
+      "url": "https://scholar.harvard.edu/files/torman_personal/files/samplepptx.pptx",
+      "tags": ["presentation", "slides", "speaking"],
+      "publishedAt": "2026-01-29T10:00:00Z"
+    },
+    "item-biz-3-2": {
+      "id": "item-biz-3-2",
+      "moduleId": "mod-biz-3",
+      "title": "Meeting Vocabulary & Phrases",
+      "description": "Essential language for leading and participating in meetings",
+      "type": "pdf",
+      "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
+      "tags": ["pdf", "meetings", "vocabulary"],
+      "publishedAt": "2026-01-30T10:00:00Z"
+    },
+    "item-biz-3-3": {
+      "id": "item-biz-3-3",
+      "moduleId": "mod-biz-3",
+      "title": "Homework: Mini Presentation",
+      "description": "Prepare and record a 3-minute business presentation",
+      "type": "homework",
+      "instructions": "Prepare a 3-minute presentation on ONE of these topics:\n\n1. Introduce your company/dream company\n2. Present a product idea\n3. Explain a business process\n\nRequirements:\n- Clear introduction and conclusion\n- At least 3 main points\n- Use presentation phrases from the lesson\n- Record yourself presenting\n\nSubmit the video recording.",
+      "dueDate": "2026-02-07",
+      "tags": ["homework", "presentation", "speaking"],
+      "publishedAt": "2026-01-29T10:00:00Z"
     }
   }
 }

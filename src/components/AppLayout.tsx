@@ -29,6 +29,7 @@ import {
   Brightness7 as LightModeIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import { useThemeMode } from '@/theme/ThemeProvider';
@@ -36,11 +37,17 @@ import { appConfig } from '@/config/app.config';
 
 const DRAWER_WIDTH = 260;
 
-const navItems = [
-  { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
-  { label: 'Courses', path: '/courses', icon: <SchoolIcon /> },
-  { label: 'Help', path: '/help', icon: <HelpIcon /> },
-];
+const getNavItems = (isAdmin: boolean) => {
+  const items = [
+    { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
+    { label: 'Courses', path: '/courses', icon: <SchoolIcon /> },
+    { label: 'Help', path: '/help', icon: <HelpIcon /> },
+  ];
+  if (isAdmin) {
+    items.push({ label: 'Course Editor', path: '/editor', icon: <EditIcon /> });
+  }
+  return items;
+};
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -84,7 +91,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       </Box>
       <Divider />
       <List sx={{ flex: 1, pt: 2 }}>
-        {navItems.map((item) => {
+        {getNavItems(session?.isAdmin || false).map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path !== '/' && location.pathname.startsWith(item.path));
           return (
@@ -151,7 +158,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}>
-            {navItems.find(item => 
+            {getNavItems(session?.isAdmin || false).find(item => 
               location.pathname === item.path || 
               (item.path !== '/' && location.pathname.startsWith(item.path))
             )?.label || appConfig.appName}

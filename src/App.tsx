@@ -17,6 +17,7 @@ import ModuleDetailPage from "@/pages/ModuleDetail";
 import ViewerPage from "@/pages/Viewer";
 import HelpPage from "@/pages/Help";
 import NotFoundPage from "@/pages/NotFoundPage";
+import EditorPage from "@/pages/Editor";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <HelpPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/editor"
+                  element={
+                    <ProtectedRoute>
+                      <EditorPage />
                     </ProtectedRoute>
                   }
                 />
