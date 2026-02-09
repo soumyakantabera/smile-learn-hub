@@ -17,6 +17,8 @@ import {
   addItem,
   updateItem,
   deleteItem,
+  reorderModulesInCourse,
+  reorderItemsInModule,
 } from '@/lib/editorStorage';
 
 interface EditorContextType {
@@ -39,6 +41,10 @@ interface EditorContextType {
   createItem: (item: Omit<ContentItem, 'id'>) => string;
   editItem: (item: ContentItem) => void;
   removeItem: (itemId: string) => void;
+  
+  // Reorder operations
+  reorderModules: (courseId: string, fromIndex: number, toIndex: number) => void;
+  reorderItems: (moduleId: string, fromIndex: number, toIndex: number) => void;
   
   // Batch operations
   createBatch: (key: string, batch: Batch) => void;
@@ -142,6 +148,17 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setIsDirty(true);
   }, []);
 
+  // Reorder operations
+  const reorderModules = useCallback((courseId: string, fromIndex: number, toIndex: number) => {
+    setContent(prev => prev ? reorderModulesInCourse(prev, courseId, fromIndex, toIndex) : prev);
+    setIsDirty(true);
+  }, []);
+
+  const reorderItems = useCallback((moduleId: string, fromIndex: number, toIndex: number) => {
+    setContent(prev => prev ? reorderItemsInModule(prev, moduleId, fromIndex, toIndex) : prev);
+    setIsDirty(true);
+  }, []);
+
   // Batch operations
   const createBatch = useCallback((key: string, batch: Batch) => {
     setContent(prev => {
@@ -213,6 +230,8 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
         createItem,
         editItem,
         removeItem,
+        reorderModules,
+        reorderItems,
         createBatch,
         editBatch,
         removeBatch,

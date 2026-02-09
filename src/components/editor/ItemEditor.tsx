@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -40,6 +40,7 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  DragIndicator as DragIcon,
 } from '@mui/icons-material';
 import { useEditor } from '@/contexts/EditorContext';
 import type { ContentItem, ItemType, QuizQuestion } from '@/types/content';
@@ -100,10 +101,12 @@ const defaultFormData: ItemFormData = {
 };
 
 export function ItemEditor() {
-  const { content, createItem, editItem, removeItem } = useEditor();
+  const { content, createItem, editItem, removeItem, reorderItems } = useEditor();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [formData, setFormData] = useState<ItemFormData>(defaultFormData);
+  const dragItem = useRef<{ moduleId: string; index: number } | null>(null);
+  const dragOverItem = useRef<{ moduleId: string; index: number } | null>(null);
 
   if (!content) return null;
 
@@ -111,10 +114,7 @@ export function ItemEditor() {
 
   const handleOpenCreate = (moduleId?: string) => {
     setEditingItem(null);
-    setFormData({
-      ...defaultFormData,
-      moduleId: moduleId || '',
-    });
+    setFormData({ ...defaultFormData, moduleId: moduleId || '' });
     setDialogOpen(true);
   };
 
@@ -138,7 +138,6 @@ export function ItemEditor() {
 
   const handleSubmit = () => {
     if (!formData.title.trim() || !formData.moduleId) return;
-
     const itemData = {
       moduleId: formData.moduleId,
       title: formData.title,
@@ -153,7 +152,6 @@ export function ItemEditor() {
       audioDuration: formData.audioDuration || undefined,
       quizQuestions: formData.type === 'quiz' ? formData.quizQuestions : undefined,
     };
-
     if (editingItem) {
       editItem({ ...itemData, id: editingItem.id });
     } else {
@@ -172,6 +170,27 @@ export function ItemEditor() {
     const module = content.modules[moduleId];
     if (!module) return [];
     return module.items.map((id) => content.items[id]).filter(Boolean);
+  };
+
+  const handleDragStart = (moduleId: string, index: number) => {
+    dragItem.current = { moduleId, index };
+  };
+
+  const handleDragEnter = (moduleId: string, index: number) => {
+    dragOverItem.current = { moduleId, index };
+  };
+
+  const handleDragEnd = () => {
+    if (
+      dragItem.current &&
+      dragOverItem.current &&
+      dragItem.current.moduleId === dragOverItem.current.moduleId &&
+      dragItem.current.index !== dragOverItem.current.index
+    ) {
+      reorderItems(dragItem.current.moduleId, dragItem.current.index, dragOverItem.current.index);
+    }
+    dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   return (
@@ -205,6 +224,7 @@ export function ItemEditor() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <Chip label={`M${module.order}`} size="small" color="primary" />
                         <Typography fontWeight={500}>{module.title}</Typography>
+                        <Typography variant="caption" color="text.secondary">• Drag to reorder</Typography>
                         <Button
                           size="small"
                           startIcon={<AddIcon />}
@@ -214,10 +234,26 @@ export function ItemEditor() {
                         </Button>
                       </Box>
                       <List dense disablePadding sx={{ pl: 2 }}>
-                        {items.map((item) => {
+                        {items.map((item, index) => {
                           const typeInfo = ITEM_TYPES.find((t) => t.value === item.type);
                           return (
-                            <ListItem key={item.id} divider sx={{ pl: 0 }}>
+                            <ListItem
+                              key={item.id}
+                              divider
+                              draggable
+                              onDragStart={() => handleDragStart(module.id, index)}
+                              onDragEnter={() => handleDragEnter(module.id, index)}
+                              onDragEnd={handleDragEnd}
+                              onDragOver={(e) => e.preventDefault()}
+                              sx={{
+                                pl: 0,
+                                cursor: 'grab',
+                                '&:active': { cursor: 'grabbing' },
+                                '&[draggable]:hover': { bgcolor: 'action.hover' },
+                                transition: 'background-color 0.15s',
+                              }}
+                            >
+                              <DragIcon sx={{ mr: 1, color: 'text.disabled', flexShrink: 0 }} />
                               <ListItemIcon sx={{ minWidth: 36, color: typeColors[item.type] }}>
                                 {typeInfo?.icon}
                               </ListItemIcon>
@@ -236,11 +272,7 @@ export function ItemEditor() {
                                 <IconButton size="small" onClick={() => handleOpenEdit(item)}>
                                   <EditIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => handleDelete(item.id)}
-                                >
+                                <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}>
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </ListItemSecondaryAction>
@@ -264,9 +296,7 @@ export function ItemEditor() {
 
       {/* Item Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingItem ? 'Edit Item' : 'Create New Item'}
-        </DialogTitle>
+        <DialogTitle>{editingItem ? 'Edit Item' : 'Create New Item'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <Grid container spacing={2}>
@@ -330,13 +360,8 @@ export function ItemEditor() {
               rows={2}
             />
 
-            {/* Type-specific fields */}
-            {(formData.type === 'pdf' ||
-              formData.type === 'video' ||
-              formData.type === 'doc' ||
-              formData.type === 'ppt' ||
-              formData.type === 'spreadsheet' ||
-              formData.type === 'link' ||
+            {(formData.type === 'pdf' || formData.type === 'video' || formData.type === 'doc' ||
+              formData.type === 'ppt' || formData.type === 'spreadsheet' || formData.type === 'link' ||
               formData.type === 'audio') && (
               <TextField
                 label="Resource URL"
@@ -393,9 +418,7 @@ export function ItemEditor() {
             {formData.type === 'quiz' && (
               <>
                 <Divider sx={{ my: 1 }} />
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Quiz Questions
-                </Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Quiz Questions</Typography>
                 <QuizEditor
                   questions={formData.quizQuestions}
                   onChange={(questions) => setFormData({ ...formData, quizQuestions: questions })}
