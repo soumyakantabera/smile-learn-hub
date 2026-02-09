@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ContentData, Course, Module, ContentItem } from '@/types/content';
 import { loadContent } from '@/lib/content';
+import type { Batch } from '@/types/content';
 import {
   saveDraft,
   loadDraft,
@@ -38,6 +39,11 @@ interface EditorContextType {
   createItem: (item: Omit<ContentItem, 'id'>) => string;
   editItem: (item: ContentItem) => void;
   removeItem: (itemId: string) => void;
+  
+  // Batch operations
+  createBatch: (key: string, batch: Batch) => void;
+  editBatch: (key: string, batch: Batch) => void;
+  removeBatch: (key: string) => void;
   
   // Draft operations
   saveChanges: () => void;
@@ -136,6 +142,33 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setIsDirty(true);
   }, []);
 
+  // Batch operations
+  const createBatch = useCallback((key: string, batch: Batch) => {
+    setContent(prev => {
+      if (!prev) return prev;
+      return { ...prev, batches: { ...prev.batches, [key]: batch } };
+    });
+    setIsDirty(true);
+  }, []);
+
+  const editBatch = useCallback((key: string, batch: Batch) => {
+    setContent(prev => {
+      if (!prev) return prev;
+      return { ...prev, batches: { ...prev.batches, [key]: batch } };
+    });
+    setIsDirty(true);
+  }, []);
+
+  const removeBatch = useCallback((key: string) => {
+    setContent(prev => {
+      if (!prev) return prev;
+      const newBatches = { ...prev.batches };
+      delete newBatches[key];
+      return { ...prev, batches: newBatches };
+    });
+    setIsDirty(true);
+  }, []);
+
   // Draft operations
   const saveChanges = useCallback(() => {
     if (content) {
@@ -180,6 +213,9 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
         createItem,
         editItem,
         removeItem,
+        createBatch,
+        editBatch,
+        removeBatch,
         saveChanges,
         discardChanges,
         exportContent,
