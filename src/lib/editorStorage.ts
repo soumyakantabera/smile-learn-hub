@@ -187,3 +187,37 @@ export function deleteItem(content: ContentData, itemId: string): ContentData {
   delete newContent.items[itemId];
   return newContent;
 }
+
+// Reorder modules within a course
+export function reorderModulesInCourse(content: ContentData, courseId: string, fromIndex: number, toIndex: number): ContentData {
+  const course = content.courses[courseId];
+  if (!course) return content;
+  const modules = [...course.modules];
+  const [moved] = modules.splice(fromIndex, 1);
+  modules.splice(toIndex, 0, moved);
+  // Update order field on each module
+  const updatedModules = { ...content.modules };
+  modules.forEach((id, i) => {
+    if (updatedModules[id]) {
+      updatedModules[id] = { ...updatedModules[id], order: i + 1 };
+    }
+  });
+  return {
+    ...content,
+    courses: { ...content.courses, [courseId]: { ...course, modules } },
+    modules: updatedModules,
+  };
+}
+
+// Reorder items within a module
+export function reorderItemsInModule(content: ContentData, moduleId: string, fromIndex: number, toIndex: number): ContentData {
+  const module = content.modules[moduleId];
+  if (!module) return content;
+  const items = [...module.items];
+  const [moved] = items.splice(fromIndex, 1);
+  items.splice(toIndex, 0, moved);
+  return {
+    ...content,
+    modules: { ...content.modules, [moduleId]: { ...module, items } },
+  };
+}

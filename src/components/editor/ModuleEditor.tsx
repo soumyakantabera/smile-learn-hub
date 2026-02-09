@@ -1,12 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
-  CardActions,
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -24,6 +20,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  TextField,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -31,6 +28,7 @@ import {
   Delete as DeleteIcon,
   ExpandMore as ExpandMoreIcon,
   Folder as FolderIcon,
+  DragIndicator as DragIcon,
 } from '@mui/icons-material';
 import { useEditor } from '@/contexts/EditorContext';
 import type { Module } from '@/types/content';
@@ -50,10 +48,12 @@ const defaultFormData: ModuleFormData = {
 };
 
 export function ModuleEditor() {
-  const { content, createModule, editModule, removeModule } = useEditor();
+  const { content, createModule, editModule, removeModule, reorderModules } = useEditor();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [formData, setFormData] = useState<ModuleFormData>(defaultFormData);
+  const dragItem = useRef<{ courseId: string; index: number } | null>(null);
+  const dragOverItem = useRef<{ courseId: string; index: number } | null>(null);
 
   if (!content) return null;
 
@@ -83,12 +83,8 @@ export function ModuleEditor() {
 
   const handleSubmit = () => {
     if (!formData.title.trim() || !formData.courseId) return;
-
     if (editingModule) {
-      editModule({
-        ...editingModule,
-        ...formData,
-      });
+      editModule({ ...editingModule, ...formData });
     } else {
       createModule(formData);
     }
@@ -99,6 +95,27 @@ export function ModuleEditor() {
     if (window.confirm('Delete this module and all its items?')) {
       removeModule(moduleId);
     }
+  };
+
+  const handleDragStart = (courseId: string, index: number) => {
+    dragItem.current = { courseId, index };
+  };
+
+  const handleDragEnter = (courseId: string, index: number) => {
+    dragOverItem.current = { courseId, index };
+  };
+
+  const handleDragEnd = () => {
+    if (
+      dragItem.current &&
+      dragOverItem.current &&
+      dragItem.current.courseId === dragOverItem.current.courseId &&
+      dragItem.current.index !== dragOverItem.current.index
+    ) {
+      reorderModules(dragItem.current.courseId, dragItem.current.index, dragOverItem.current.index);
+    }
+    dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   return (
@@ -116,8 +133,7 @@ export function ModuleEditor() {
         courses.map((course) => {
           const courseModules = course.modules
             .map((id) => content.modules[id])
-            .filter(Boolean)
-            .sort((a, b) => a.order - b.order);
+            .filter(Boolean);
 
           return (
             <Accordion key={course.id} defaultExpanded sx={{ mb: 2 }}>
@@ -127,16 +143,32 @@ export function ModuleEditor() {
                   <Box>
                     <Typography fontWeight={600}>{course.title}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {courseModules.length} modules
+                      {courseModules.length} modules • Drag to reorder
                     </Typography>
                   </Box>
                 </Box>
               </AccordionSummary>
               <AccordionDetails>
                 <List disablePadding>
-                  {courseModules.map((module) => (
-                    <ListItem key={module.id} divider sx={{ pl: 0 }}>
-                      <Chip label={`M${module.order}`} size="small" sx={{ mr: 2 }} />
+                  {courseModules.map((module, index) => (
+                    <ListItem
+                      key={module.id}
+                      divider
+                      draggable
+                      onDragStart={() => handleDragStart(course.id, index)}
+                      onDragEnter={() => handleDragEnter(course.id, index)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => e.preventDefault()}
+                      sx={{
+                        pl: 0,
+                        cursor: 'grab',
+                        '&:active': { cursor: 'grabbing' },
+                        '&[draggable]:hover': { bgcolor: 'action.hover' },
+                        transition: 'background-color 0.15s',
+                      }}
+                    >
+                      <DragIcon sx={{ mr: 1, color: 'text.disabled', flexShrink: 0 }} />
+                      <Chip label={`M${index + 1}`} size="small" sx={{ mr: 2 }} />
                       <ListItemText
                         primary={module.title}
                         secondary={`${module.description} • ${module.items.length} items`}
@@ -168,9 +200,7 @@ export function ModuleEditor() {
 
       {/* Module Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingModule ? 'Edit Module' : 'Create New Module'}
-        </DialogTitle>
+        <DialogTitle>{editingModule ? 'Edit Module' : 'Create New Module'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <FormControl fullWidth required>
@@ -182,9 +212,7 @@ export function ModuleEditor() {
                 disabled={!!editingModule}
               >
                 {courses.map((course) => (
-                  <MenuItem key={course.id} value={course.id}>
-                    {course.title}
-                  </MenuItem>
+                  <MenuItem key={course.id} value={course.id}>{course.title}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -204,14 +232,6 @@ export function ModuleEditor() {
               multiline
               rows={2}
               placeholder="Brief module description..."
-            />
-            <TextField
-              label="Order"
-              type="number"
-              value={formData.order}
-              onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
-              fullWidth
-              inputProps={{ min: 1 }}
             />
           </Box>
         </DialogContent>
