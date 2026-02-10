@@ -19,6 +19,9 @@ import {
   deleteItem,
   reorderModulesInCourse,
   reorderItemsInModule,
+  duplicateCourse as dupCourse,
+  duplicateModule as dupModule,
+  duplicateItem as dupItem,
 } from '@/lib/editorStorage';
 
 interface EditorContextType {
@@ -27,31 +30,28 @@ interface EditorContextType {
   isDirty: boolean;
   lastSaved: Date | null;
   
-  // Course operations
   createCourse: (course: Omit<Course, 'id' | 'modules'>, batchKey: string) => string;
   editCourse: (course: Course) => void;
   removeCourse: (courseId: string) => void;
+  duplicateCourseAction: (courseId: string) => string;
   
-  // Module operations
   createModule: (module: Omit<Module, 'id' | 'items'>) => string;
   editModule: (module: Module) => void;
   removeModule: (moduleId: string) => void;
+  duplicateModuleAction: (moduleId: string) => string;
   
-  // Item operations
   createItem: (item: Omit<ContentItem, 'id'>) => string;
   editItem: (item: ContentItem) => void;
   removeItem: (itemId: string) => void;
+  duplicateItemAction: (itemId: string) => string;
   
-  // Reorder operations
   reorderModules: (courseId: string, fromIndex: number, toIndex: number) => void;
   reorderItems: (moduleId: string, fromIndex: number, toIndex: number) => void;
   
-  // Batch operations
   createBatch: (key: string, batch: Batch) => void;
   editBatch: (key: string, batch: Batch) => void;
   removeBatch: (key: string) => void;
   
-  // Draft operations
   saveChanges: () => void;
   discardChanges: () => void;
   exportContent: () => void;
@@ -66,7 +66,6 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Load content on mount (prefer draft, fallback to production)
   useEffect(() => {
     const init = async () => {
       const draft = loadDraft();
@@ -82,7 +81,6 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     init();
   }, []);
 
-  // Auto-save when content changes
   useEffect(() => {
     if (content && isDirty) {
       saveDraft(content);
@@ -91,7 +89,6 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     }
   }, [content, isDirty]);
 
-  // Course operations
   const createCourse = useCallback((courseData: Omit<Course, 'id' | 'modules'>, batchKey: string): string => {
     const id = generateId('course');
     const course: Course = { ...courseData, id, modules: [] };
@@ -110,7 +107,18 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setIsDirty(true);
   }, []);
 
-  // Module operations
+  const duplicateCourseAction = useCallback((courseId: string): string => {
+    let newId = '';
+    setContent(prev => {
+      if (!prev) return prev;
+      const result = dupCourse(prev, courseId);
+      newId = result.newCourseId;
+      return result.content;
+    });
+    setIsDirty(true);
+    return newId;
+  }, []);
+
   const createModule = useCallback((moduleData: Omit<Module, 'id' | 'items'>): string => {
     const id = generateId('module');
     const module: Module = { ...moduleData, id, items: [] };
@@ -129,7 +137,18 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setIsDirty(true);
   }, []);
 
-  // Item operations
+  const duplicateModuleAction = useCallback((moduleId: string): string => {
+    let newId = '';
+    setContent(prev => {
+      if (!prev) return prev;
+      const result = dupModule(prev, moduleId);
+      newId = result.newModuleId;
+      return result.content;
+    });
+    setIsDirty(true);
+    return newId;
+  }, []);
+
   const createItem = useCallback((itemData: Omit<ContentItem, 'id'>): string => {
     const id = generateId('item');
     const item: ContentItem = { ...itemData, id };
@@ -148,7 +167,18 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setIsDirty(true);
   }, []);
 
-  // Reorder operations
+  const duplicateItemAction = useCallback((itemId: string): string => {
+    let newId = '';
+    setContent(prev => {
+      if (!prev) return prev;
+      const result = dupItem(prev, itemId);
+      newId = result.newItemId;
+      return result.content;
+    });
+    setIsDirty(true);
+    return newId;
+  }, []);
+
   const reorderModules = useCallback((courseId: string, fromIndex: number, toIndex: number) => {
     setContent(prev => prev ? reorderModulesInCourse(prev, courseId, fromIndex, toIndex) : prev);
     setIsDirty(true);
@@ -159,7 +189,6 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setIsDirty(true);
   }, []);
 
-  // Batch operations
   const createBatch = useCallback((key: string, batch: Batch) => {
     setContent(prev => {
       if (!prev) return prev;
@@ -186,7 +215,6 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setIsDirty(true);
   }, []);
 
-  // Draft operations
   const saveChanges = useCallback(() => {
     if (content) {
       saveDraft(content);
@@ -217,28 +245,13 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   return (
     <EditorContext.Provider
       value={{
-        content,
-        isLoading,
-        isDirty,
-        lastSaved,
-        createCourse,
-        editCourse,
-        removeCourse,
-        createModule,
-        editModule,
-        removeModule,
-        createItem,
-        editItem,
-        removeItem,
-        reorderModules,
-        reorderItems,
-        createBatch,
-        editBatch,
-        removeBatch,
-        saveChanges,
-        discardChanges,
-        exportContent,
-        resetToProduction,
+        content, isLoading, isDirty, lastSaved,
+        createCourse, editCourse, removeCourse, duplicateCourseAction,
+        createModule, editModule, removeModule, duplicateModuleAction,
+        createItem, editItem, removeItem, duplicateItemAction,
+        reorderModules, reorderItems,
+        createBatch, editBatch, removeBatch,
+        saveChanges, discardChanges, exportContent, resetToProduction,
       }}
     >
       {children}

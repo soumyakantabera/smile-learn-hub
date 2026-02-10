@@ -2,12 +2,26 @@
 
 export type ItemType = 'pdf' | 'doc' | 'ppt' | 'spreadsheet' | 'video' | 'link' | 'homework' | 'youtube' | 'audio' | 'quiz';
 
+export type QuestionType = 'multiple_choice' | 'true_false' | 'fill_blank';
+
+export type CourseStatus = 'draft' | 'published' | 'archived';
+
+export interface QuizSettings {
+  timeLimit?: number; // in minutes
+  passingScore?: number; // percentage 0-100
+  shuffleQuestions?: boolean;
+  showExplanations?: boolean;
+}
+
 export interface QuizQuestion {
   id: string;
   question: string;
   options: string[];
   correctIndex: number;
   explanation?: string;
+  type?: QuestionType;
+  imageUrl?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
 }
 
 export interface ContentItem {
@@ -17,13 +31,14 @@ export interface ContentItem {
   description: string;
   type: ItemType;
   url?: string;
-  embedUrl?: string; // For YouTube/Vimeo embeds
+  embedUrl?: string;
   instructions?: string;
   dueDate?: string;
   tags: string[];
   publishedAt: string;
-  quizQuestions?: QuizQuestion[]; // For quiz type
-  audioDuration?: string; // For audio type
+  quizQuestions?: QuizQuestion[];
+  quizSettings?: QuizSettings;
+  audioDuration?: string;
 }
 
 export interface Module {
@@ -45,6 +60,7 @@ export interface Course {
   modules: string[];
   category?: string;
   level?: 'Beginner' | 'Intermediate' | 'Advanced';
+  status?: CourseStatus;
 }
 
 export interface Batch {
@@ -57,7 +73,7 @@ export interface PasscodeEntry {
   hash: string;
   batchKey: string;
   label: string;
-  isAdmin?: boolean; // Admin flag for editor access
+  isAdmin?: boolean;
 }
 
 export interface ContentData {

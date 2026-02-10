@@ -74,8 +74,6 @@ export function updateCourse(content: ContentData, course: Course): ContentData 
 export function deleteCourse(content: ContentData, courseId: string): ContentData {
   const newContent = { ...content };
   const course = newContent.courses[courseId];
-  
-  // Delete all modules and items belonging to this course
   if (course) {
     course.modules.forEach(moduleId => {
       const module = newContent.modules[moduleId];
@@ -87,17 +85,13 @@ export function deleteCourse(content: ContentData, courseId: string): ContentDat
       }
     });
   }
-  
   delete newContent.courses[courseId];
-  
-  // Remove from batches
   Object.keys(newContent.batches).forEach(batchKey => {
     newContent.batches[batchKey] = {
       ...newContent.batches[batchKey],
       courses: newContent.batches[batchKey].courses.filter(id => id !== courseId),
     };
   });
-  
   return newContent;
 }
 
@@ -105,7 +99,6 @@ export function deleteCourse(content: ContentData, courseId: string): ContentDat
 export function addModule(content: ContentData, module: Module): ContentData {
   const newContent = { ...content };
   newContent.modules = { ...newContent.modules, [module.id]: module };
-  
   if (newContent.courses[module.courseId]) {
     newContent.courses = {
       ...newContent.courses,
@@ -128,14 +121,10 @@ export function updateModule(content: ContentData, module: Module): ContentData 
 export function deleteModule(content: ContentData, moduleId: string): ContentData {
   const newContent = { ...content };
   const module = newContent.modules[moduleId];
-  
-  // Delete all items in this module
   if (module) {
     module.items.forEach(itemId => {
       delete newContent.items[itemId];
     });
-    
-    // Remove from course
     if (newContent.courses[module.courseId]) {
       newContent.courses[module.courseId] = {
         ...newContent.courses[module.courseId],
@@ -143,7 +132,6 @@ export function deleteModule(content: ContentData, moduleId: string): ContentDat
       };
     }
   }
-  
   delete newContent.modules[moduleId];
   return newContent;
 }
@@ -152,7 +140,6 @@ export function deleteModule(content: ContentData, moduleId: string): ContentDat
 export function addItem(content: ContentData, item: ContentItem): ContentData {
   const newContent = { ...content };
   newContent.items = { ...newContent.items, [item.id]: item };
-  
   if (newContent.modules[item.moduleId]) {
     newContent.modules = {
       ...newContent.modules,
@@ -175,15 +162,12 @@ export function updateItem(content: ContentData, item: ContentItem): ContentData
 export function deleteItem(content: ContentData, itemId: string): ContentData {
   const newContent = { ...content };
   const item = newContent.items[itemId];
-  
-  // Remove from module
   if (item && newContent.modules[item.moduleId]) {
     newContent.modules[item.moduleId] = {
       ...newContent.modules[item.moduleId],
       items: newContent.modules[item.moduleId].items.filter(id => id !== itemId),
     };
   }
-  
   delete newContent.items[itemId];
   return newContent;
 }
@@ -195,7 +179,6 @@ export function reorderModulesInCourse(content: ContentData, courseId: string, f
   const modules = [...course.modules];
   const [moved] = modules.splice(fromIndex, 1);
   modules.splice(toIndex, 0, moved);
-  // Update order field on each module
   const updatedModules = { ...content.modules };
   modules.forEach((id, i) => {
     if (updatedModules[id]) {
@@ -220,4 +203,103 @@ export function reorderItemsInModule(content: ContentData, moduleId: string, fro
     ...content,
     modules: { ...content.modules, [moduleId]: { ...module, items } },
   };
+}
+
+// Duplicate a course with all modules and items
+export function duplicateCourse(content: ContentData, courseId: string): { content: ContentData; newCourseId: string } {
+  const course = content.courses[courseId];
+  if (!course) return { content, newCourseId: '' };
+
+  const newCourseId = generateId('course');
+  const newModuleIds: string[] = [];
+  let newContent = { ...content };
+  newContent.courses = { ...newContent.courses };
+  newContent.modules = { ...newContent.modules };
+  newContent.items = { ...newContent.items };
+
+  course.modules.forEach((modId) => {
+    const mod = content.modules[modId];
+    if (!mod) return;
+    const newModId = generateId('module');
+    const newItemIds: string[] = [];
+
+    mod.items.forEach((itemId) => {
+      const item = content.items[itemId];
+      if (!item) return;
+      const newItemId = generateId('item');
+      newContent.items[newItemId] = { ...item, id: newItemId, moduleId: newModId };
+      newItemIds.push(newItemId);
+    });
+
+    newContent.modules[newModId] = { ...mod, id: newModId, courseId: newCourseId, items: newItemIds };
+    newModuleIds.push(newModId);
+  });
+
+  newContent.courses[newCourseId] = {
+    ...course,
+    id: newCourseId,
+    title: `${course.title} (Copy)`,
+    modules: newModuleIds,
+  };
+
+  // Add to same batches
+  Object.keys(newContent.batches).forEach((bk) => {
+    if (newContent.batches[bk].courses.includes(courseId)) {
+      newContent.batches = {
+        ...newContent.batches,
+        [bk]: { ...newContent.batches[bk], courses: [...newContent.batches[bk].courses, newCourseId] },
+      };
+    }
+  });
+
+  return { content: newContent, newCourseId };
+}
+
+// Duplicate a module with all items
+export function duplicateModule(content: ContentData, moduleId: string): { content: ContentData; newModuleId: string } {
+  const mod = content.modules[moduleId];
+  if (!mod) return { content, newModuleId: '' };
+
+  const newModId = generateId('module');
+  let newContent = { ...content };
+  newContent.modules = { ...newContent.modules };
+  newContent.items = { ...newContent.items };
+  newContent.courses = { ...newContent.courses };
+
+  const newItemIds: string[] = [];
+  mod.items.forEach((itemId) => {
+    const item = content.items[itemId];
+    if (!item) return;
+    const newItemId = generateId('item');
+    newContent.items[newItemId] = { ...item, id: newItemId, moduleId: newModId };
+    newItemIds.push(newItemId);
+  });
+
+  newContent.modules[newModId] = { ...mod, id: newModId, title: `${mod.title} (Copy)`, items: newItemIds };
+
+  // Add to course
+  const course = newContent.courses[mod.courseId];
+  if (course) {
+    newContent.courses[mod.courseId] = { ...course, modules: [...course.modules, newModId] };
+  }
+
+  return { content: newContent, newModuleId: newModId };
+}
+
+// Duplicate an item
+export function duplicateItem(content: ContentData, itemId: string): { content: ContentData; newItemId: string } {
+  const item = content.items[itemId];
+  if (!item) return { content, newItemId: '' };
+
+  const newItemId = generateId('item');
+  let newContent = { ...content };
+  newContent.items = { ...newContent.items, [newItemId]: { ...item, id: newItemId, title: `${item.title} (Copy)` } };
+  newContent.modules = { ...newContent.modules };
+
+  const mod = newContent.modules[item.moduleId];
+  if (mod) {
+    newContent.modules[item.moduleId] = { ...mod, items: [...mod.items, newItemId] };
+  }
+
+  return { content: newContent, newItemId };
 }
