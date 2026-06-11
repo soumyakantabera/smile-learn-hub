@@ -21,6 +21,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   TextField,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -29,9 +30,13 @@ import {
   ExpandMore as ExpandMoreIcon,
   Folder as FolderIcon,
   DragIndicator as DragIcon,
+  ContentCopy as DuplicateIcon,
 } from '@mui/icons-material';
+import { toast } from 'sonner';
 import { useEditor } from '@/contexts/EditorContext';
 import type { Module } from '@/types/content';
+import { ConfirmDialog } from './ConfirmDialog';
+import { EmptyState } from './EmptyState';
 
 interface ModuleFormData {
   courseId: string;
@@ -40,23 +45,19 @@ interface ModuleFormData {
   order: number;
 }
 
-const defaultFormData: ModuleFormData = {
-  courseId: '',
-  title: '',
-  description: '',
-  order: 1,
-};
+const defaultFormData: ModuleFormData = { courseId: '', title: '', description: '', order: 1 };
 
 export function ModuleEditor() {
-  const { content, createModule, editModule, removeModule, reorderModules } = useEditor();
+  const { content, createModule, editModule, removeModule, duplicateModule, reorderModules } = useEditor();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [formData, setFormData] = useState<ModuleFormData>(defaultFormData);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [quickAdd, setQuickAdd] = useState<Record<string, string>>({});
   const dragItem = useRef<{ courseId: string; index: number } | null>(null);
   const dragOverItem = useRef<{ courseId: string; index: number } | null>(null);
 
   if (!content) return null;
-
   const courses = Object.values(content.courses);
 
   const handleOpenCreate = (courseId?: string) => {
@@ -85,26 +86,29 @@ export function ModuleEditor() {
     if (!formData.title.trim() || !formData.courseId) return;
     if (editingModule) {
       editModule({ ...editingModule, ...formData });
+      toast.success('Module updated');
     } else {
       createModule(formData);
+      toast.success('Module created');
     }
     setDialogOpen(false);
   };
 
-  const handleDelete = (moduleId: string) => {
-    if (window.confirm('Delete this module and all its items?')) {
-      removeModule(moduleId);
-    }
+  const handleQuickAdd = (courseId: string) => {
+    const title = quickAdd[courseId]?.trim();
+    if (!title) return;
+    const course = content.courses[courseId];
+    createModule({ courseId, title, description: '', order: course.modules.length + 1 });
+    setQuickAdd((p) => ({ ...p, [courseId]: '' }));
+    toast.success(`Added "${title}"`);
   };
 
   const handleDragStart = (courseId: string, index: number) => {
     dragItem.current = { courseId, index };
   };
-
   const handleDragEnter = (courseId: string, index: number) => {
     dragOverItem.current = { courseId, index };
   };
-
   const handleDragEnd = () => {
     if (
       dragItem.current &&
@@ -128,13 +132,14 @@ export function ModuleEditor() {
       </Box>
 
       {courses.length === 0 ? (
-        <Typography color="text.secondary">Create a course first to add modules.</Typography>
+        <EmptyState
+          icon={<FolderIcon />}
+          title="No courses yet"
+          description="Create a course first to start adding modules."
+        />
       ) : (
         courses.map((course) => {
-          const courseModules = course.modules
-            .map((id) => content.modules[id])
-            .filter(Boolean);
-
+          const courseModules = course.modules.map((id) => content.modules[id]).filter(Boolean);
           return (
             <Accordion key={course.id} defaultExpanded sx={{ mb: 2 }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -167,38 +172,80 @@ export function ModuleEditor() {
                         transition: 'background-color 0.15s',
                       }}
                     >
-                      <DragIcon sx={{ mr: 1, color: 'text.disabled', flexShrink: 0 }} />
+                      <DragIcon sx={{ mr: 1, color: 'text.disabled' }} aria-label="Drag handle" />
                       <Chip label={`M${index + 1}`} size="small" sx={{ mr: 2 }} />
                       <ListItemText
                         primary={module.title}
-                        secondary={`${module.description} • ${module.items.length} items`}
+                        secondary={
+                          <Box component="span" sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <span>{module.description}</span>
+                            <Chip
+                              label={`${module.items.length} items`}
+                              size="small"
+                              color={module.items.length === 0 ? 'warning' : 'success'}
+                              variant="outlined"
+                            />
+                          </Box>
+                        }
+                        secondaryTypographyProps={{ component: 'div' }}
                       />
                       <ListItemSecondaryAction>
-                        <IconButton size="small" onClick={() => handleOpenEdit(module)}>
+                        <Tooltip title="Duplicate">
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              duplicateModule(module.id);
+                              toast.success('Module duplicated');
+                            }}
+                            aria-label="Duplicate module"
+                          >
+                            <DuplicateIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <IconButton size="small" onClick={() => handleOpenEdit(module)} aria-label="Edit module">
                           <EditIcon fontSize="small" />
                         </IconButton>
-                        <IconButton size="small" color="error" onClick={() => handleDelete(module.id)}>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => setConfirmDelete(module.id)}
+                          aria-label="Delete module"
+                        >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </ListItemSecondaryAction>
                     </ListItem>
                   ))}
                 </List>
-                <Button
-                  startIcon={<AddIcon />}
-                  size="small"
-                  onClick={() => handleOpenCreate(course.id)}
-                  sx={{ mt: 1 }}
-                >
-                  Add Module to {course.title}
-                </Button>
+
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 2 }}>
+                  <TextField
+                    size="small"
+                    placeholder="Quick add module title..."
+                    value={quickAdd[course.id] || ''}
+                    onChange={(e) => setQuickAdd((p) => ({ ...p, [course.id]: e.target.value }))}
+                    onKeyDown={(e) => e.key === 'Enter' && handleQuickAdd(course.id)}
+                    sx={{ flex: 1 }}
+                  />
+                  <Button
+                    startIcon={<AddIcon />}
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleQuickAdd(course.id)}
+                    disabled={!quickAdd[course.id]?.trim()}
+                  >
+                    Quick add
+                  </Button>
+                  <Button startIcon={<AddIcon />} size="small" onClick={() => handleOpenCreate(course.id)}>
+                    Detailed
+                  </Button>
+                </Box>
               </AccordionDetails>
             </Accordion>
           );
         })
       )}
 
-      {/* Module Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editingModule ? 'Edit Module' : 'Create New Module'}</DialogTitle>
         <DialogContent>
@@ -211,8 +258,10 @@ export function ModuleEditor() {
                 onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
                 disabled={!!editingModule}
               >
-                {courses.map((course) => (
-                  <MenuItem key={course.id} value={course.id}>{course.title}</MenuItem>
+                {courses.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.title}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -222,7 +271,6 @@ export function ModuleEditor() {
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               fullWidth
               required
-              placeholder="e.g., Unit 1: Introduction"
             />
             <TextField
               label="Description"
@@ -231,7 +279,6 @@ export function ModuleEditor() {
               fullWidth
               multiline
               rows={2}
-              placeholder="Brief module description..."
             />
           </Box>
         </DialogContent>
@@ -246,6 +293,21 @@ export function ModuleEditor() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete module?"
+        message="This will delete the module and all of its items. You can undo this with Ctrl+Z."
+        destructive
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (confirmDelete) {
+            removeModule(confirmDelete);
+            toast.success('Module deleted');
+          }
+        }}
+        onClose={() => setConfirmDelete(null)}
+      />
     </Box>
   );
 }

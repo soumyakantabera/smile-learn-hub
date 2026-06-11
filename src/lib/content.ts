@@ -17,10 +17,12 @@ export async function loadContent(): Promise<ContentData> {
 export function getBatchCourses(content: ContentData, batchKey: string): Course[] {
   const batch = content.batches[batchKey];
   if (!batch) return [];
-  
+
   return batch.courses
     .map(courseId => content.courses[courseId])
-    .filter(Boolean);
+    .filter(Boolean)
+    // Hide draft/archived courses from students; admin batch sees everything
+    .filter(course => batchKey === 'batch-admin' || (course.status || 'published') === 'published');
 }
 
 export function getCourse(content: ContentData, courseId: string): Course | null {

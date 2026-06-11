@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { ContentData, Course, Module, ContentItem } from '@/types/content';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import type { ContentData, Course, Module, ContentItem, Batch } from '@/types/content';
 import { loadContent } from '@/lib/content';
-import type { Batch } from '@/types/content';
 import {
   saveDraft,
   loadDraft,
@@ -11,186 +10,209 @@ import {
   addCourse,
   updateCourse,
   deleteCourse,
+  duplicateCourse as dupCourseFn,
   addModule,
   updateModule,
   deleteModule,
+  duplicateModule as dupModuleFn,
   addItem,
   updateItem,
   deleteItem,
+  duplicateItem as dupItemFn,
+  moveItem as moveItemFn,
   reorderModulesInCourse,
   reorderItemsInModule,
+  getDraftSizeKB,
+  listSnapshots,
+  restoreSnapshot,
+  type Snapshot,
 } from '@/lib/editorStorage';
+
+const HISTORY_LIMIT = 30;
 
 interface EditorContextType {
   content: ContentData | null;
+  productionContent: ContentData | null;
   isLoading: boolean;
   isDirty: boolean;
   lastSaved: Date | null;
-  
-  // Course operations
+  draftSizeKB: number;
+  canUndo: boolean;
+  canRedo: boolean;
+
   createCourse: (course: Omit<Course, 'id' | 'modules'>, batchKey: string) => string;
   editCourse: (course: Course) => void;
   removeCourse: (courseId: string) => void;
-  
-  // Module operations
+  duplicateCourse: (courseId: string) => void;
+
   createModule: (module: Omit<Module, 'id' | 'items'>) => string;
   editModule: (module: Module) => void;
   removeModule: (moduleId: string) => void;
-  
-  // Item operations
+  duplicateModule: (moduleId: string) => void;
+
   createItem: (item: Omit<ContentItem, 'id'>) => string;
   editItem: (item: ContentItem) => void;
   removeItem: (itemId: string) => void;
-  
-  // Reorder operations
+  duplicateItem: (itemId: string) => void;
+  moveItem: (itemId: string, targetModuleId: string) => void;
+
   reorderModules: (courseId: string, fromIndex: number, toIndex: number) => void;
   reorderItems: (moduleId: string, fromIndex: number, toIndex: number) => void;
-  
-  // Batch operations
+
   createBatch: (key: string, batch: Batch) => void;
   editBatch: (key: string, batch: Batch) => void;
   removeBatch: (key: string) => void;
-  
-  // Draft operations
+
   saveChanges: () => void;
   discardChanges: () => void;
   exportContent: () => void;
+  importContent: (data: ContentData) => void;
   resetToProduction: () => Promise<void>;
+
+  undo: () => void;
+  redo: () => void;
+  getSnapshots: () => Snapshot[];
+  restoreFromSnapshot: (id: string) => void;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 export function EditorProvider({ children }: { children: React.ReactNode }) {
   const [content, setContent] = useState<ContentData | null>(null);
+  const [productionContent, setProductionContent] = useState<ContentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [draftSizeKB, setDraftSizeKB] = useState(0);
 
-  // Load content on mount (prefer draft, fallback to production)
+  const past = useRef<ContentData[]>([]);
+  const future = useRef<ContentData[]>([]);
+  const [, setHistoryTick] = useState(0);
+  const skipHistory = useRef(false);
+
   useEffect(() => {
     const init = async () => {
       const draft = loadDraft();
+      const prod = await loadContent();
+      setProductionContent(prod);
       if (draft) {
         setContent(draft);
         setLastSaved(new Date(draft.lastModified));
       } else {
-        const prodContent = await loadContent();
-        setContent(prodContent);
+        setContent(prod);
       }
       setIsLoading(false);
     };
     init();
   }, []);
 
-  // Auto-save when content changes
   useEffect(() => {
     if (content && isDirty) {
       saveDraft(content);
       setLastSaved(new Date());
+      setDraftSizeKB(getDraftSizeKB());
       setIsDirty(false);
     }
   }, [content, isDirty]);
 
-  // Course operations
-  const createCourse = useCallback((courseData: Omit<Course, 'id' | 'modules'>, batchKey: string): string => {
-    const id = generateId('course');
-    const course: Course = { ...courseData, id, modules: [] };
-    setContent(prev => prev ? addCourse(prev, course, batchKey) : prev);
-    setIsDirty(true);
-    return id;
-  }, []);
-
-  const editCourse = useCallback((course: Course) => {
-    setContent(prev => prev ? updateCourse(prev, course) : prev);
-    setIsDirty(true);
-  }, []);
-
-  const removeCourse = useCallback((courseId: string) => {
-    setContent(prev => prev ? deleteCourse(prev, courseId) : prev);
-    setIsDirty(true);
-  }, []);
-
-  // Module operations
-  const createModule = useCallback((moduleData: Omit<Module, 'id' | 'items'>): string => {
-    const id = generateId('module');
-    const module: Module = { ...moduleData, id, items: [] };
-    setContent(prev => prev ? addModule(prev, module) : prev);
-    setIsDirty(true);
-    return id;
-  }, []);
-
-  const editModule = useCallback((module: Module) => {
-    setContent(prev => prev ? updateModule(prev, module) : prev);
-    setIsDirty(true);
-  }, []);
-
-  const removeModule = useCallback((moduleId: string) => {
-    setContent(prev => prev ? deleteModule(prev, moduleId) : prev);
-    setIsDirty(true);
-  }, []);
-
-  // Item operations
-  const createItem = useCallback((itemData: Omit<ContentItem, 'id'>): string => {
-    const id = generateId('item');
-    const item: ContentItem = { ...itemData, id };
-    setContent(prev => prev ? addItem(prev, item) : prev);
-    setIsDirty(true);
-    return id;
-  }, []);
-
-  const editItem = useCallback((item: ContentItem) => {
-    setContent(prev => prev ? updateItem(prev, item) : prev);
-    setIsDirty(true);
-  }, []);
-
-  const removeItem = useCallback((itemId: string) => {
-    setContent(prev => prev ? deleteItem(prev, itemId) : prev);
-    setIsDirty(true);
-  }, []);
-
-  // Reorder operations
-  const reorderModules = useCallback((courseId: string, fromIndex: number, toIndex: number) => {
-    setContent(prev => prev ? reorderModulesInCourse(prev, courseId, fromIndex, toIndex) : prev);
-    setIsDirty(true);
-  }, []);
-
-  const reorderItems = useCallback((moduleId: string, fromIndex: number, toIndex: number) => {
-    setContent(prev => prev ? reorderItemsInModule(prev, moduleId, fromIndex, toIndex) : prev);
-    setIsDirty(true);
-  }, []);
-
-  // Batch operations
-  const createBatch = useCallback((key: string, batch: Batch) => {
-    setContent(prev => {
+  const mutate = useCallback((updater: (prev: ContentData) => ContentData) => {
+    setContent((prev) => {
       if (!prev) return prev;
-      return { ...prev, batches: { ...prev.batches, [key]: batch } };
+      if (!skipHistory.current) {
+        past.current.push(prev);
+        if (past.current.length > HISTORY_LIMIT) past.current.shift();
+        future.current = [];
+        setHistoryTick((t) => t + 1);
+      }
+      skipHistory.current = false;
+      return updater(prev);
     });
     setIsDirty(true);
   }, []);
 
-  const editBatch = useCallback((key: string, batch: Batch) => {
-    setContent(prev => {
-      if (!prev) return prev;
-      return { ...prev, batches: { ...prev.batches, [key]: batch } };
-    });
-    setIsDirty(true);
-  }, []);
+  // Courses
+  const createCourse = useCallback(
+    (courseData: Omit<Course, 'id' | 'modules'>, batchKey: string): string => {
+      const id = generateId('course');
+      const course: Course = { ...courseData, id, modules: [], status: courseData.status || 'draft' };
+      mutate((prev) => addCourse(prev, course, batchKey));
+      return id;
+    },
+    [mutate],
+  );
+  const editCourse = useCallback((c: Course) => mutate((prev) => updateCourse(prev, c)), [mutate]);
+  const removeCourse = useCallback((id: string) => mutate((prev) => deleteCourse(prev, id)), [mutate]);
+  const duplicateCourse = useCallback((id: string) => mutate((prev) => dupCourseFn(prev, id)), [mutate]);
 
-  const removeBatch = useCallback((key: string) => {
-    setContent(prev => {
-      if (!prev) return prev;
-      const newBatches = { ...prev.batches };
-      delete newBatches[key];
-      return { ...prev, batches: newBatches };
-    });
-    setIsDirty(true);
-  }, []);
+  // Modules
+  const createModule = useCallback(
+    (moduleData: Omit<Module, 'id' | 'items'>): string => {
+      const id = generateId('module');
+      const module: Module = { ...moduleData, id, items: [] };
+      mutate((prev) => addModule(prev, module));
+      return id;
+    },
+    [mutate],
+  );
+  const editModule = useCallback((m: Module) => mutate((prev) => updateModule(prev, m)), [mutate]);
+  const removeModule = useCallback((id: string) => mutate((prev) => deleteModule(prev, id)), [mutate]);
+  const duplicateModule = useCallback((id: string) => mutate((prev) => dupModuleFn(prev, id)), [mutate]);
 
-  // Draft operations
+  // Items
+  const createItem = useCallback(
+    (itemData: Omit<ContentItem, 'id'>): string => {
+      const id = generateId('item');
+      const item: ContentItem = { ...itemData, id };
+      mutate((prev) => addItem(prev, item));
+      return id;
+    },
+    [mutate],
+  );
+  const editItem = useCallback((it: ContentItem) => mutate((prev) => updateItem(prev, it)), [mutate]);
+  const removeItem = useCallback((id: string) => mutate((prev) => deleteItem(prev, id)), [mutate]);
+  const duplicateItem = useCallback((id: string) => mutate((prev) => dupItemFn(prev, id)), [mutate]);
+  const moveItem = useCallback(
+    (id: string, target: string) => mutate((prev) => moveItemFn(prev, id, target)),
+    [mutate],
+  );
+
+  // Reorder
+  const reorderModules = useCallback(
+    (courseId: string, fromIndex: number, toIndex: number) =>
+      mutate((prev) => reorderModulesInCourse(prev, courseId, fromIndex, toIndex)),
+    [mutate],
+  );
+  const reorderItems = useCallback(
+    (moduleId: string, fromIndex: number, toIndex: number) =>
+      mutate((prev) => reorderItemsInModule(prev, moduleId, fromIndex, toIndex)),
+    [mutate],
+  );
+
+  // Batches
+  const createBatch = useCallback(
+    (key: string, batch: Batch) => mutate((prev) => ({ ...prev, batches: { ...prev.batches, [key]: batch } })),
+    [mutate],
+  );
+  const editBatch = useCallback(
+    (key: string, batch: Batch) => mutate((prev) => ({ ...prev, batches: { ...prev.batches, [key]: batch } })),
+    [mutate],
+  );
+  const removeBatch = useCallback(
+    (key: string) =>
+      mutate((prev) => {
+        const next = { ...prev.batches };
+        delete next[key];
+        return { ...prev, batches: next };
+      }),
+    [mutate],
+  );
+
+  // Draft
   const saveChanges = useCallback(() => {
     if (content) {
       saveDraft(content);
       setLastSaved(new Date());
+      setDraftSizeKB(getDraftSizeKB());
       setIsDirty(false);
     }
   }, [content]);
@@ -201,35 +223,84 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const exportContent = useCallback(() => {
-    if (content) {
-      exportDraftAsJson(content);
-    }
+    if (content) exportDraftAsJson(content);
   }, [content]);
+
+  const importContent = useCallback((data: ContentData) => mutate(() => data), [mutate]);
 
   const resetToProduction = useCallback(async () => {
     clearDraft();
-    const prodContent = await loadContent();
-    setContent(prodContent);
+    const prod = await loadContent();
+    past.current = [];
+    future.current = [];
+    skipHistory.current = true;
+    setContent(prod);
+    setProductionContent(prod);
     setIsDirty(false);
     setLastSaved(null);
+    setHistoryTick((t) => t + 1);
   }, []);
+
+  const undo = useCallback(() => {
+    if (past.current.length === 0) return;
+    setContent((prev) => {
+      if (!prev) return prev;
+      const previous = past.current.pop()!;
+      future.current.push(prev);
+      skipHistory.current = true;
+      setHistoryTick((t) => t + 1);
+      return previous;
+    });
+    setIsDirty(true);
+  }, []);
+
+  const redo = useCallback(() => {
+    if (future.current.length === 0) return;
+    setContent((prev) => {
+      if (!prev) return prev;
+      const next = future.current.pop()!;
+      past.current.push(prev);
+      skipHistory.current = true;
+      setHistoryTick((t) => t + 1);
+      return next;
+    });
+    setIsDirty(true);
+  }, []);
+
+  const getSnapshots = useCallback(() => listSnapshots(), []);
+
+  const restoreFromSnapshot = useCallback(
+    (id: string) => {
+      const snap = restoreSnapshot(id);
+      if (snap) mutate(() => snap);
+    },
+    [mutate],
+  );
 
   return (
     <EditorContext.Provider
       value={{
         content,
+        productionContent,
         isLoading,
         isDirty,
         lastSaved,
+        draftSizeKB,
+        canUndo: past.current.length > 0,
+        canRedo: future.current.length > 0,
         createCourse,
         editCourse,
         removeCourse,
+        duplicateCourse,
         createModule,
         editModule,
         removeModule,
+        duplicateModule,
         createItem,
         editItem,
         removeItem,
+        duplicateItem,
+        moveItem,
         reorderModules,
         reorderItems,
         createBatch,
@@ -238,7 +309,12 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
         saveChanges,
         discardChanges,
         exportContent,
+        importContent,
         resetToProduction,
+        undo,
+        redo,
+        getSnapshots,
+        restoreFromSnapshot,
       }}
     >
       {children}
@@ -248,8 +324,6 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
 
 export function useEditor() {
   const context = useContext(EditorContext);
-  if (!context) {
-    throw new Error('useEditor must be used within an EditorProvider');
-  }
+  if (!context) throw new Error('useEditor must be used within an EditorProvider');
   return context;
 }

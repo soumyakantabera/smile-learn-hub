@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -24,6 +24,9 @@ import {
   AccordionDetails,
   Grid,
   Divider,
+  Checkbox,
+  Tooltip,
+  Stack,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -41,10 +44,17 @@ import {
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
   DragIndicator as DragIcon,
+  ContentCopy as DuplicateIcon,
+  DriveFileMove as MoveIcon,
 } from '@mui/icons-material';
+import { toast } from 'sonner';
 import { useEditor } from '@/contexts/EditorContext';
 import type { ContentItem, ItemType, QuizQuestion } from '@/types/content';
 import { QuizEditor } from './QuizEditor';
+import { ConfirmDialog } from './ConfirmDialog';
+import { EmptyState } from './EmptyState';
+import { TagAutocomplete } from './TagAutocomplete';
+import { getAllItemTags } from '@/lib/editorStorage';
 
 const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = [
   { value: 'pdf', label: 'PDF Document', icon: <PdfIcon /> },
@@ -81,7 +91,7 @@ interface ItemFormData {
   embedUrl: string;
   instructions: string;
   dueDate: string;
-  tags: string;
+  tags: string[];
   audioDuration: string;
   quizQuestions: QuizQuestion[];
 }
@@ -95,21 +105,28 @@ const defaultFormData: ItemFormData = {
   embedUrl: '',
   instructions: '',
   dueDate: '',
-  tags: '',
+  tags: [],
   audioDuration: '',
   quizQuestions: [],
 };
 
 export function ItemEditor() {
-  const { content, createItem, editItem, removeItem, reorderItems } = useEditor();
+  const { content, createItem, editItem, removeItem, duplicateItem, moveItem, reorderItems } = useEditor();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [formData, setFormData] = useState<ItemFormData>(defaultFormData);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [moveTarget, setMoveTarget] = useState('');
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const dragItem = useRef<{ moduleId: string; index: number } | null>(null);
   const dragOverItem = useRef<{ moduleId: string; index: number } | null>(null);
 
-  if (!content) return null;
+  const allTags = useMemo(() => (content ? getAllItemTags(content) : []), [content]);
+  const allModules = useMemo(() => (content ? Object.values(content.modules) : []), [content]);
 
+  if (!content) return null;
   const courses = Object.values(content.courses);
 
   const handleOpenCreate = (moduleId?: string) => {
@@ -129,7 +146,7 @@ export function ItemEditor() {
       embedUrl: item.embedUrl || '',
       instructions: item.instructions || '',
       dueDate: item.dueDate || '',
-      tags: item.tags.join(', '),
+      tags: item.tags || [],
       audioDuration: item.audioDuration || '',
       quizQuestions: item.quizQuestions || [],
     });
@@ -147,23 +164,45 @@ export function ItemEditor() {
       embedUrl: formData.embedUrl || undefined,
       instructions: formData.instructions || undefined,
       dueDate: formData.dueDate || undefined,
-      tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      tags: formData.tags,
       publishedAt: editingItem?.publishedAt || new Date().toISOString(),
       audioDuration: formData.audioDuration || undefined,
       quizQuestions: formData.type === 'quiz' ? formData.quizQuestions : undefined,
     };
     if (editingItem) {
       editItem({ ...itemData, id: editingItem.id });
+      toast.success('Item updated');
     } else {
       createItem(itemData);
+      toast.success('Item created');
     }
     setDialogOpen(false);
   };
 
-  const handleDelete = (itemId: string) => {
-    if (window.confirm('Delete this item?')) {
-      removeItem(itemId);
-    }
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    const count = selected.size;
+    selected.forEach((id) => removeItem(id));
+    toast.success(`${count} item${count !== 1 ? 's' : ''} deleted`);
+    setSelected(new Set());
+  };
+
+  const handleBulkMove = () => {
+    if (!moveTarget) return;
+    const count = selected.size;
+    selected.forEach((id) => moveItem(id, moveTarget));
+    toast.success(`${count} item${count !== 1 ? 's' : ''} moved`);
+    setSelected(new Set());
+    setMoveDialogOpen(false);
+    setMoveTarget('');
   };
 
   const getModuleItems = (moduleId: string) => {
@@ -175,11 +214,9 @@ export function ItemEditor() {
   const handleDragStart = (moduleId: string, index: number) => {
     dragItem.current = { moduleId, index };
   };
-
   const handleDragEnter = (moduleId: string, index: number) => {
     dragOverItem.current = { moduleId, index };
   };
-
   const handleDragEnd = () => {
     if (
       dragItem.current &&
@@ -195,22 +232,52 @@ export function ItemEditor() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
         <Typography variant="h6">Content Items</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenCreate()}>
-          Add Item
-        </Button>
+        <Stack direction="row" spacing={1}>
+          {selected.size > 0 && (
+            <>
+              <Chip
+                label={`${selected.size} selected`}
+                color="primary"
+                onDelete={() => setSelected(new Set())}
+              />
+              <Button size="small" startIcon={<MoveIcon />} onClick={() => setMoveDialogOpen(true)}>
+                Move
+              </Button>
+              <Button
+                size="small"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => setBulkDeleteConfirm(true)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenCreate()}>
+            Add Item
+          </Button>
+        </Stack>
       </Box>
 
       {courses.length === 0 ? (
-        <Typography color="text.secondary">Create a course and module first.</Typography>
+        <EmptyState title="No courses yet" description="Create a course and module first to add content items." />
       ) : (
         courses.map((course) => {
           const courseModules = course.modules
             .map((id) => content.modules[id])
             .filter(Boolean)
             .sort((a, b) => a.order - b.order);
-
           return (
             <Accordion key={course.id} sx={{ mb: 2 }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -224,18 +291,17 @@ export function ItemEditor() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <Chip label={`M${module.order}`} size="small" color="primary" />
                         <Typography fontWeight={500}>{module.title}</Typography>
-                        <Typography variant="caption" color="text.secondary">• Drag to reorder</Typography>
-                        <Button
-                          size="small"
-                          startIcon={<AddIcon />}
-                          onClick={() => handleOpenCreate(module.id)}
-                        >
+                        <Typography variant="caption" color="text.secondary">
+                          • Drag to reorder
+                        </Typography>
+                        <Button size="small" startIcon={<AddIcon />} onClick={() => handleOpenCreate(module.id)}>
                           Add Item
                         </Button>
                       </Box>
                       <List dense disablePadding sx={{ pl: 2 }}>
                         {items.map((item, index) => {
                           const typeInfo = ITEM_TYPES.find((t) => t.value === item.type);
+                          const isSelected = selected.has(item.id);
                           return (
                             <ListItem
                               key={item.id}
@@ -251,28 +317,60 @@ export function ItemEditor() {
                                 '&:active': { cursor: 'grabbing' },
                                 '&[draggable]:hover': { bgcolor: 'action.hover' },
                                 transition: 'background-color 0.15s',
+                                bgcolor: isSelected ? 'action.selected' : undefined,
                               }}
                             >
-                              <DragIcon sx={{ mr: 1, color: 'text.disabled', flexShrink: 0 }} />
+                              <Checkbox
+                                size="small"
+                                checked={isSelected}
+                                onChange={() => toggleSelect(item.id)}
+                                inputProps={{ 'aria-label': `Select ${item.title}` }}
+                                sx={{ mr: 0.5 }}
+                              />
+                              <DragIcon
+                                sx={{ mr: 1, color: 'text.disabled', flexShrink: 0 }}
+                                aria-label="Drag handle"
+                              />
                               <ListItemIcon sx={{ minWidth: 36, color: typeColors[item.type] }}>
                                 {typeInfo?.icon}
                               </ListItemIcon>
                               <ListItemText
                                 primary={item.title}
                                 secondary={
-                                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                                  <Box
+                                    component="span"
+                                    sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}
+                                  >
                                     <Chip label={typeInfo?.label} size="small" variant="outlined" />
                                     {item.tags.slice(0, 2).map((tag) => (
                                       <Chip key={tag} label={tag} size="small" />
                                     ))}
                                   </Box>
                                 }
+                                secondaryTypographyProps={{ component: 'div' }}
                               />
                               <ListItemSecondaryAction>
-                                <IconButton size="small" onClick={() => handleOpenEdit(item)}>
+                                <Tooltip title="Duplicate">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                      duplicateItem(item.id);
+                                      toast.success('Item duplicated');
+                                    }}
+                                    aria-label="Duplicate item"
+                                  >
+                                    <DuplicateIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <IconButton size="small" onClick={() => handleOpenEdit(item)} aria-label="Edit item">
                                   <EditIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => setConfirmDelete(item.id)}
+                                  aria-label="Delete item"
+                                >
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </ListItemSecondaryAction>
@@ -317,7 +415,7 @@ export function ItemEditor() {
                           <MenuItem key={module.id} value={module.id}>
                             {course.title} → {module.title}
                           </MenuItem>
-                        ))
+                        )),
                     )}
                   </Select>
                 </FormControl>
@@ -349,7 +447,6 @@ export function ItemEditor() {
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               fullWidth
               required
-              placeholder="e.g., Lesson 1: Greetings"
             />
             <TextField
               label="Description"
@@ -360,9 +457,7 @@ export function ItemEditor() {
               rows={2}
             />
 
-            {(formData.type === 'pdf' || formData.type === 'video' || formData.type === 'doc' ||
-              formData.type === 'ppt' || formData.type === 'spreadsheet' || formData.type === 'link' ||
-              formData.type === 'audio') && (
+            {(['pdf', 'video', 'doc', 'ppt', 'spreadsheet', 'link', 'audio'] as ItemType[]).includes(formData.type) && (
               <TextField
                 label="Resource URL"
                 value={formData.url}
@@ -373,14 +468,43 @@ export function ItemEditor() {
             )}
 
             {formData.type === 'youtube' && (
-              <TextField
-                label="YouTube/Vimeo Embed URL"
-                value={formData.embedUrl}
-                onChange={(e) => setFormData({ ...formData, embedUrl: e.target.value })}
-                fullWidth
-                placeholder="https://www.youtube.com/embed/VIDEO_ID"
-                helperText="Use the embed URL format: youtube.com/embed/ID or player.vimeo.com/video/ID"
-              />
+              <>
+                <TextField
+                  label="YouTube/Vimeo Embed URL"
+                  value={formData.embedUrl}
+                  onChange={(e) => setFormData({ ...formData, embedUrl: e.target.value })}
+                  fullWidth
+                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                  helperText="Use the embed URL format: youtube.com/embed/ID or player.vimeo.com/video/ID"
+                />
+                {formData.embedUrl && (
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      pb: '56.25%',
+                      height: 0,
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      border: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <iframe
+                      src={formData.embedUrl}
+                      title="Preview"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </Box>
+                )}
+              </>
+            )}
+
+            {formData.type === 'pdf' && formData.url && (
+              <Box sx={{ height: 300, border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+                <iframe src={formData.url} title="PDF preview" style={{ width: '100%', height: '100%', border: 0 }} />
+              </Box>
             )}
 
             {formData.type === 'audio' && (
@@ -402,7 +526,6 @@ export function ItemEditor() {
                   fullWidth
                   multiline
                   rows={4}
-                  placeholder="Assignment instructions..."
                 />
                 <TextField
                   label="Due Date"
@@ -418,7 +541,9 @@ export function ItemEditor() {
             {formData.type === 'quiz' && (
               <>
                 <Divider sx={{ my: 1 }} />
-                <Typography variant="subtitle1" fontWeight={600}>Quiz Questions</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Quiz Questions
+                </Typography>
                 <QuizEditor
                   questions={formData.quizQuestions}
                   onChange={(questions) => setFormData({ ...formData, quizQuestions: questions })}
@@ -426,12 +551,10 @@ export function ItemEditor() {
               </>
             )}
 
-            <TextField
-              label="Tags (comma-separated)"
+            <TagAutocomplete
               value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              fullWidth
-              placeholder="e.g., grammar, vocabulary, beginner"
+              options={allTags}
+              onChange={(tags) => setFormData({ ...formData, tags })}
             />
           </Box>
         </DialogContent>
@@ -446,6 +569,59 @@ export function ItemEditor() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Bulk move */}
+      <Dialog open={moveDialogOpen} onClose={() => setMoveDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          Move {selected.size} item{selected.size !== 1 ? 's' : ''}
+        </DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={{ mt: 1 }}>
+            <InputLabel>Target module</InputLabel>
+            <Select value={moveTarget} label="Target module" onChange={(e) => setMoveTarget(e.target.value)}>
+              {allModules.map((m) => {
+                const c = content.courses[m.courseId];
+                return (
+                  <MenuItem key={m.id} value={m.id}>
+                    {c?.title || '—'} → {m.title}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMoveDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" disabled={!moveTarget} onClick={handleBulkMove}>
+            Move
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete item?"
+        message="This will permanently remove the content item. You can undo with Ctrl+Z."
+        destructive
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (confirmDelete) {
+            removeItem(confirmDelete);
+            toast.success('Item deleted');
+          }
+        }}
+        onClose={() => setConfirmDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteConfirm}
+        title={`Delete ${selected.size} items?`}
+        message="This will permanently remove all selected content items."
+        destructive
+        confirmLabel="Delete all"
+        onConfirm={handleBulkDelete}
+        onClose={() => setBulkDeleteConfirm(false)}
+      />
     </Box>
   );
 }
