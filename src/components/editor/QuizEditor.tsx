@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -17,8 +17,11 @@ import {
   Delete as DeleteIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  DragIndicator as DragIcon,
+  PlayArrow as PlayIcon,
 } from '@mui/icons-material';
 import type { QuizQuestion } from '@/types/content';
+import { QuizPreviewDialog } from './QuizPreviewDialog';
 
 interface QuizEditorProps {
   questions: QuizQuestion[];
@@ -27,6 +30,9 @@ interface QuizEditorProps {
 
 export function QuizEditor({ questions, onChange }: QuizEditorProps) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const dragFrom = useRef<number | null>(null);
+  const dragOver = useRef<number | null>(null);
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
@@ -57,22 +63,63 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
     if (expandedIndex === index) setExpandedIndex(null);
   };
 
+  const handleDragEnd = () => {
+    if (
+      dragFrom.current !== null &&
+      dragOver.current !== null &&
+      dragFrom.current !== dragOver.current
+    ) {
+      const next = [...questions];
+      const [moved] = next.splice(dragFrom.current, 1);
+      next.splice(dragOver.current, 0, moved);
+      onChange(next);
+    }
+    dragFrom.current = null;
+    dragOver.current = null;
+  };
+
   return (
     <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Button
+          size="small"
+          startIcon={<PlayIcon />}
+          onClick={() => setPreviewOpen(true)}
+          disabled={questions.length === 0}
+        >
+          Take Quiz Preview
+        </Button>
+      </Box>
+
       {questions.map((q, qIndex) => (
-        <Card key={q.id} sx={{ mb: 2 }}>
+        <Card
+          key={q.id}
+          sx={{ mb: 2, cursor: 'grab', '&:active': { cursor: 'grabbing' } }}
+          draggable
+          onDragStart={() => (dragFrom.current = qIndex)}
+          onDragEnter={() => (dragOver.current = qIndex)}
+          onDragEnd={handleDragEnd}
+          onDragOver={(e) => e.preventDefault()}
+        >
           <CardContent sx={{ pb: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DragIcon sx={{ color: 'text.disabled' }} aria-label="Drag to reorder" />
               <Typography variant="subtitle2" sx={{ flex: 1 }}>
                 Q{qIndex + 1}: {q.question || '(untitled)'}
               </Typography>
               <IconButton
                 size="small"
                 onClick={() => setExpandedIndex(expandedIndex === qIndex ? null : qIndex)}
+                aria-label={expandedIndex === qIndex ? 'Collapse question' : 'Expand question'}
               >
                 {expandedIndex === qIndex ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               </IconButton>
-              <IconButton size="small" color="error" onClick={() => removeQuestion(qIndex)}>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => removeQuestion(qIndex)}
+                aria-label="Delete question"
+              >
                 <DeleteIcon />
               </IconButton>
             </Box>
@@ -96,12 +143,7 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
                 >
                   {q.options.map((opt, optIndex) => (
                     <Box key={optIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <FormControlLabel
-                        value={optIndex}
-                        control={<Radio size="small" />}
-                        label=""
-                        sx={{ mr: 0 }}
-                      />
+                      <FormControlLabel value={optIndex} control={<Radio size="small" />} label="" sx={{ mr: 0 }} />
                       <TextField
                         size="small"
                         value={opt}
@@ -142,6 +184,8 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
           No questions added yet. Click "Add Question" to create quiz questions.
         </Typography>
       )}
+
+      <QuizPreviewDialog open={previewOpen} onClose={() => setPreviewOpen(false)} questions={questions} />
     </Box>
   );
 }

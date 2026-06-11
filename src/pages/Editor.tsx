@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
   Box,
@@ -9,15 +9,22 @@ import {
   Tabs,
   Tab,
   Alert,
-  Snackbar,
   CircularProgress,
   Chip,
   Tooltip,
   IconButton,
+  Breadcrumbs,
+  Link as MuiLink,
+  Menu,
+  MenuItem,
+  Divider,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Download as DownloadIcon,
+  Upload as UploadIcon,
   Refresh as RefreshIcon,
   Dashboard as DashboardIcon,
   School as SchoolIcon,
@@ -26,7 +33,14 @@ import {
   Group as GroupIcon,
   Visibility as PreviewIcon,
   Warning as WarningIcon,
+  Undo as UndoIcon,
+  Redo as RedoIcon,
+  CloudUpload as PublishIcon,
+  History as HistoryIcon,
+  Keyboard as KeyboardIcon,
+  Storage as StorageIcon,
 } from '@mui/icons-material';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { EditorProvider, useEditor } from '@/contexts/EditorContext';
 import { AppLayout } from '@/components/AppLayout';
@@ -36,6 +50,9 @@ import { ModuleEditor } from '@/components/editor/ModuleEditor';
 import { ItemEditor } from '@/components/editor/ItemEditor';
 import { BatchEditor } from '@/components/editor/BatchEditor';
 import { ContentPreview } from '@/components/editor/ContentPreview';
+import { ConfirmDialog } from '@/components/editor/ConfirmDialog';
+import { PublishWizard } from '@/components/editor/PublishWizard';
+import { importDraftFromFile } from '@/lib/editorStorage';
 
 const TABS = [
   { label: 'Dashboard', icon: <DashboardIcon fontSize="small" /> },
@@ -53,26 +70,62 @@ function EditorContent() {
     isLoading,
     isDirty,
     lastSaved,
+    draftSizeKB,
+    canUndo,
+    canRedo,
     saveChanges,
     exportContent,
+    importContent,
     resetToProduction,
+    undo,
+    redo,
+    getSnapshots,
+    restoreFromSnapshot,
   } = useEditor();
 
   const [tabIndex, setTabIndex] = useState(0);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' }>({
-    open: false,
-    message: '',
-    severity: 'info',
-  });
+  const [resetConfirm, setResetConfirm] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [snapAnchor, setSnapAnchor] = useState<null | HTMLElement>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!session?.isAdmin) {
-    return <Navigate to="/" replace />;
-  }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === 's') {
+        e.preventDefault();
+        saveChanges();
+        toast.success('Draft saved');
+      } else if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [saveChanges, undo, redo]);
+
+  if (!session?.isAdmin) return <Navigate to="/" replace />;
 
   if (isLoading) {
     return (
       <AppLayout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, flexDirection: 'column', gap: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            py: 8,
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
           <CircularProgress />
           <Typography color="text.secondary">Loading editor...</Typography>
         </Box>
@@ -90,26 +143,51 @@ function EditorContent() {
 
   const handleSave = () => {
     saveChanges();
-    setSnackbar({ open: true, message: 'Draft saved to local storage!', severity: 'success' });
+    toast.success('Draft saved to local storage');
   };
 
   const handleExport = () => {
     exportContent();
-    setSnackbar({ open: true, message: 'Content exported as JSON!', severity: 'success' });
+    toast.success('Content exported as JSON');
   };
 
-  const handleReset = async () => {
-    if (window.confirm('This will discard all draft changes and reload from production. Continue?')) {
-      await resetToProduction();
-      setSnackbar({ open: true, message: 'Reset to production content.', severity: 'info' });
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = await importDraftFromFile(file);
+      importContent(data);
+      toast.success('Content imported successfully');
+    } catch (err) {
+      toast.error(`Import failed: ${(err as Error).message}`);
+    } finally {
+      e.target.value = '';
     }
   };
 
+  const snapshots = getSnapshots();
+
   return (
     <AppLayout>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ mb: 2 }}>
+        <Breadcrumbs sx={{ mb: 1 }}>
+          <MuiLink underline="hover" color="inherit" href="/">
+            Home
+          </MuiLink>
+          <Typography color="text.primary">Editor</Typography>
+          <Typography color="text.primary">{TABS[tabIndex].label}</Typography>
+        </Breadcrumbs>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
           <Box>
             <Typography variant="h4" fontWeight={800}>
               LMS Editor
@@ -119,33 +197,89 @@ function EditorContent() {
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            {isDirty && (
-              <Chip
-                icon={<WarningIcon />}
-                label="Unsaved changes"
-                size="small"
-                color="warning"
-                variant="filled"
-              />
-            )}
-            {lastSaved && !isDirty && (
+            {isDirty ? (
+              <Chip icon={<WarningIcon />} label="Unsaved changes" size="small" color="warning" />
+            ) : lastSaved ? (
               <Chip
                 label={`Saved ${new Date(lastSaved).toLocaleTimeString()}`}
                 size="small"
                 color="success"
                 variant="outlined"
               />
+            ) : null}
+            {draftSizeKB > 0 && (
+              <Tooltip title="Draft size in localStorage">
+                <Chip icon={<StorageIcon />} label={`${draftSizeKB} KB`} size="small" variant="outlined" />
+              </Tooltip>
             )}
-            <Tooltip title="Discard draft and reload production data">
-              <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleReset} size="small">
-                Reset
+            <Tooltip title="Undo (Ctrl+Z)">
+              <span>
+                <IconButton size="small" onClick={undo} disabled={!canUndo} aria-label="Undo">
+                  <UndoIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Redo (Ctrl+Shift+Z)">
+              <span>
+                <IconButton size="small" onClick={redo} disabled={!canRedo} aria-label="Redo">
+                  <RedoIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Restore from snapshot">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setSnapAnchor(e.currentTarget)}
+                  disabled={snapshots.length === 0}
+                  aria-label="Snapshots"
+                >
+                  <HistoryIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Keyboard shortcuts">
+              <IconButton size="small" onClick={() => setShortcutsOpen(true)} aria-label="Keyboard shortcuts">
+                <KeyboardIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Import JSON">
+              <Button variant="outlined" startIcon={<UploadIcon />} onClick={handleImportClick} size="small">
+                Import
               </Button>
             </Tooltip>
-            <Tooltip title="Download content as JSON file">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json"
+              hidden
+              onChange={handleImportFile}
+            />
+            <Tooltip title="Download as JSON">
               <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleExport} size="small">
                 Export
               </Button>
             </Tooltip>
+            <Tooltip title="Discard draft and reload production">
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={() => setResetConfirm(true)}
+                size="small"
+                color="warning"
+              >
+                Reset
+              </Button>
+            </Tooltip>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<PublishIcon />}
+              onClick={() => setPublishOpen(true)}
+              size="small"
+            >
+              Publish
+            </Button>
             <Button
               variant="contained"
               startIcon={<SaveIcon />}
@@ -159,7 +293,33 @@ function EditorContent() {
         </Box>
       </Box>
 
-      {/* Editor Tabs */}
+      <Menu anchorEl={snapAnchor} open={!!snapAnchor} onClose={() => setSnapAnchor(null)}>
+        <MenuItem disabled>
+          <Typography variant="caption">Recent snapshots</Typography>
+        </MenuItem>
+        <Divider />
+        {snapshots.length === 0 && (
+          <MenuItem disabled>
+            <Typography variant="body2">No snapshots yet</Typography>
+          </MenuItem>
+        )}
+        {snapshots.map((s) => (
+          <MenuItem
+            key={s.id}
+            onClick={() => {
+              restoreFromSnapshot(s.id);
+              toast.success('Snapshot restored');
+              setSnapAnchor(null);
+            }}
+          >
+            <ListItemIcon>
+              <HistoryIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary={new Date(s.takenAt).toLocaleString()} secondary={`${s.sizeKB} KB`} />
+          </MenuItem>
+        ))}
+      </Menu>
+
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
@@ -169,7 +329,7 @@ function EditorContent() {
             scrollButtons="auto"
             allowScrollButtonsMobile
           >
-            {TABS.map((tab, i) => (
+            {TABS.map((tab) => (
               <Tab
                 key={tab.label}
                 label={tab.label}
@@ -190,12 +350,28 @@ function EditorContent() {
         </CardContent>
       </Card>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-        message={snackbar.message}
+      <ConfirmDialog
+        open={resetConfirm}
+        title="Reset to production?"
+        message="This will discard all unsaved draft changes and reload from the published content. This cannot be undone."
+        destructive
+        confirmLabel="Reset"
+        onConfirm={async () => {
+          await resetToProduction();
+          toast.info('Reset to production content');
+        }}
+        onClose={() => setResetConfirm(false)}
+      />
+
+      <PublishWizard open={publishOpen} onClose={() => setPublishOpen(false)} />
+
+      <ConfirmDialog
+        open={shortcutsOpen}
+        title="Keyboard shortcuts"
+        message="Ctrl/Cmd+S — Save draft   •   Ctrl/Cmd+Z — Undo   •   Ctrl/Cmd+Shift+Z or Ctrl+Y — Redo"
+        confirmLabel="Got it"
+        onConfirm={() => {}}
+        onClose={() => setShortcutsOpen(false)}
       />
     </AppLayout>
   );
