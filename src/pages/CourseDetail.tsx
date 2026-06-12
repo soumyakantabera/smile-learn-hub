@@ -39,8 +39,10 @@ import {
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getCourse, getCourseModules, getModuleItems } from '@/lib/content';
+import { buildCourseSequence, getLastVisitedItem } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
 import type { ItemType } from '@/types/content';
+import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 
 const typeIcons: Record<ItemType, React.ReactNode> = {
   pdf: <PdfIcon />,
@@ -104,6 +106,10 @@ export default function CourseDetailPage() {
   }
 
   const modules = getCourseModules(content, courseId);
+  const sequence = buildCourseSequence(content, courseId);
+  const lastVisited = getLastVisitedItem(courseId);
+  const resumeId = lastVisited && content.items[lastVisited] ? lastVisited : sequence[0]?.item.id;
+  const hasResume = !!lastVisited && !!content.items[lastVisited];
 
   return (
     <AppLayout>
