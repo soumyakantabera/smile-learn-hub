@@ -96,9 +96,41 @@ export default function ViewerPage() {
   const { content, isLoading, error } = useContent();
   const { session } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [studentName, setStudentName] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [outlineOpen, setOutlineOpen] = useState(false);
+
+  // Compute navigation context
+  const adj = content && itemId ? getAdjacentItems(content, itemId) : null;
+
+  // Remember last visited
+  useEffect(() => {
+    if (adj?.course && itemId) {
+      rememberVisitedItem(adj.course.id, itemId);
+    }
+  }, [adj?.course?.id, itemId]);
+
+  // Keyboard shortcuts (left/right arrows)
+  useEffect(() => {
+    if (!adj) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if ((e.key === 'ArrowRight' || e.key === 'j') && adj.next) {
+        navigate(`/view/${adj.next.item.id}`);
+      } else if ((e.key === 'ArrowLeft' || e.key === 'k') && adj.prev) {
+        navigate(`/view/${adj.prev.item.id}`);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [adj, navigate]);
+
+
 
   if (isLoading) {
     return (
