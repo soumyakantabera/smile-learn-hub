@@ -167,7 +167,22 @@ export default function CourseDetailPage() {
               <Typography variant="body2">{course.duration}</Typography>
             </Box>
             <Chip label={`${modules.length} Modules`} size="small" color="primary" variant="outlined" />
+            <Chip label={`${sequence.length} Items`} size="small" variant="outlined" />
           </Box>
+          {resumeId && (
+            <Box sx={{ mt: 3 }}>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<PlayArrowIcon />}
+                component={Link}
+                to={`/view/${resumeId}`}
+                sx={{ textTransform: 'none' }}
+              >
+                {hasResume ? 'Resume course' : 'Start course'}
+              </Button>
+            </Box>
+          )}
         </CardContent>
       </Card>
 
