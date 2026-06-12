@@ -492,6 +492,45 @@ export default function ViewerPage() {
         </Typography>
       </Breadcrumbs>
 
+      {/* Position toolbar */}
+      {adj?.current && adj.sequence.length > 0 && (
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1 }}>
+            <Button
+              size="small"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => module && navigate(`/modules/${module.id}?from=${item.id}`)}
+              sx={{ textTransform: 'none' }}
+            >
+              Module
+            </Button>
+            <Chip
+              size="small"
+              label={`Item ${adj.current.indexInCourse + 1} of ${adj.sequence.length}`}
+              color="primary"
+              variant="outlined"
+            />
+            <Box sx={{ flex: 1 }} />
+            <Tooltip title="Course outline">
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ListAltIcon />}
+                onClick={() => setOutlineOpen(true)}
+                sx={{ textTransform: 'none' }}
+              >
+                Outline
+              </Button>
+            </Tooltip>
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={((adj.current.indexInCourse + 1) / adj.sequence.length) * 100}
+            sx={{ height: 4, borderRadius: 2 }}
+          />
+        </Box>
+      )}
+
       {/* Item Header */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
@@ -505,11 +544,12 @@ export default function ViewerPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             {typeIcons[item.type]}
           </Box>
-          <Typography variant="h4" fontWeight={700}>
+          <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={700} sx={{ wordBreak: 'break-word' }}>
             {item.title}
           </Typography>
         </Box>
@@ -534,6 +574,27 @@ export default function ViewerPage() {
 
       {/* Content Viewer */}
       {renderViewer()}
+
+      {/* Prev / Next navigation */}
+      {adj && adj.course && (
+        <>
+          <ItemNavBar prev={adj.prev} next={adj.next} courseId={adj.course.id} />
+          {/* Spacer so fixed bar on mobile doesn't overlap page bottom */}
+          {isMobile && <Box sx={{ height: 96 }} />}
+        </>
+      )}
+
+      {/* Module outline drawer */}
+      {adj && (
+        <ModuleOutlineDrawer
+          open={outlineOpen}
+          onClose={() => setOutlineOpen(false)}
+          sequence={adj.sequence}
+          currentItemId={item.id}
+          courseTitle={adj.course?.title}
+        />
+      )}
+
 
       {/* Snackbar */}
       <Snackbar
