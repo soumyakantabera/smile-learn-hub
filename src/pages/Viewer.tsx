@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,6 +14,10 @@ import {
   TextField,
   Snackbar,
   IconButton,
+  LinearProgress,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   NavigateNext as NavigateNextIcon,
@@ -35,11 +39,15 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  ListAlt as ListAltIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getItem, getModule, getCourse } from '@/lib/content';
+import { getAdjacentItems, rememberVisitedItem } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
+import { ItemNavBar } from '@/components/viewer/ItemNavBar';
+import { ModuleOutlineDrawer } from '@/components/viewer/ModuleOutlineDrawer';
 import { appConfig } from '@/config/app.config';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
 import type { ItemType } from '@/types/content';
