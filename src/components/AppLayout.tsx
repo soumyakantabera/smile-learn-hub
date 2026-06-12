@@ -34,6 +34,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { appConfig } from '@/config/app.config';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 
 const DRAWER_WIDTH = 260;
 
