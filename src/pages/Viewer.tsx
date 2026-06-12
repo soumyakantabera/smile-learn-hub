@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,6 +14,10 @@ import {
   TextField,
   Snackbar,
   IconButton,
+  LinearProgress,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   NavigateNext as NavigateNextIcon,
@@ -35,11 +39,15 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  ListAlt as ListAltIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getItem, getModule, getCourse } from '@/lib/content';
+import { getAdjacentItems, rememberVisitedItem } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
+import { ItemNavBar } from '@/components/viewer/ItemNavBar';
+import { ModuleOutlineDrawer } from '@/components/viewer/ModuleOutlineDrawer';
 import { appConfig } from '@/config/app.config';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
 import type { ItemType } from '@/types/content';
@@ -88,9 +96,41 @@ export default function ViewerPage() {
   const { content, isLoading, error } = useContent();
   const { session } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [studentName, setStudentName] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [outlineOpen, setOutlineOpen] = useState(false);
+
+  // Compute navigation context
+  const adj = content && itemId ? getAdjacentItems(content, itemId) : null;
+
+  // Remember last visited
+  useEffect(() => {
+    if (adj?.course && itemId) {
+      rememberVisitedItem(adj.course.id, itemId);
+    }
+  }, [adj?.course?.id, itemId]);
+
+  // Keyboard shortcuts (left/right arrows)
+  useEffect(() => {
+    if (!adj) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if ((e.key === 'ArrowRight' || e.key === 'j') && adj.next) {
+        navigate(`/view/${adj.next.item.id}`);
+      } else if ((e.key === 'ArrowLeft' || e.key === 'k') && adj.prev) {
+        navigate(`/view/${adj.prev.item.id}`);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [adj, navigate]);
+
+
 
   if (isLoading) {
     return (
@@ -452,6 +492,45 @@ export default function ViewerPage() {
         </Typography>
       </Breadcrumbs>
 
+      {/* Position toolbar */}
+      {adj?.current && adj.sequence.length > 0 && (
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1 }}>
+            <Button
+              size="small"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => module && navigate(`/modules/${module.id}?from=${item.id}`)}
+              sx={{ textTransform: 'none' }}
+            >
+              Module
+            </Button>
+            <Chip
+              size="small"
+              label={`Item ${adj.current.indexInCourse + 1} of ${adj.sequence.length}`}
+              color="primary"
+              variant="outlined"
+            />
+            <Box sx={{ flex: 1 }} />
+            <Tooltip title="Course outline">
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ListAltIcon />}
+                onClick={() => setOutlineOpen(true)}
+                sx={{ textTransform: 'none' }}
+              >
+                Outline
+              </Button>
+            </Tooltip>
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={((adj.current.indexInCourse + 1) / adj.sequence.length) * 100}
+            sx={{ height: 4, borderRadius: 2 }}
+          />
+        </Box>
+      )}
+
       {/* Item Header */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
@@ -465,11 +544,12 @@ export default function ViewerPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             {typeIcons[item.type]}
           </Box>
-          <Typography variant="h4" fontWeight={700}>
+          <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={700} sx={{ wordBreak: 'break-word' }}>
             {item.title}
           </Typography>
         </Box>
@@ -494,6 +574,27 @@ export default function ViewerPage() {
 
       {/* Content Viewer */}
       {renderViewer()}
+
+      {/* Prev / Next navigation */}
+      {adj && adj.course && (
+        <>
+          <ItemNavBar prev={adj.prev} next={adj.next} courseId={adj.course.id} />
+          {/* Spacer so fixed bar on mobile doesn't overlap page bottom */}
+          {isMobile && <Box sx={{ height: 96 }} />}
+        </>
+      )}
+
+      {/* Module outline drawer */}
+      {adj && (
+        <ModuleOutlineDrawer
+          open={outlineOpen}
+          onClose={() => setOutlineOpen(false)}
+          sequence={adj.sequence}
+          currentItemId={item.id}
+          courseTitle={adj.course?.title}
+        />
+      )}
+
 
       {/* Snackbar */}
       <Snackbar

@@ -34,6 +34,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { appConfig } from '@/config/app.config';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 
 const DRAWER_WIDTH = 260;
 
@@ -247,8 +248,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         }}
       >
         <Toolbar />
-        <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>
+        <Box sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 12, md: 3 } }}>{children}</Box>
       </Box>
+      <MobileBottomNav />
     </Box>
   );
 }

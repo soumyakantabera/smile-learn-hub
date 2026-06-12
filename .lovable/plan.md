@@ -1,44 +1,80 @@
-# Final LMS Editor Upgrade — Implementation Plan
+# Student Navigation Overhaul
 
-## Phase 1 — Data robustness
-- `src/types/content.ts`: add `CourseStatus = 'draft' | 'published' | 'archived'` and `status?: CourseStatus` on `Course`.
-- `src/lib/editorStorage.ts`: add `duplicateCourse`, `duplicateModule`, `duplicateItem`, `moveItem`, rolling localStorage snapshots (`lws_draft_snapshots`, keep last 5), `getDraftSizeKB`, `importDraftFromFile`, `diffContent` for draft-vs-production diff, and `getAllItemTags` helper.
-- `src/contexts/EditorContext.tsx`: add in-memory undo/redo stack (limit 30), expose `duplicate*`, `moveItem`, `importContent`, `undo/redo`, `canUndo/canRedo`, `draftSizeKB`, `getSnapshots`, `restoreFromSnapshot`, plus `productionContent` for diffing.
+Goal: Let students fluidly move through course content with Previous/Next buttons, in-context module outlines, and a polished navigation experience on both desktop and mobile.
 
-## Phase 2 — Editor shell (`src/pages/Editor.tsx`)
-- Breadcrumb trail (Home › Editor › current tab).
-- Global keyboard shortcuts: Ctrl/Cmd+S (save), Ctrl/Cmd+Z (undo), Ctrl/Cmd+Shift+Z or Ctrl+Y (redo), with a "Keyboard shortcuts" help dialog.
-- Toolbar: Undo/Redo buttons, snapshot menu, Import/Export JSON, Reset (now uses `ConfirmDialog`), Save Draft, **Publish** button.
-- Replace `Snackbar` with `sonner` toasts.
-- Draft size chip in KB.
+---
 
-## Phase 3 — Reusable components (new)
-- `ConfirmDialog.tsx`, `EmptyState.tsx`, `TagAutocomplete.tsx` (MUI Autocomplete freeSolo), `PublishWizard.tsx` (diff summary + download), `QuizPreviewDialog.tsx` (wraps `QuizViewer`).
+## 1. Sequence helper (new) — `src/lib/contentNavigation.ts`
 
-## Phase 4 — Authoring upgrades
-- `QuizEditor.tsx`: drag-and-drop reorder for questions + "Take Quiz Preview" launching `QuizPreviewDialog`.
-- `ItemEditor.tsx`: tag autocomplete, per-row Duplicate button, multi-select checkboxes with bulk **Move** (to another module) and **Delete**, live YouTube embed and PDF iframe preview inside the create/edit dialog, `ConfirmDialog`/`EmptyState`, sonner toasts.
-- `ModuleEditor.tsx`: per-row Duplicate, quick-add inline input under each course, color-coded item-count badge, `ConfirmDialog`, sonner toasts.
-- `CourseEditor.tsx`: per-card Duplicate, status field (`draft`/`published`/`archived`) with badge, search + status filter, live thumbnail preview, `ConfirmDialog`, sonner toasts.
+Single source of truth for "what comes next" so all pages agree.
 
-## Phase 5 — Publishing flow
-- New `PublishWizard.tsx`: shows diff vs production (`coursesAdded/Changed/Removed` etc.), explains "download index.json → replace `public/content/index.json` → commit/deploy", with a one-click Download button.
-- `src/lib/content.ts`: `getBatchCourses` filters non-published courses for student batches (admin batch still sees everything).
+- `buildCourseSequence(content, courseId)` → flat ordered array `[{ item, module, indexInCourse }]` covering every item in every module (modules sorted by `order`, items in stored order).
+- `getAdjacentItems(content, itemId)` → `{ prev, next, current, sequence, course, module }`. Handles cross-module jumps (last item of module N → first item of module N+1) and returns `null` for ends.
+- `getItemPosition(sequence, itemId)` → `{ index, total }` for "12 of 34" labels.
 
-## Phase 6 — Polish & a11y
-- `aria-label` on all icon-only buttons and drag handles.
-- Hover/transition states on course cards; success/warning color cues on empty modules.
+No business-logic changes; pure read helpers using existing `getCourse / getCourseModules / getModuleItems`.
 
-## Files touched
-- Edit: `src/types/content.ts`, `src/lib/editorStorage.ts`, `src/lib/content.ts`, `src/contexts/EditorContext.tsx`, `src/pages/Editor.tsx`, `src/components/editor/CourseEditor.tsx`, `src/components/editor/ModuleEditor.tsx`, `src/components/editor/ItemEditor.tsx`, `src/components/editor/QuizEditor.tsx`.
-- Create: `src/components/editor/ConfirmDialog.tsx`, `EmptyState.tsx`, `TagAutocomplete.tsx`, `PublishWizard.tsx`, `QuizPreviewDialog.tsx`.
+## 2. Viewer page — `src/pages/Viewer.tsx`
 
-## Out of scope
-- Backend persistence / Lovable Cloud (kept on localStorage).
-- Markdown rich text (deferred — `react-markdown` not currently installed).
-- Real-time multi-user editing or student progress tracking.
+Add a sticky/responsive navigation bar both above and below the content:
 
-## Dependencies
-- None added. Uses installed MUI Autocomplete, `sonner`, existing `recharts`.
+- **Top bar (compact):** Back to module button, progress chip `Item 12 / 34`, linear progress bar of position in course.
+- **Bottom bar (primary action):**
+  - Left: `← Previous` button showing prev item title (truncated). Disabled at start.
+  - Right: `Next →` button showing next item title. Disabled at end; when at end show `Finish course` linking back to course page.
+  - Middle (desktop only): "Module: X" chip.
+- Mobile: bottom bar becomes a fixed `Paper` pinned to viewport bottom (`position: fixed`, `bottom: 0`) with safe-area padding, two equal-width buttons, swipeable feel. Add bottom spacing on main content so fixed bar doesn't overlap.
+- Desktop (≥ md): inline (not fixed) below the viewer, full width inside content column.
+- Keyboard shortcuts: `←` / `→` (also `J`/`K`) navigate prev/next when not focused in an input/textarea/contenteditable.
+- "Up to module" link on breadcrumb already exists — also add an `ArrowUpward` button in the top bar that returns to module page on mobile (since breadcrumbs are cramped).
 
-All code for these changes is already drafted and ready to write — approving this plan will apply it in build mode.
+## 3. Module page — `src/pages/ModuleDetail.tsx`
+
+- Add **Previous module / Next module** buttons at the bottom (uses `course.modules` order).
+- Add **"Continue where you left off"** affordance: if the URL has `?from=item-id` (set when leaving Viewer via Back), scroll/highlight that row.
+- Make item rows more tappable on mobile: bigger touch target, secondary line wraps, tag chips hide below `sm`.
+
+## 4. Course page (`src/pages/CourseDetail.tsx`) — light touch only
+
+- Add a "Start course" / "Resume" button that links to the first item of the first module (uses new sequence helper). Keeps existing layout.
+
+## 5. Module outline drawer (new, viewer only)
+
+On Viewer page add a "Module outline" button (icon `ListAlt`):
+- **Desktop (≥ md):** opens a right-side `Drawer` (320 px) listing all items in the current module with the active item highlighted and clickable to jump.
+- **Mobile:** same drawer but `anchor="bottom"` with a 75-vh sheet, swipe-to-close.
+
+This gives students contextual navigation without leaving the viewer.
+
+## 6. App-wide mobile polish — `src/components/AppLayout.tsx`
+
+- Add a **bottom navigation bar on mobile** (`BottomNavigation` from MUI) with Dashboard / Courses / Help (admin sees Editor too via overflow). Visible only `xs..sm`, hidden on `md+`. Sidebar still works via hamburger; bottom nav makes the most common destinations one tap away.
+- Increase main content bottom padding on mobile so it clears the bottom nav and the Viewer's fixed prev/next bar.
+- Keep AppBar title showing current page; on Viewer, replace title with truncated item title for context.
+
+## 7. Files
+
+**New**
+- `src/lib/contentNavigation.ts`
+- `src/components/viewer/ItemNavBar.tsx` (top + bottom bar variants, reused)
+- `src/components/viewer/ModuleOutlineDrawer.tsx`
+- `src/components/MobileBottomNav.tsx`
+
+**Edited**
+- `src/pages/Viewer.tsx` — wire ItemNavBar, ModuleOutlineDrawer, keyboard shortcuts, mobile spacing
+- `src/pages/ModuleDetail.tsx` — prev/next module, mobile-friendly rows, highlight-from-query
+- `src/pages/CourseDetail.tsx` — Start/Resume button
+- `src/components/AppLayout.tsx` — mount MobileBottomNav, adjust bottom padding
+
+## 8. Out of scope
+
+- Persisting per-student progress (no backend yet) — "Resume" uses last item visited via `localStorage` only as a non-blocking enhancement.
+- Changing the editor pages.
+- Swipe gestures beyond what MUI Drawer provides natively.
+
+## 9. Technical notes
+
+- Use MUI `useMediaQuery(theme.breakpoints.down('md'))` for breakpoint branching, matching existing pattern in `AppLayout`.
+- Fixed bottom bar uses `paddingBottom: 'env(safe-area-inset-bottom)'` for iOS notch.
+- Keyboard handler attaches in `useEffect` on Viewer only; checks `document.activeElement.tagName` to ignore inputs.
+- All new components use existing MUI theme tokens — no custom colors.

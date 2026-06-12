@@ -39,8 +39,10 @@ import {
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getCourse, getCourseModules, getModuleItems } from '@/lib/content';
+import { buildCourseSequence, getLastVisitedItem } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
 import type { ItemType } from '@/types/content';
+import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 
 const typeIcons: Record<ItemType, React.ReactNode> = {
   pdf: <PdfIcon />,
@@ -104,6 +106,10 @@ export default function CourseDetailPage() {
   }
 
   const modules = getCourseModules(content, courseId);
+  const sequence = buildCourseSequence(content, courseId);
+  const lastVisited = getLastVisitedItem(courseId);
+  const resumeId = lastVisited && content.items[lastVisited] ? lastVisited : sequence[0]?.item.id;
+  const hasResume = !!lastVisited && !!content.items[lastVisited];
 
   return (
     <AppLayout>
@@ -161,7 +167,22 @@ export default function CourseDetailPage() {
               <Typography variant="body2">{course.duration}</Typography>
             </Box>
             <Chip label={`${modules.length} Modules`} size="small" color="primary" variant="outlined" />
+            <Chip label={`${sequence.length} Items`} size="small" variant="outlined" />
           </Box>
+          {resumeId && (
+            <Box sx={{ mt: 3 }}>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<PlayArrowIcon />}
+                component={Link}
+                to={`/view/${resumeId}`}
+                sx={{ textTransform: 'none' }}
+              >
+                {hasResume ? 'Resume course' : 'Start course'}
+              </Button>
+            </Box>
+          )}
         </CardContent>
       </Card>
 
