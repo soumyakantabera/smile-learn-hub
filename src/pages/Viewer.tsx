@@ -44,10 +44,17 @@ import {
 import { useContent } from '@/contexts/ContentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getItem, getModule, getCourse } from '@/lib/content';
-import { getAdjacentItems, rememberVisitedItem } from '@/lib/contentNavigation';
+import {
+  getAdjacentItems,
+  rememberVisitedItem,
+  rememberVisitedModule,
+  markItemVisited,
+  getVisitedItems,
+} from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
 import { ItemNavBar } from '@/components/viewer/ItemNavBar';
 import { ModuleOutlineDrawer } from '@/components/viewer/ModuleOutlineDrawer';
+import { CourseProgressRail } from '@/components/viewer/CourseProgressRail';
 import { appConfig } from '@/config/app.config';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
 import type { ItemType } from '@/types/content';
@@ -110,8 +117,12 @@ export default function ViewerPage() {
   useEffect(() => {
     if (adj?.course && itemId) {
       rememberVisitedItem(adj.course.id, itemId);
+      markItemVisited(adj.course.id, itemId);
+      if (adj.module) rememberVisitedModule(adj.course.id, adj.module.id);
     }
-  }, [adj?.course?.id, itemId]);
+  }, [adj?.course?.id, adj?.module?.id, itemId]);
+
+  const visited = adj?.course ? getVisitedItems(adj.course.id) : new Set<string>();
 
   // Keyboard shortcuts (left/right arrows)
   useEffect(() => {
@@ -492,43 +503,15 @@ export default function ViewerPage() {
         </Typography>
       </Breadcrumbs>
 
-      {/* Position toolbar */}
+      {/* Course progress rail */}
       {adj?.current && adj.sequence.length > 0 && (
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-            <Button
-              size="small"
-              startIcon={<ArrowBackIcon />}
-              onClick={() => module && navigate(`/modules/${module.id}?from=${item.id}`)}
-              sx={{ textTransform: 'none' }}
-            >
-              Module
-            </Button>
-            <Chip
-              size="small"
-              label={`Item ${adj.current.indexInCourse + 1} of ${adj.sequence.length}`}
-              color="primary"
-              variant="outlined"
-            />
-            <Box sx={{ flex: 1 }} />
-            <Tooltip title="Course outline">
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<ListAltIcon />}
-                onClick={() => setOutlineOpen(true)}
-                sx={{ textTransform: 'none' }}
-              >
-                Outline
-              </Button>
-            </Tooltip>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={((adj.current.indexInCourse + 1) / adj.sequence.length) * 100}
-            sx={{ height: 4, borderRadius: 2 }}
-          />
-        </Box>
+        <CourseProgressRail
+          sequence={adj.sequence}
+          currentItemId={item.id}
+          visited={visited}
+          courseTitle={adj.course?.title}
+          moduleTitle={adj.module?.title}
+        />
       )}
 
       {/* Item Header */}
@@ -578,9 +561,19 @@ export default function ViewerPage() {
       {/* Prev / Next navigation */}
       {adj && adj.course && (
         <>
-          <ItemNavBar prev={adj.prev} next={adj.next} courseId={adj.course.id} />
+          <ItemNavBar
+            prev={adj.prev}
+            next={adj.next}
+            current={adj.current}
+            sequence={adj.sequence}
+            visited={visited}
+            courseId={adj.course.id}
+            moduleId={adj.module?.id}
+            currentItemId={item.id}
+            onOpenOutline={() => setOutlineOpen(true)}
+          />
           {/* Spacer so fixed bar on mobile doesn't overlap page bottom */}
-          {isMobile && <Box sx={{ height: 96 }} />}
+          {isMobile && <Box sx={{ height: 140 }} />}
         </>
       )}
 
