@@ -80,7 +80,7 @@ export default function ModuleDetailPage() {
   const highlightRef = useRef<HTMLLIElement | null>(null);
 
   useEffect(() => {
-    if (fromItem && highlightRef.current) {
+    if (highlightRef.current) {
       highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [fromItem, moduleId]);
