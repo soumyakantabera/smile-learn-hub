@@ -16,6 +16,8 @@ import {
   Chip,
   Button,
   Paper,
+  CircularProgress,
+  LinearProgress,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -37,7 +39,7 @@ import {
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getModule, getCourse, getModuleItems } from '@/lib/content';
-import { getAdjacentModules } from '@/lib/contentNavigation';
+import { getAdjacentModules, getVisitedItems, getLastVisitedItem } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
 import type { ItemType } from '@/types/content';
 
