@@ -1,80 +1,92 @@
-# Student Navigation Overhaul
 
-Goal: Let students fluidly move through course content with Previous/Next buttons, in-context module outlines, and a polished navigation experience on both desktop and mobile.
+# Comprehensive Content Navigator + Visualizations + Module Cache
+
+## Goals
+1. Turn the existing prev/next bar into an app-like comprehensive **content navigator** that works on both desktop and mobile.
+2. Add **richer visualizations** of course/module progress.
+3. **Cache the last-opened module per course** in the browser so students resume in context, not just on the last item.
 
 ---
 
-## 1. Sequence helper (new) — `src/lib/contentNavigation.ts`
+## 1. App-like Content Navigator (`ItemNavBar.tsx` rewrite)
 
-Single source of truth for "what comes next" so all pages agree.
+Replace the simple Prev/Next paper with a multi-zone **sticky control bar** used on both desktop and mobile.
 
-- `buildCourseSequence(content, courseId)` → flat ordered array `[{ item, module, indexInCourse }]` covering every item in every module (modules sorted by `order`, items in stored order).
-- `getAdjacentItems(content, itemId)` → `{ prev, next, current, sequence, course, module }`. Handles cross-module jumps (last item of module N → first item of module N+1) and returns `null` for ends.
-- `getItemPosition(sequence, itemId)` → `{ index, total }` for "12 of 34" labels.
+**Desktop (md+):** sticky to the bottom of the viewport (not just at the bottom of the page), full-width within the content column, three zones:
+- Left: Prev tile (icon + "Previous" label + truncated title + module name as caption).
+- Center: a **scrubbable item dots strip** — one dot per item in the course, current is enlarged & colored, completed dots filled, future dots outlined; hover shows a tooltip with item title/module/type icon. Clicking a dot jumps to that item. Auto-scrolls so current dot stays centered.
+- Right: Next tile (mirrors Prev) or green "Finish course" when at end. Plus a compact "Outline" icon button that opens `ModuleOutlineDrawer`.
 
-No business-logic changes; pure read helpers using existing `getCourse / getCourseModules / getModuleItems`.
+**Mobile (xs–sm):** fixed bottom sheet with two rows:
+- Row 1: thin `LinearProgress` + "Module X · Item Y of N" + outline icon (top-right).
+- Row 2: large Prev / Next buttons (icon-forward style, equal width, touch-target ≥48px). Swipe left/right on this bar triggers next/prev (use simple touchstart/touchend handler).
+- Safe-area inset already handled; reuse and add `MobileBottomNav` offset so they stack cleanly.
 
-## 2. Viewer page — `src/pages/Viewer.tsx`
+**Shared:**
+- Add a small **module label chip** above the prev/next titles ("In: Module 2 — Algebra").
+- Add `aria-label`s, focus-visible rings, and `useHotkeys`-style ←/→ already exists.
+- Add **"Up to module"** quick action (currently lives in the position toolbar) inside the bar's overflow menu, so the page-top toolbar can be slimmed.
 
-Add a sticky/responsive navigation bar both above and below the content:
+## 2. Better Visualization
 
-- **Top bar (compact):** Back to module button, progress chip `Item 12 / 34`, linear progress bar of position in course.
-- **Bottom bar (primary action):**
-  - Left: `← Previous` button showing prev item title (truncated). Disabled at start.
-  - Right: `Next →` button showing next item title. Disabled at end; when at end show `Finish course` linking back to course page.
-  - Middle (desktop only): "Module: X" chip.
-- Mobile: bottom bar becomes a fixed `Paper` pinned to viewport bottom (`position: fixed`, `bottom: 0`) with safe-area padding, two equal-width buttons, swipeable feel. Add bottom spacing on main content so fixed bar doesn't overlap.
-- Desktop (≥ md): inline (not fixed) below the viewer, full width inside content column.
-- Keyboard shortcuts: `←` / `→` (also `J`/`K`) navigate prev/next when not focused in an input/textarea/contenteditable.
-- "Up to module" link on breadcrumb already exists — also add an `ArrowUpward` button in the top bar that returns to module page on mobile (since breadcrumbs are cramped).
+**A. CourseProgressRail (new `src/components/viewer/CourseProgressRail.tsx`)**
+Render at top of the Viewer page, replacing the current "Item X of Y" Chip + flat LinearProgress block:
+- Horizontal **segmented progress bar** — one segment per module, each subdivided into items. Current item segment glows; completed segments filled with primary color, future segments muted.
+- Above bar: course title, "Module 2 of 5 · Item 7 of 23", elapsed-percentage chip.
+- Click any segment → jump to that item.
+- Compact mobile variant: stack module name + segmented bar only.
 
-## 3. Module page — `src/pages/ModuleDetail.tsx`
+**B. ModuleDetail visualization**
+- Add a **donut/ring progress** (MUI `CircularProgress` with custom label) showing items visited vs total items in the module, sourced from `getLastVisitedItem` history (extend storage — see §3).
+- Add a "Next module" / "Previous module" card pair at the bottom (already exists from earlier work; keep, but restyle with arrows + thumbnails of first item type).
 
-- Add **Previous module / Next module** buttons at the bottom (uses `course.modules` order).
-- Add **"Continue where you left off"** affordance: if the URL has `?from=item-id` (set when leaving Viewer via Back), scroll/highlight that row.
-- Make item rows more tappable on mobile: bigger touch target, secondary line wraps, tag chips hide below `sm`.
+**C. CourseDetail visualization**
+- Replace plain "Resume" button with a **resume card** showing: last visited module title, last item title, item type icon, % course complete (segmented mini-bar). Buttons: "Resume" (jumps to last item) and "Restart" (jumps to first item; clears last-visited).
 
-## 4. Course page (`src/pages/CourseDetail.tsx`) — light touch only
+## 3. Browser cache for last opened module
 
-- Add a "Start course" / "Resume" button that links to the first item of the first module (uses new sequence helper). Keeps existing layout.
+Extend `src/lib/contentNavigation.ts`:
 
-## 5. Module outline drawer (new, viewer only)
+```ts
+const LAST_MODULE_KEY = 'lms:last-module';   // { [courseId]: moduleId }
+const VISITED_ITEMS_KEY = 'lms:visited-items'; // { [courseId]: string[] }  // for visualization
 
-On Viewer page add a "Module outline" button (icon `ListAlt`):
-- **Desktop (≥ md):** opens a right-side `Drawer` (320 px) listing all items in the current module with the active item highlighted and clickable to jump.
-- **Mobile:** same drawer but `anchor="bottom"` with a 75-vh sheet, swipe-to-close.
+export function rememberVisitedModule(courseId: string, moduleId: string) { ... }
+export function getLastVisitedModule(courseId: string): string | null { ... }
+export function markItemVisited(courseId: string, itemId: string) { ... }
+export function getVisitedItems(courseId: string): Set<string> { ... }
+```
 
-This gives students contextual navigation without leaving the viewer.
+Wire-up:
+- `Viewer.tsx` `useEffect`: also call `rememberVisitedModule(course.id, module.id)` and `markItemVisited(course.id, itemId)`.
+- `CourseDetail.tsx` resume button: prefer `getLastVisitedItem`; fall back to first item of `getLastVisitedModule`.
+- `ModuleDetail.tsx`: read `getLastVisitedModule(courseId)` and if it equals current module, scroll to the last-visited item card.
+- `Courses` list page (if applicable): show a "Continue" badge next to the course matching `getLastVisitedModule`.
 
-## 6. App-wide mobile polish — `src/components/AppLayout.tsx`
+All stored in `localStorage`; safe JSON parsing wrapped in try/catch (matching existing pattern). No backend changes.
 
-- Add a **bottom navigation bar on mobile** (`BottomNavigation` from MUI) with Dashboard / Courses / Help (admin sees Editor too via overflow). Visible only `xs..sm`, hidden on `md+`. Sidebar still works via hamburger; bottom nav makes the most common destinations one tap away.
-- Increase main content bottom padding on mobile so it clears the bottom nav and the Viewer's fixed prev/next bar.
-- Keep AppBar title showing current page; on Viewer, replace title with truncated item title for context.
+## 4. Edits / new files
 
-## 7. Files
+**New:**
+- `src/components/viewer/CourseProgressRail.tsx`
+- `src/components/viewer/ItemDotsStrip.tsx` (used by ItemNavBar center zone on desktop)
+- `src/components/viewer/ResumeCard.tsx` (used by CourseDetail)
 
-**New**
-- `src/lib/contentNavigation.ts`
-- `src/components/viewer/ItemNavBar.tsx` (top + bottom bar variants, reused)
-- `src/components/viewer/ModuleOutlineDrawer.tsx`
-- `src/components/MobileBottomNav.tsx`
+**Edited:**
+- `src/components/viewer/ItemNavBar.tsx` — full rewrite per §1.
+- `src/lib/contentNavigation.ts` — add module + visited-items cache.
+- `src/pages/Viewer.tsx` — mount CourseProgressRail, slim position toolbar, write module + visited storage.
+- `src/pages/CourseDetail.tsx` — swap Resume button for ResumeCard.
+- `src/pages/ModuleDetail.tsx` — donut progress, restyle next/prev module cards, scroll to last-visited item.
 
-**Edited**
-- `src/pages/Viewer.tsx` — wire ItemNavBar, ModuleOutlineDrawer, keyboard shortcuts, mobile spacing
-- `src/pages/ModuleDetail.tsx` — prev/next module, mobile-friendly rows, highlight-from-query
-- `src/pages/CourseDetail.tsx` — Start/Resume button
-- `src/components/AppLayout.tsx` — mount MobileBottomNav, adjust bottom padding
+## Out of scope
+- No server-side progress (no Lovable Cloud changes).
+- No content schema changes (no new fields on items/modules).
+- No editor-side changes.
+- No swipe library (uses native touch events only).
 
-## 8. Out of scope
-
-- Persisting per-student progress (no backend yet) — "Resume" uses last item visited via `localStorage` only as a non-blocking enhancement.
-- Changing the editor pages.
-- Swipe gestures beyond what MUI Drawer provides natively.
-
-## 9. Technical notes
-
-- Use MUI `useMediaQuery(theme.breakpoints.down('md'))` for breakpoint branching, matching existing pattern in `AppLayout`.
-- Fixed bottom bar uses `paddingBottom: 'env(safe-area-inset-bottom)'` for iOS notch.
-- Keyboard handler attaches in `useEffect` on Viewer only; checks `document.activeElement.tagName` to ignore inputs.
-- All new components use existing MUI theme tokens — no custom colors.
+## Technical notes
+- Reuse MUI `useMediaQuery(theme.breakpoints.down('md'))` for desktop/mobile split.
+- Sticky-on-desktop nav bar: `position: sticky; bottom: 16px` inside the content scroll container; falls back to `position: fixed` on mobile (current behavior).
+- Dots strip uses CSS `scroll-snap` + `ref.scrollIntoView({ inline: 'center', behavior: 'smooth' })` on item change.
+- All visualizations driven by `buildCourseSequence` (already exists) — no extra data fetches.
