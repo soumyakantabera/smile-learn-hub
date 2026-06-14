@@ -5,6 +5,7 @@ export interface SequenceEntry {
   item: ContentItem;
   module: Module;
   indexInCourse: number;
+  indexInModule: number;
 }
 
 export function buildCourseSequence(content: ContentData, courseId: string): SequenceEntry[] {
@@ -13,9 +14,9 @@ export function buildCourseSequence(content: ContentData, courseId: string): Seq
   let i = 0;
   for (const module of modules) {
     const items = getModuleItems(content, module.id);
-    for (const item of items) {
-      seq.push({ item, module, indexInCourse: i++ });
-    }
+    items.forEach((item, j) => {
+      seq.push({ item, module, indexInCourse: i++, indexInModule: j });
+    });
   }
   return seq;
 }
@@ -65,21 +66,66 @@ export function getAdjacentModules(content: ContentData, moduleId: string) {
   };
 }
 
-const LAST_VISITED_KEY = 'lms:last-visited-item';
+/* -------------------- Local browser cache -------------------- */
 
-export function rememberVisitedItem(courseId: string, itemId: string) {
+const LAST_VISITED_KEY = 'lms:last-visited-item';
+const LAST_MODULE_KEY = 'lms:last-module';
+const VISITED_ITEMS_KEY = 'lms:visited-items';
+
+function readJSON<T>(key: string, fallback: T): T {
   try {
-    const map = JSON.parse(localStorage.getItem(LAST_VISITED_KEY) || '{}');
-    map[courseId] = itemId;
-    localStorage.setItem(LAST_VISITED_KEY, JSON.stringify(map));
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJSON(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
   } catch {}
 }
 
+export function rememberVisitedItem(courseId: string, itemId: string) {
+  const map = readJSON<Record<string, string>>(LAST_VISITED_KEY, {});
+  map[courseId] = itemId;
+  writeJSON(LAST_VISITED_KEY, map);
+}
+
 export function getLastVisitedItem(courseId: string): string | null {
-  try {
-    const map = JSON.parse(localStorage.getItem(LAST_VISITED_KEY) || '{}');
-    return map[courseId] || null;
-  } catch {
-    return null;
+  const map = readJSON<Record<string, string>>(LAST_VISITED_KEY, {});
+  return map[courseId] || null;
+}
+
+export function rememberVisitedModule(courseId: string, moduleId: string) {
+  const map = readJSON<Record<string, string>>(LAST_MODULE_KEY, {});
+  map[courseId] = moduleId;
+  writeJSON(LAST_MODULE_KEY, map);
+}
+
+export function getLastVisitedModule(courseId: string): string | null {
+  const map = readJSON<Record<string, string>>(LAST_MODULE_KEY, {});
+  return map[courseId] || null;
+}
+
+export function markItemVisited(courseId: string, itemId: string) {
+  const map = readJSON<Record<string, string[]>>(VISITED_ITEMS_KEY, {});
+  const list = new Set(map[courseId] || []);
+  list.add(itemId);
+  map[courseId] = Array.from(list);
+  writeJSON(VISITED_ITEMS_KEY, map);
+}
+
+export function getVisitedItems(courseId: string): Set<string> {
+  const map = readJSON<Record<string, string[]>>(VISITED_ITEMS_KEY, {});
+  return new Set(map[courseId] || []);
+}
+
+export function clearCourseProgress(courseId: string) {
+  for (const key of [LAST_VISITED_KEY, LAST_MODULE_KEY, VISITED_ITEMS_KEY]) {
+    const map = readJSON<Record<string, unknown>>(key, {});
+    delete map[courseId];
+    writeJSON(key, map);
   }
 }
