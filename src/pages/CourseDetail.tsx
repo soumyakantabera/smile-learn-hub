@@ -39,8 +39,15 @@ import {
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getCourse, getCourseModules, getModuleItems } from '@/lib/content';
-import { buildCourseSequence, getLastVisitedItem } from '@/lib/contentNavigation';
+import {
+  buildCourseSequence,
+  getLastVisitedItem,
+  getLastVisitedModule,
+  getVisitedItems,
+  clearCourseProgress,
+} from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
+import { ResumeCard } from '@/components/viewer/ResumeCard';
 import type { ItemType } from '@/types/content';
 import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 
