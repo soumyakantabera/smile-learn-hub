@@ -117,6 +117,10 @@ export default function ModuleDetailPage() {
   const course = getCourse(content, module.courseId);
   const items = getModuleItems(content, moduleId);
   const { prev: prevModule, next: nextModule } = getAdjacentModules(content, moduleId);
+  const visited = course ? getVisitedItems(course.id) : new Set<string>();
+  const lastItem = course ? getLastVisitedItem(course.id) : null;
+  const visitedInModule = items.filter((i) => visited.has(i.id)).length;
+  const modulePct = items.length > 0 ? Math.round((visitedInModule / items.length) * 100) : 0;
 
   return (
     <AppLayout>
@@ -139,25 +143,44 @@ export default function ModuleDetailPage() {
         </Typography>
       </Breadcrumbs>
 
-      {/* Module Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
-          <Chip label={`Module ${module.order}`} color="primary" size="small" />
-          <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={700}>
+      {/* Module Header with donut progress */}
+      <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 }, mb: 3, borderRadius: 3, display: 'flex', gap: 2.5, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+          <CircularProgress variant="determinate" value={100} size={72} thickness={4} sx={{ color: 'action.hover' }} />
+          <CircularProgress
+            variant="determinate"
+            value={modulePct}
+            size={72}
+            thickness={4}
+            sx={{ color: 'primary.main', position: 'absolute', left: 0 }}
+          />
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="caption" fontWeight={700}>{modulePct}%</Typography>
+          </Box>
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
+            <Chip label={`Module ${module.order}`} color="primary" size="small" />
+            <Typography variant="caption" color="text.secondary">
+              {visitedInModule}/{items.length} items viewed
+            </Typography>
+          </Box>
+          <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight={700}>
             {module.title}
           </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {module.description}
+          </Typography>
         </Box>
-        <Typography variant="body1" color="text.secondary">
-          {module.description}
-        </Typography>
-      </Box>
+      </Paper>
 
       {/* Items List */}
       <Card>
         <CardContent sx={{ p: 0 }}>
           <List disablePadding>
             {items.map((item, index) => {
-              const isFrom = fromItem === item.id;
+              const isFrom = fromItem === item.id || (!fromItem && lastItem === item.id);
+              const isVisited = visited.has(item.id);
               return (
                 <ListItem
                   key={item.id}
@@ -193,10 +216,15 @@ export default function ModuleDetailPage() {
                         },
                       }}
                     />
-                    <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, ml: 1, flexShrink: 0 }}>
-                      {item.tags.slice(0, 2).map((tag) => (
-                        <Chip key={tag} label={tag} size="small" variant="outlined" />
-                      ))}
+                    <Box sx={{ display: 'flex', gap: 1, ml: 1, flexShrink: 0, alignItems: 'center' }}>
+                      {isVisited && (
+                        <Chip label="Viewed" size="small" color="success" variant="outlined" />
+                      )}
+                      <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1 }}>
+                        {item.tags.slice(0, 2).map((tag) => (
+                          <Chip key={tag} label={tag} size="small" variant="outlined" />
+                        ))}
+                      </Box>
                     </Box>
                   </ListItemButton>
                 </ListItem>
