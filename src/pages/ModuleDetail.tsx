@@ -36,11 +36,17 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  FolderOpen as FolderOpenIcon,
+  School as SchoolIcon,
+  MenuBook as MenuBookIcon,
+  Numbers as NumbersIcon,
+  TaskAlt as TaskAltIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getModule, getCourse, getModuleItems } from '@/lib/content';
 import { getAdjacentModules, getVisitedItems, getLastVisitedItem } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
+import { PageHeader } from '@/components/PageHeader';
 import type { ItemType } from '@/types/content';
 
 const typeIcons: Record<ItemType, React.ReactNode> = {
