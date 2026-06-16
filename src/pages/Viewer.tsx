@@ -40,6 +40,9 @@ import {
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
   ListAlt as ListAltIcon,
+  School as SchoolIcon,
+  MenuBook as MenuBookIcon,
+  Folder as FolderIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { useAuth } from '@/contexts/AuthContext';
