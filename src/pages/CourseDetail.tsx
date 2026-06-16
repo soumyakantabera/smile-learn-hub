@@ -50,6 +50,7 @@ import {
 } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
 import { ResumeCard } from '@/components/viewer/ResumeCard';
+import { PageHeader } from '@/components/PageHeader';
 import type { ItemType } from '@/types/content';
 import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 
