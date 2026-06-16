@@ -130,17 +130,16 @@ export default function CourseDetailPage() {
 
   return (
     <AppLayout>
-      {/* Breadcrumbs */}
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-        <Link to="/courses" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Typography color="text.secondary" sx={{ '&:hover': { textDecoration: 'underline' } }}>
-            Courses
-          </Typography>
-        </Link>
-        <Typography color="text.primary" fontWeight={500}>
-          {course.title}
-        </Typography>
-      </Breadcrumbs>
+      <PageHeader
+        icon={<MenuBookIcon />}
+        title={course.title}
+        subtitle={course.description}
+        crumbs={[
+          { label: 'Courses', to: '/courses', icon: <SchoolIcon /> },
+          { label: course.title, icon: <MenuBookIcon /> },
+        ]}
+      />
+
 
       {/* Course Header */}
       <Card sx={{ mb: 4, overflow: 'hidden' }}>
