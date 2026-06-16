@@ -36,6 +36,8 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  School as SchoolIcon,
+  MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getCourse, getCourseModules, getModuleItems } from '@/lib/content';
