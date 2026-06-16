@@ -39,6 +39,7 @@ import {
   History as HistoryIcon,
   Keyboard as KeyboardIcon,
   Storage as StorageIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
