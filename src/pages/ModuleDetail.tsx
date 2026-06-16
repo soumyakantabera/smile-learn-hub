@@ -36,11 +36,17 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  FolderOpen as FolderOpenIcon,
+  School as SchoolIcon,
+  MenuBook as MenuBookIcon,
+  Numbers as NumbersIcon,
+  TaskAlt as TaskAltIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getModule, getCourse, getModuleItems } from '@/lib/content';
 import { getAdjacentModules, getVisitedItems, getLastVisitedItem } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
+import { PageHeader } from '@/components/PageHeader';
 import type { ItemType } from '@/types/content';
 
 const typeIcons: Record<ItemType, React.ReactNode> = {
@@ -124,24 +130,30 @@ export default function ModuleDetailPage() {
 
   return (
     <AppLayout>
-      {/* Breadcrumbs */}
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-        <Link to="/courses" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Typography color="text.secondary" sx={{ '&:hover': { textDecoration: 'underline' } }}>
-            Courses
-          </Typography>
-        </Link>
-        {course && (
-          <Link to={`/courses/${course.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Typography color="text.secondary" sx={{ '&:hover': { textDecoration: 'underline' } }}>
-              {course.title}
-            </Typography>
-          </Link>
-        )}
-        <Typography color="text.primary" fontWeight={500}>
-          {module.title}
-        </Typography>
-      </Breadcrumbs>
+      <PageHeader
+        icon={<FolderOpenIcon />}
+        title={module.title}
+        subtitle={module.description}
+        crumbs={[
+          { label: 'Courses', to: '/courses', icon: <SchoolIcon /> },
+          ...(course
+            ? [{ label: course.title, to: `/courses/${course.id}`, icon: <MenuBookIcon /> }]
+            : []),
+          { label: module.title, icon: <FolderOpenIcon /> },
+        ]}
+        meta={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Chip label={`Module ${module.order}`} color="primary" size="small" icon={<NumbersIcon />} />
+            <Chip
+              size="small"
+              variant="outlined"
+              icon={<TaskAltIcon />}
+              label={`${visitedInModule}/${items.length} viewed · ${modulePct}%`}
+            />
+          </Box>
+        }
+      />
+
 
       {/* Module Header with donut progress */}
       <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 }, mb: 3, borderRadius: 3, display: 'flex', gap: 2.5, alignItems: 'center', flexWrap: 'wrap' }}>

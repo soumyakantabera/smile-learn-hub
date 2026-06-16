@@ -39,6 +39,7 @@ import {
   History as HistoryIcon,
   Keyboard as KeyboardIcon,
   Storage as StorageIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,6 +54,8 @@ import { ContentPreview } from '@/components/editor/ContentPreview';
 import { ConfirmDialog } from '@/components/editor/ConfirmDialog';
 import { PublishWizard } from '@/components/editor/PublishWizard';
 import { importDraftFromFile } from '@/lib/editorStorage';
+import { PageHeader } from '@/components/PageHeader';
+
 
 const TABS = [
   { label: 'Dashboard', icon: <DashboardIcon fontSize="small" /> },
@@ -171,36 +174,23 @@ function EditorContent() {
 
   return (
     <AppLayout>
-      <Box sx={{ mb: 2 }}>
-        <Breadcrumbs sx={{ mb: 1 }}>
-          <MuiLink underline="hover" color="inherit" href="/">
-            Home
-          </MuiLink>
-          <Typography color="text.primary">Editor</Typography>
-          <Typography color="text.primary">{TABS[tabIndex].label}</Typography>
-        </Breadcrumbs>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 2,
-          }}
-        >
-          <Box>
-            <Typography variant="h4" fontWeight={800}>
-              LMS Editor
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Manage courses, modules, content, and batches
-            </Typography>
-          </Box>
+      <PageHeader
+        icon={TABS[tabIndex].icon}
+        iconColor="hsl(280, 70%, 55%)"
+        title="LMS Editor"
+        subtitle="Manage courses, modules, content, and batches"
+        crumbs={[
+          { label: 'Home', to: '/', icon: <DashboardIcon /> },
+          { label: 'Editor', icon: <EditIcon /> },
+          { label: TABS[tabIndex].label, icon: TABS[tabIndex].icon },
+        ]}
+        meta={
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             {isDirty ? (
               <Chip icon={<WarningIcon />} label="Unsaved changes" size="small" color="warning" />
             ) : lastSaved ? (
               <Chip
+                icon={<SaveIcon />}
                 label={`Saved ${new Date(lastSaved).toLocaleTimeString()}`}
                 size="small"
                 color="success"
@@ -212,6 +202,10 @@ function EditorContent() {
                 <Chip icon={<StorageIcon />} label={`${draftSizeKB} KB`} size="small" variant="outlined" />
               </Tooltip>
             )}
+          </Box>
+        }
+        actions={
+          <>
             <Tooltip title="Undo (Ctrl+Z)">
               <span>
                 <IconButton size="small" onClick={undo} disabled={!canUndo} aria-label="Undo">
@@ -289,9 +283,10 @@ function EditorContent() {
             >
               Save Draft
             </Button>
-          </Box>
-        </Box>
-      </Box>
+          </>
+        }
+      />
+
 
       <Menu anchorEl={snapAnchor} open={!!snapAnchor} onClose={() => setSnapAnchor(null)}>
         <MenuItem disabled>

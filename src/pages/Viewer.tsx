@@ -40,6 +40,9 @@ import {
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
   ListAlt as ListAltIcon,
+  School as SchoolIcon,
+  MenuBook as MenuBookIcon,
+  Folder as FolderIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,6 +58,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { ItemNavBar } from '@/components/viewer/ItemNavBar';
 import { ModuleOutlineDrawer } from '@/components/viewer/ModuleOutlineDrawer';
 import { CourseProgressRail } from '@/components/viewer/CourseProgressRail';
+import { PageHeader } from '@/components/PageHeader';
 import { appConfig } from '@/config/app.config';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
 import type { ItemType } from '@/types/content';
@@ -479,29 +483,40 @@ export default function ViewerPage() {
 
   return (
     <AppLayout>
-      {/* Breadcrumbs */}
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-        <Link to="/courses" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Typography color="text.secondary" sx={{ '&:hover': { textDecoration: 'underline' } }}>
-            Courses
-          </Typography>
-        </Link>
-        {course && (
-          <Link to={`/courses/${course.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Typography color="text.secondary" sx={{ '&:hover': { textDecoration: 'underline' } }}>
-              {course.title}
-            </Typography>
-          </Link>
-        )}
-        {module && (
-          <Typography color="text.secondary">
-            {module.title}
-          </Typography>
-        )}
-        <Typography color="text.primary" fontWeight={500}>
-          {item.title}
-        </Typography>
-      </Breadcrumbs>
+      <PageHeader
+        iconColor={typeColors[item.type]}
+        icon={typeIcons[item.type]}
+        title={item.title}
+        subtitle={item.description}
+        crumbs={[
+          { label: 'Courses', to: '/courses', icon: <SchoolIcon /> },
+          ...(course
+            ? [{ label: course.title, to: `/courses/${course.id}`, icon: <MenuBookIcon /> }]
+            : []),
+          ...(module
+            ? [{ label: module.title, to: course ? `/modules/${module.id}` : undefined, icon: <FolderIcon /> }]
+            : []),
+          { label: item.title, icon: typeIcons[item.type] },
+        ]}
+        meta={
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Chip
+              icon={typeIcons[item.type] as React.ReactElement}
+              label={typeLabels[item.type]}
+              size="small"
+              sx={{
+                bgcolor: `${typeColors[item.type]}15`,
+                color: typeColors[item.type],
+                fontWeight: 600,
+                '& .MuiChip-icon': { color: typeColors[item.type] },
+              }}
+            />
+            {item.tags.map((tag) => (
+              <Chip key={tag} label={tag} size="small" variant="outlined" />
+            ))}
+          </Box>
+        }
+      />
 
       {/* Course progress rail */}
       {adj?.current && adj.sequence.length > 0 && (
@@ -513,47 +528,6 @@ export default function ViewerPage() {
           moduleTitle={adj.module?.title}
         />
       )}
-
-      {/* Item Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 2,
-              bgcolor: `${typeColors[item.type]}15`,
-              color: typeColors[item.type],
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            {typeIcons[item.type]}
-          </Box>
-          <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={700} sx={{ wordBreak: 'break-word' }}>
-            {item.title}
-          </Typography>
-        </Box>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          {item.description}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Chip
-            label={typeLabels[item.type]}
-            size="small"
-            sx={{
-              bgcolor: `${typeColors[item.type]}15`,
-              color: typeColors[item.type],
-              fontWeight: 500,
-            }}
-          />
-          {item.tags.map((tag) => (
-            <Chip key={tag} label={tag} size="small" variant="outlined" />
-          ))}
-        </Box>
-      </Box>
 
       {/* Content Viewer */}
       {renderViewer()}

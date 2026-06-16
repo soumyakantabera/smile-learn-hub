@@ -36,6 +36,8 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  School as SchoolIcon,
+  MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
 import { useContent } from '@/contexts/ContentContext';
 import { getCourse, getCourseModules, getModuleItems } from '@/lib/content';
@@ -48,6 +50,7 @@ import {
 } from '@/lib/contentNavigation';
 import { AppLayout } from '@/components/AppLayout';
 import { ResumeCard } from '@/components/viewer/ResumeCard';
+import { PageHeader } from '@/components/PageHeader';
 import type { ItemType } from '@/types/content';
 import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 
@@ -127,17 +130,16 @@ export default function CourseDetailPage() {
 
   return (
     <AppLayout>
-      {/* Breadcrumbs */}
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-        <Link to="/courses" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Typography color="text.secondary" sx={{ '&:hover': { textDecoration: 'underline' } }}>
-            Courses
-          </Typography>
-        </Link>
-        <Typography color="text.primary" fontWeight={500}>
-          {course.title}
-        </Typography>
-      </Breadcrumbs>
+      <PageHeader
+        icon={<MenuBookIcon />}
+        title={course.title}
+        subtitle={course.description}
+        crumbs={[
+          { label: 'Courses', to: '/courses', icon: <SchoolIcon /> },
+          { label: course.title, icon: <MenuBookIcon /> },
+        ]}
+      />
+
 
       {/* Course Header */}
       <Card sx={{ mb: 4, overflow: 'hidden' }}>
