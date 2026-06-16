@@ -58,6 +58,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { ItemNavBar } from '@/components/viewer/ItemNavBar';
 import { ModuleOutlineDrawer } from '@/components/viewer/ModuleOutlineDrawer';
 import { CourseProgressRail } from '@/components/viewer/CourseProgressRail';
+import { PageHeader } from '@/components/PageHeader';
 import { appConfig } from '@/config/app.config';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
 import type { ItemType } from '@/types/content';
