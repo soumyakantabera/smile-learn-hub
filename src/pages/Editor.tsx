@@ -54,6 +54,8 @@ import { ContentPreview } from '@/components/editor/ContentPreview';
 import { ConfirmDialog } from '@/components/editor/ConfirmDialog';
 import { PublishWizard } from '@/components/editor/PublishWizard';
 import { importDraftFromFile } from '@/lib/editorStorage';
+import { PageHeader } from '@/components/PageHeader';
+
 
 const TABS = [
   { label: 'Dashboard', icon: <DashboardIcon fontSize="small" /> },
