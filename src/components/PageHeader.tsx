@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Typography, Paper, Stack, Chip, useTheme, alpha } from '@mui/material';
+import { Box, Typography, Paper, Stack, Chip, useTheme, useMediaQuery, alpha } from '@mui/material';
 import {
   Home as HomeIcon,
   ChevronRight as ChevronRightIcon,
@@ -39,6 +39,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   compact = false,
 }) => {
   const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
+  const isCompact = compact || isXs;
   const accent = iconColor || theme.palette.primary.main;
 
   return (
@@ -70,17 +72,23 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       />
 
       {/* Breadcrumb pills */}
-      <Stack
-        direction="row"
-        spacing={0.5}
-        alignItems="center"
+      <Box
+        className="scrollbar-thin"
         sx={{
-          flexWrap: 'wrap',
-          rowGap: 0.5,
           mb: title || icon ? 1.5 : 0,
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          mx: -0.5,
+          px: 0.5,
         }}
       >
-        {crumbs.map((c, i) => {
+        <Stack
+          direction="row"
+          spacing={0.5}
+          alignItems="center"
+          sx={{ flexWrap: 'nowrap', width: 'max-content' }}
+        >
+          {crumbs.map((c, i) => {
           const isLast = i === crumbs.length - 1;
           const content = (
             <Chip
