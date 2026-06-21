@@ -1,92 +1,79 @@
+## Mobile Layout Audit — Findings & Fixes
 
-# Comprehensive Content Navigator + Visualizations + Module Cache
+Scope: every student/admin page on phone viewports (≤ md). All work is in presentation code; no business logic touched.
 
-## Goals
-1. Turn the existing prev/next bar into an app-like comprehensive **content navigator** that works on both desktop and mobile.
-2. Add **richer visualizations** of course/module progress.
-3. **Cache the last-opened module per course** in the browser so students resume in context, not just on the last item.
+### Issues found
 
----
+1. **Bottom content hidden behind floating bars.** `AppLayout` uses one blanket `pb: { xs: 12 }` (96 px) for every page. On the Viewer the floating `ItemNavBar` plus 56-px `MobileBottomNav` plus iOS safe-area can reach ~180 px, so the last paragraph / "Finish" button gets covered. On non-viewer pages 96 px is more than needed, producing a dead gap above the bottom nav.
 
-## 1. App-like Content Navigator (`ItemNavBar.tsx` rewrite)
+2. **Phantom 56-px gap below `ItemNavBar` on Viewer (mobile).** `MobileBottomNav` is hidden on `/view/*`, but `ItemNavBar` is still pinned to `bottom: 56` for `xs`, so it floats with a visible gap and content peeks underneath. The spacer `<Box height: 140>` in `Viewer.tsx` is a magic number that no longer matches.
 
-Replace the simple Prev/Next paper with a multi-zone **sticky control bar** used on both desktop and mobile.
+3. **`100vh` causes Safari/Chrome address-bar clipping.** Outer `Box` and main `Box` in `AppLayout`, plus `Login`, `ProtectedRoute`, `NotFoundPage`, all use `minHeight: '100vh'`. On mobile this overshoots the visible area when the URL bar collapses, leaving a strip you can't scroll past on short pages, and triggers the "no vertical scroll" feeling on Dashboard when content is just under viewport.
 
-**Desktop (md+):** sticky to the bottom of the viewport (not just at the bottom of the page), full-width within the content column, three zones:
-- Left: Prev tile (icon + "Previous" label + truncated title + module name as caption).
-- Center: a **scrubbable item dots strip** — one dot per item in the course, current is enlarged & colored, completed dots filled, future dots outlined; hover shows a tooltip with item title/module/type icon. Clicking a dot jumps to that item. Auto-scrolls so current dot stays centered.
-- Right: Next tile (mirrors Prev) or green "Finish course" when at end. Plus a compact "Outline" icon button that opens `ModuleOutlineDrawer`.
+4. **Horizontal scroll risk from `PageHeader` and `ItemDotsStrip`.** `PageHeader` breadcrumb `Stack` does not constrain width; long titles overflow the viewport on 360-px screens because `Chip` `maxWidth: 160` plus the icon tile plus action buttons can exceed 100 vw. The header's outer `Paper` lacks `overflow-x: hidden` on the wrapper, so the document body picks up an `overflow-x` scrollbar.
 
-**Mobile (xs–sm):** fixed bottom sheet with two rows:
-- Row 1: thin `LinearProgress` + "Module X · Item Y of N" + outline icon (top-right).
-- Row 2: large Prev / Next buttons (icon-forward style, equal width, touch-target ≥48px). Swipe left/right on this bar triggers next/prev (use simple touchstart/touchend handler).
-- Safe-area inset already handled; reuse and add `MobileBottomNav` offset so they stack cleanly.
+5. **`PageHeader` actions / meta row stacks awkwardly on mobile.** On `Editor.tsx` the actions slot holds 6 icon buttons + Save + Publish; with `direction: { xs: 'column', sm: 'row' }` they collapse below the title but get `gap: 1` only, producing wrap with uneven height and no horizontal scroll fallback.
 
-**Shared:**
-- Add a small **module label chip** above the prev/next titles ("In: Module 2 — Algebra").
-- Add `aria-label`s, focus-visible rings, and `useHotkeys`-style ←/→ already exists.
-- Add **"Up to module"** quick action (currently lives in the position toolbar) inside the bar's overflow menu, so the page-top toolbar can be slimmed.
+6. **Drawer width = 260 px on a 360-px phone** leaves only a 38-px tap-out gutter. Combined with `<Toolbar />` content padding (xs: `p: 2` = 16 px each side) the layout feels cramped.
 
-## 2. Better Visualization
+7. **AppBar height ≠ spacer height on short mobile.** `<Toolbar />` in main uses default `min-height`, but `AppBar` toolbar in landscape phones drops to 48 px; the spacer mismatch leaves a 8-px white strip under the bar.
 
-**A. CourseProgressRail (new `src/components/viewer/CourseProgressRail.tsx`)**
-Render at top of the Viewer page, replacing the current "Item X of Y" Chip + flat LinearProgress block:
-- Horizontal **segmented progress bar** — one segment per module, each subdivided into items. Current item segment glows; completed segments filled with primary color, future segments muted.
-- Above bar: course title, "Module 2 of 5 · Item 7 of 23", elapsed-percentage chip.
-- Click any segment → jump to that item.
-- Compact mobile variant: stack module name + segmented bar only.
+8. **`pb` of 0 on Editor body** — `Editor.tsx` renders large tab panels that, on phones, push under the bottom nav because the Editor's own content already had its own padding.
 
-**B. ModuleDetail visualization**
-- Add a **donut/ring progress** (MUI `CircularProgress` with custom label) showing items visited vs total items in the module, sourced from `getLastVisitedItem` history (extend storage — see §3).
-- Add a "Next module" / "Previous module" card pair at the bottom (already exists from earlier work; keep, but restyle with arrows + thumbnails of first item type).
+### Fixes
 
-**C. CourseDetail visualization**
-- Replace plain "Resume" button with a **resume card** showing: last visited module title, last item title, item type icon, % course complete (segmented mini-bar). Buttons: "Resume" (jumps to last item) and "Restart" (jumps to first item; clears last-visited).
+**A. `src/components/AppLayout.tsx`**
+- Replace `minHeight: '100vh'` with `minHeight: '100dvh'` (with `100vh` fallback) on both the outer flex `Box` and the main `Box`.
+- Add `overflowX: 'hidden'` on the outer flex `Box` to kill stray horizontal scroll.
+- Make the main content padding-bottom **route-aware**: read `useLocation()`; if path starts with `/view/`, use `pb: { xs: 'calc(180px + env(safe-area-inset-bottom))', md: 3 }`, else `pb: { xs: 'calc(80px + env(safe-area-inset-bottom))', md: 3 }`. Remove the magic `Box height: 140` spacer from `Viewer.tsx`.
+- Mobile `Drawer` width: `min(300px, 86vw)` instead of fixed 260.
+- Replace the manual `<Toolbar />` spacer with `theme.mixins.toolbar` `minHeight` so it auto-matches landscape/portrait toolbar heights.
 
-## 3. Browser cache for last opened module
+**B. `src/components/MobileBottomNav.tsx`**
+- Already returns `null` on `/view/*` — keep, but export a constant `MOBILE_BOTTOM_NAV_HEIGHT = 56` so `AppLayout` can reuse it.
 
-Extend `src/lib/contentNavigation.ts`:
+**C. `src/components/viewer/ItemNavBar.tsx`**
+- Mobile `Paper` uses `bottom: 0` (not 56). The route hides `MobileBottomNav`, so the nav bar sits flush above the safe-area. Keep `pb: env(safe-area-inset-bottom)`.
+- Cap the Paper at `maxWidth: '100vw'` and add `overflowX: 'hidden'` to prevent the dots strip from leaking horizontally.
 
-```ts
-const LAST_MODULE_KEY = 'lms:last-module';   // { [courseId]: moduleId }
-const VISITED_ITEMS_KEY = 'lms:visited-items'; // { [courseId]: string[] }  // for visualization
+**D. `src/components/PageHeader.tsx`**
+- Wrap the breadcrumb `Stack` in a `Box` with `overflowX: 'auto'`, `flexWrap: 'nowrap'`, and hide the scrollbar (`scrollbar-thin` class). Chips stay on one line and scroll horizontally if too long — standard app pattern.
+- On `xs`, reduce icon tile from 56→44 px (force `compact` on small screens via `useMediaQuery`).
+- Cap title with `wordBreak: 'break-word'` (already) and add `fontSize: { xs: '1.15rem', sm: '1.35rem' }`.
+- Actions row on `xs`: `width: 100%`, `overflowX: 'auto'`, `flexWrap: 'nowrap'`, `-webkit-overflow-scrolling: touch`, so a long admin toolbar scrolls horizontally instead of stacking.
 
-export function rememberVisitedModule(courseId: string, moduleId: string) { ... }
-export function getLastVisitedModule(courseId: string): string | null { ... }
-export function markItemVisited(courseId: string, itemId: string) { ... }
-export function getVisitedItems(courseId: string): Set<string> { ... }
-```
+**E. `src/pages/Login.tsx`, `src/pages/NotFoundPage.tsx`, `src/components/ProtectedRoute.tsx`**
+- Swap `minHeight: '100vh'` → `minHeight: '100dvh'`.
 
-Wire-up:
-- `Viewer.tsx` `useEffect`: also call `rememberVisitedModule(course.id, module.id)` and `markItemVisited(course.id, itemId)`.
-- `CourseDetail.tsx` resume button: prefer `getLastVisitedItem`; fall back to first item of `getLastVisitedModule`.
-- `ModuleDetail.tsx`: read `getLastVisitedModule(courseId)` and if it equals current module, scroll to the last-visited item card.
-- `Courses` list page (if applicable): show a "Continue" badge next to the course matching `getLastVisitedModule`.
+**F. `src/pages/Viewer.tsx`**
+- Remove the conditional 140-px spacer (handled centrally in `AppLayout` now).
+- Add `sx={{ maxWidth: '100%', overflowX: 'hidden' }}` on any iframe/video container that currently can overshoot (PDF iframe is 600 px tall, fine; verify with viewport-based `height: { xs: '70vh', md: 600 }`).
 
-All stored in `localStorage`; safe JSON parsing wrapped in try/catch (matching existing pattern). No backend changes.
+**G. `src/index.css`**
+- Add a global safety rule:
+  ```css
+  html, body, #root { max-width: 100vw; overflow-x: hidden; }
+  ```
+  Prevents accidental horizontal scroll if any future child overflows.
 
-## 4. Edits / new files
+### Out of scope
+- No content-data or context/state changes.
+- No editor logic, no auth, no navigation routes added.
+- No new dependencies.
 
-**New:**
-- `src/components/viewer/CourseProgressRail.tsx`
-- `src/components/viewer/ItemDotsStrip.tsx` (used by ItemNavBar center zone on desktop)
-- `src/components/viewer/ResumeCard.tsx` (used by CourseDetail)
+### Files touched
+- `src/components/AppLayout.tsx`
+- `src/components/MobileBottomNav.tsx`
+- `src/components/PageHeader.tsx`
+- `src/components/viewer/ItemNavBar.tsx`
+- `src/pages/Viewer.tsx`
+- `src/pages/Login.tsx`
+- `src/pages/NotFoundPage.tsx`
+- `src/components/ProtectedRoute.tsx`
+- `src/index.css`
 
-**Edited:**
-- `src/components/viewer/ItemNavBar.tsx` — full rewrite per §1.
-- `src/lib/contentNavigation.ts` — add module + visited-items cache.
-- `src/pages/Viewer.tsx` — mount CourseProgressRail, slim position toolbar, write module + visited storage.
-- `src/pages/CourseDetail.tsx` — swap Resume button for ResumeCard.
-- `src/pages/ModuleDetail.tsx` — donut progress, restyle next/prev module cards, scroll to last-visited item.
-
-## Out of scope
-- No server-side progress (no Lovable Cloud changes).
-- No content schema changes (no new fields on items/modules).
-- No editor-side changes.
-- No swipe library (uses native touch events only).
-
-## Technical notes
-- Reuse MUI `useMediaQuery(theme.breakpoints.down('md'))` for desktop/mobile split.
-- Sticky-on-desktop nav bar: `position: sticky; bottom: 16px` inside the content scroll container; falls back to `position: fixed` on mobile (current behavior).
-- Dots strip uses CSS `scroll-snap` + `ref.scrollIntoView({ inline: 'center', behavior: 'smooth' })` on item change.
-- All visualizations driven by `buildCourseSequence` (already exists) — no extra data fetches.
+### Verification
+After build, drive Playwright at 390×674 to:
+1. Scroll `/` to bottom — confirm last "Recently Added" card is fully visible above the bottom nav.
+2. Scroll `/view/<item>` — confirm Finish button reachable, nav bar flush with safe-area.
+3. Rotate viewport (drag the device toggle to tablet) — confirm no horizontal scrollbar appears on any route.
