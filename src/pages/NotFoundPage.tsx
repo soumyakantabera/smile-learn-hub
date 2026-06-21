@@ -7,7 +7,7 @@ export default function NotFoundPage() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: ['100vh', '100dvh'],
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

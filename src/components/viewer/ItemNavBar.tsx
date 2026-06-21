@@ -79,7 +79,9 @@ export function ItemNavBar({
           position: 'fixed',
           left: 0,
           right: 0,
-          bottom: { xs: 56, sm: 0 }, // sit above MobileBottomNav on xs
+          bottom: 0,
+          maxWidth: '100vw',
+          overflowX: 'hidden',
           zIndex: (t) => t.zIndex.appBar,
           px: 1.25,
           pt: 0.75,

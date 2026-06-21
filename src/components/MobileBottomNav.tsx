@@ -9,6 +9,8 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 
+export const MOBILE_BOTTOM_NAV_HEIGHT = 56;
+
 export function MobileBottomNav() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));

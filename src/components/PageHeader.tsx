@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Typography, Paper, Stack, Chip, useTheme, alpha } from '@mui/material';
+import { Box, Typography, Paper, Stack, Chip, useTheme, useMediaQuery, alpha } from '@mui/material';
 import {
   Home as HomeIcon,
   ChevronRight as ChevronRightIcon,
@@ -39,6 +39,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   compact = false,
 }) => {
   const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
+  const isCompact = compact || isXs;
   const accent = iconColor || theme.palette.primary.main;
 
   return (
@@ -70,17 +72,23 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       />
 
       {/* Breadcrumb pills */}
-      <Stack
-        direction="row"
-        spacing={0.5}
-        alignItems="center"
+      <Box
+        className="scrollbar-thin"
         sx={{
-          flexWrap: 'wrap',
-          rowGap: 0.5,
           mb: title || icon ? 1.5 : 0,
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          mx: -0.5,
+          px: 0.5,
         }}
       >
-        {crumbs.map((c, i) => {
+        <Stack
+          direction="row"
+          spacing={0.5}
+          alignItems="center"
+          sx={{ flexWrap: 'nowrap', width: 'max-content' }}
+        >
+          {crumbs.map((c, i) => {
           const isLast = i === crumbs.length - 1;
           const content = (
             <Chip
@@ -139,7 +147,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </React.Fragment>
           );
         })}
-      </Stack>
+        </Stack>
+      </Box>
 
       {(title || icon || actions) && (
         <Stack
@@ -148,12 +157,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           justifyContent="space-between"
         >
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 0, flex: 1, width: '100%' }}>
             {icon && (
               <Box
                 sx={{
-                  width: compact ? 44 : 56,
-                  height: compact ? 44 : 56,
+                  width: isCompact ? 44 : 56,
+                  height: isCompact ? 44 : 56,
                   borderRadius: 2.5,
                   flexShrink: 0,
                   display: 'flex',
@@ -163,18 +172,22 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   background: `linear-gradient(135deg, ${alpha(accent, 0.18)}, ${alpha(accent, 0.06)})`,
                   border: `1px solid ${alpha(accent, 0.25)}`,
                   boxShadow: `0 6px 16px -8px ${alpha(accent, 0.6)}`,
-                  '& svg': { fontSize: compact ? 24 : 30 },
+                  '& svg': { fontSize: isCompact ? 24 : 30 },
                 }}
               >
                 {icon}
               </Box>
             )}
-            <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
               {title && (
                 <Typography
-                  variant={compact ? 'h6' : 'h5'}
+                  variant={isCompact ? 'h6' : 'h5'}
                   fontWeight={800}
-                  sx={{ lineHeight: 1.2, wordBreak: 'break-word' }}
+                  sx={{
+                    lineHeight: 1.2,
+                    wordBreak: 'break-word',
+                    fontSize: { xs: '1.15rem', sm: '1.35rem' },
+                  }}
                 >
                   {title}
                 </Typography>
@@ -192,7 +205,19 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </Box>
           </Stack>
           {actions && (
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', flexShrink: 0 }}>
+            <Box
+              className="scrollbar-thin"
+              sx={{
+                display: 'flex',
+                gap: 1,
+                flexShrink: 0,
+                width: { xs: '100%', sm: 'auto' },
+                flexWrap: { xs: 'nowrap', sm: 'wrap' },
+                overflowX: { xs: 'auto', sm: 'visible' },
+                WebkitOverflowScrolling: 'touch',
+                pb: { xs: 0.5, sm: 0 },
+              }}
+            >
               {actions}
             </Box>
           )}
