@@ -147,7 +147,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </React.Fragment>
           );
         })}
-      </Stack>
+        </Stack>
+      </Box>
 
       {(title || icon || actions) && (
         <Stack
@@ -156,12 +157,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           justifyContent="space-between"
         >
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 0, flex: 1, width: '100%' }}>
             {icon && (
               <Box
                 sx={{
-                  width: compact ? 44 : 56,
-                  height: compact ? 44 : 56,
+                  width: isCompact ? 44 : 56,
+                  height: isCompact ? 44 : 56,
                   borderRadius: 2.5,
                   flexShrink: 0,
                   display: 'flex',
@@ -171,18 +172,22 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   background: `linear-gradient(135deg, ${alpha(accent, 0.18)}, ${alpha(accent, 0.06)})`,
                   border: `1px solid ${alpha(accent, 0.25)}`,
                   boxShadow: `0 6px 16px -8px ${alpha(accent, 0.6)}`,
-                  '& svg': { fontSize: compact ? 24 : 30 },
+                  '& svg': { fontSize: isCompact ? 24 : 30 },
                 }}
               >
                 {icon}
               </Box>
             )}
-            <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
               {title && (
                 <Typography
-                  variant={compact ? 'h6' : 'h5'}
+                  variant={isCompact ? 'h6' : 'h5'}
                   fontWeight={800}
-                  sx={{ lineHeight: 1.2, wordBreak: 'break-word' }}
+                  sx={{
+                    lineHeight: 1.2,
+                    wordBreak: 'break-word',
+                    fontSize: { xs: '1.15rem', sm: '1.35rem' },
+                  }}
                 >
                   {title}
                 </Typography>
@@ -200,7 +205,19 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </Box>
           </Stack>
           {actions && (
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', flexShrink: 0 }}>
+            <Box
+              className="scrollbar-thin"
+              sx={{
+                display: 'flex',
+                gap: 1,
+                flexShrink: 0,
+                width: { xs: '100%', sm: 'auto' },
+                flexWrap: { xs: 'nowrap', sm: 'wrap' },
+                overflowX: { xs: 'auto', sm: 'visible' },
+                WebkitOverflowScrolling: 'touch',
+                pb: { xs: 0.5, sm: 0 },
+              }}
+            >
               {actions}
             </Box>
           )}
