@@ -546,8 +546,6 @@ export default function ViewerPage() {
             currentItemId={item.id}
             onOpenOutline={() => setOutlineOpen(true)}
           />
-          {/* Spacer so fixed bar on mobile doesn't overlap page bottom */}
-          {isMobile && <Box sx={{ height: 140 }} />}
         </>
       )}
 

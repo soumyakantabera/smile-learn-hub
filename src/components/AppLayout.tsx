@@ -34,7 +34,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { appConfig } from '@/config/app.config';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { MobileBottomNav, MOBILE_BOTTOM_NAV_HEIGHT } from '@/components/MobileBottomNav';
 
 const DRAWER_WIDTH = 260;
 
@@ -135,8 +135,20 @@ export function AppLayout({ children }: AppLayoutProps) {
     </Box>
   );
 
+  const isViewer = location.pathname.startsWith('/view/');
+  // Bottom padding accounts for floating ItemNavBar on /view/* and MobileBottomNav elsewhere
+  const mobileBottomPad = isViewer
+    ? `calc(180px + env(safe-area-inset-bottom))`
+    : `calc(${MOBILE_BOTTOM_NAV_HEIGHT + 24}px + env(safe-area-inset-bottom))`;
+
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: ['100vh', '100dvh'],
+        overflowX: 'hidden',
+      }}
+    >
       {/* App Bar */}
       <AppBar
         position="fixed"
@@ -214,7 +226,10 @@ export function AppLayout({ children }: AppLayoutProps) {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: 'min(300px, 86vw)',
+            },
           }}
         >
           {drawer}
@@ -243,12 +258,20 @@ export function AppLayout({ children }: AppLayoutProps) {
         sx={{
           flexGrow: 1,
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          minHeight: '100vh',
+          minWidth: 0,
+          minHeight: ['100vh', '100dvh'],
           bgcolor: 'background.default',
         }}
       >
         <Toolbar />
-        <Box sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 12, md: 3 } }}>{children}</Box>
+        <Box
+          sx={{
+            p: { xs: 2, sm: 3 },
+            pb: { xs: mobileBottomPad, md: 3 },
+          }}
+        >
+          {children}
+        </Box>
       </Box>
       <MobileBottomNav />
     </Box>
