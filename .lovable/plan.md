@@ -1,79 +1,103 @@
-## Mobile Layout Audit — Findings & Fixes
 
-Scope: every student/admin page on phone viewports (≤ md). All work is in presentation code; no business logic touched.
+# Learn with Smile — Auth, Admin CMS, Progress Sync & Visual Refresh
 
-### Issues found
+## 1. Backend (Lovable Cloud)
 
-1. **Bottom content hidden behind floating bars.** `AppLayout` uses one blanket `pb: { xs: 12 }` (96 px) for every page. On the Viewer the floating `ItemNavBar` plus 56-px `MobileBottomNav` plus iOS safe-area can reach ~180 px, so the last paragraph / "Finish" button gets covered. On non-viewer pages 96 px is more than needed, producing a dead gap above the bottom nav.
+Enable Lovable Cloud and provision:
 
-2. **Phantom 56-px gap below `ItemNavBar` on Viewer (mobile).** `MobileBottomNav` is hidden on `/view/*`, but `ItemNavBar` is still pinned to `bottom: 56` for `xs`, so it floats with a visible gap and content peeks underneath. The spacer `<Box height: 140>` in `Viewer.tsx` is a magic number that no longer matches.
+- **auth.users** — managed; email/password only, email confirmation OFF (admin creates accounts and shares credentials personally).
+- **profiles** — `id` (FK auth.users), `full_name`, `email`, `phone`, `avatar_url`, `created_at`. Auto-created on signup via trigger.
+- **user_roles** — `(user_id, role)` with enum `app_role` = `admin | student`. Read via `has_role()` SECURITY DEFINER. Never on profiles.
+- **enrollments** — `(user_id, course_id, enrolled_at, enrolled_by, status)`. Admin-only writes; user reads own.
+- **progress** — `(user_id, item_id, course_id, module_id, visited_at, completed, time_spent_seconds)`. Unique on `(user_id, item_id)`.
+- **quiz_attempts** — `(user_id, item_id, score, max_score, answers jsonb, attempted_at)`.
+- **resume_state** — `(user_id, course_id, last_item_id, last_module_id, updated_at)`. Unique on `(user_id, course_id)`.
+- **support_tickets** (optional log) — skip for now; CTA is direct WhatsApp deep link.
 
-3. **`100vh` causes Safari/Chrome address-bar clipping.** Outer `Box` and main `Box` in `AppLayout`, plus `Login`, `ProtectedRoute`, `NotFoundPage`, all use `minHeight: '100vh'`. On mobile this overshoots the visible area when the URL bar collapses, leaving a strip you can't scroll past on short pages, and triggers the "no vertical scroll" feeling on Dashboard when content is just under viewport.
+All tables: GRANTs to authenticated + service_role, RLS enabled, policies scoped to `auth.uid()` (admin overrides via `has_role(auth.uid(),'admin')`).
 
-4. **Horizontal scroll risk from `PageHeader` and `ItemDotsStrip`.** `PageHeader` breadcrumb `Stack` does not constrain width; long titles overflow the viewport on 360-px screens because `Chip` `maxWidth: 160` plus the icon tile plus action buttons can exceed 100 vw. The header's outer `Paper` lacks `overflow-x: hidden` on the wrapper, so the document body picks up an `overflow-x` scrollbar.
+`course_id` / `module_id` / `item_id` remain string IDs from the existing JSON content (no content migration this pass).
 
-5. **`PageHeader` actions / meta row stacks awkwardly on mobile.** On `Editor.tsx` the actions slot holds 6 icon buttons + Save + Publish; with `direction: { xs: 'column', sm: 'row' }` they collapse below the title but get `gap: 1` only, producing wrap with uneven height and no horizontal scroll fallback.
+## 2. Auth changes
 
-6. **Drawer width = 260 px on a 360-px phone** leaves only a 38-px tap-out gutter. Combined with `<Toolbar />` content padding (xs: `p: 2` = 16 px each side) the layout feels cramped.
+- Remove `public/passcodes.json`, `src/lib/auth.ts` passcode logic, batch-key concept from `SessionData`, `AuthContext`.
+- Rewrite `AuthContext` on Supabase: `onAuthStateChange` + `getSession`, `signInWithPassword`, `signOut`. No public signup UI.
+- New `/login` page — email + password, "forgot password" → `resetPasswordForEmail`, `/reset-password` page.
+- `ProtectedRoute` checks session; new `AdminRoute` checks `has_role('admin')`.
+- Seed one admin via SQL migration (email provided by user during build, or default `admin@learnwithsmile.local` with a generated temp password shown once).
 
-7. **AppBar height ≠ spacer height on short mobile.** `<Toolbar />` in main uses default `min-height`, but `AppBar` toolbar in landscape phones drops to 48 px; the spacer mismatch leaves a 8-px white strip under the bar.
+## 3. Progress sync
 
-8. **`pb` of 0 on Editor body** — `Editor.tsx` renders large tab panels that, on phones, push under the bottom nav because the Editor's own content already had its own padding.
+- `src/lib/progress.ts` — `markVisited(itemId)`, `markCompleted(itemId)`, `saveQuizAttempt(...)`, `setResume(courseId,itemId)`, plus realtime-friendly fetchers `useProgress(courseId)`, `useResume()`.
+- `Viewer.tsx`: on mount → markVisited + setResume + start time-spent timer; on unmount → flush time.
+- `ResumeCard` / `CourseProgressRail` / `ItemDotsStrip` read from DB instead of localStorage.
+- Dashboard gains a **My Progress** panel: per enrolled course → % complete, last opened item ("Resume"), total time, quiz best scores. Cross-device because it's server-side.
 
-### Fixes
+## 4. Admin CMS (`/admin/*`, admin-only)
 
-**A. `src/components/AppLayout.tsx`**
-- Replace `minHeight: '100vh'` with `minHeight: '100dvh'` (with `100vh` fallback) on both the outer flex `Box` and the main `Box`.
-- Add `overflowX: 'hidden'` on the outer flex `Box` to kill stray horizontal scroll.
-- Make the main content padding-bottom **route-aware**: read `useLocation()`; if path starts with `/view/`, use `pb: { xs: 'calc(180px + env(safe-area-inset-bottom))', md: 3 }`, else `pb: { xs: 'calc(80px + env(safe-area-inset-bottom))', md: 3 }`. Remove the magic `Box height: 140` spacer from `Viewer.tsx`.
-- Mobile `Drawer` width: `min(300px, 86vw)` instead of fixed 260.
-- Replace the manual `<Toolbar />` spacer with `theme.mixins.toolbar` `minHeight` so it auto-matches landscape/portrait toolbar heights.
+Replace the old `/editor` admin surface with a proper management console:
 
-**B. `src/components/MobileBottomNav.tsx`**
-- Already returns `null` on `/view/*` — keep, but export a constant `MOBILE_BOTTOM_NAV_HEIGHT = 56` so `AppLayout` can reuse it.
+- `/admin` — overview: user count, active today, enrollments, recent signups.
+- `/admin/users` — list, search, create user (email + temp password, copy-to-clipboard toast), edit profile, reset password, disable, delete.
+- `/admin/enrollments` — pick user → toggle courses on/off; bulk enroll by course.
+- `/admin/content` — keep existing JSON editor (`Editor.tsx`) under this route, unchanged behavior.
+- `/admin/progress` — read-only table: per user/course progress + last seen.
 
-**C. `src/components/viewer/ItemNavBar.tsx`**
-- Mobile `Paper` uses `bottom: 0` (not 56). The route hides `MobileBottomNav`, so the nav bar sits flush above the safe-area. Keep `pb: env(safe-area-inset-bottom)`.
-- Cap the Paper at `maxWidth: '100vw'` and add `overflowX: 'hidden'` to prevent the dots strip from leaking horizontally.
+User creation uses an edge function `admin-create-user` (service-role key) that: validates admin caller via JWT + `has_role`, calls `auth.admin.createUser({ email, password, email_confirm: true })`, inserts profile + role.
 
-**D. `src/components/PageHeader.tsx`**
-- Wrap the breadcrumb `Stack` in a `Box` with `overflowX: 'auto'`, `flexWrap: 'nowrap'`, and hide the scrollbar (`scrollbar-thin` class). Chips stay on one line and scroll horizontally if too long — standard app pattern.
-- On `xs`, reduce icon tile from 56→44 px (force `compact` on small screens via `useMediaQuery`).
-- Cap title with `wordBreak: 'break-word'` (already) and add `fontSize: { xs: '1.15rem', sm: '1.35rem' }`.
-- Actions row on `xs`: `width: 100%`, `overflowX: 'auto'`, `flexWrap: 'nowrap'`, `-webkit-overflow-scrolling: touch`, so a long admin toolbar scrolls horizontally instead of stacking.
+## 5. Support CTA
 
-**E. `src/pages/Login.tsx`, `src/pages/NotFoundPage.tsx`, `src/components/ProtectedRoute.tsx`**
-- Swap `minHeight: '100vh'` → `minHeight: '100dvh'`.
+Floating button in `AppLayout` (and a card on Dashboard + Help page) → `https://wa.me/919674479949?text=...` with prefilled message including user email + current page. Mobile: lives above the bottom nav, respects safe-area.
 
-**F. `src/pages/Viewer.tsx`**
-- Remove the conditional 140-px spacer (handled centrally in `AppLayout` now).
-- Add `sx={{ maxWidth: '100%', overflowX: 'hidden' }}` on any iframe/video container that currently can overshoot (PDF iframe is 600 px tall, fine; verify with viewport-based `height: { xs: '70vh', md: 600 }`).
+## 6. Visual refresh — Indigo + Coral, mobile-first
 
-**G. `src/index.css`**
-- Add a global safety rule:
-  ```css
-  html, body, #root { max-width: 100vw; overflow-x: hidden; }
-  ```
-  Prevents accidental horizontal scroll if any future child overflows.
+Design tokens in `src/index.css` + `tailwind.config.ts` + `muiTheme.ts` (all three in sync):
 
-### Out of scope
-- No content-data or context/state changes.
-- No editor logic, no auth, no navigation routes added.
-- No new dependencies.
+```
+--primary:        239 84% 60%   /* Indigo #4F46E5 */
+--primary-glow:   250 92% 72%
+--accent:         38 92% 50%    /* Amber #F59E0B */
+--destructive:    0 84% 60%     /* Coral/Red #EF4444 */
+--background:     210 40% 98%   /* #F8FAFC */
+--foreground:     222 47% 11%   /* #0F172A */
+--card / --muted / --border tuned to match
+--gradient-primary: linear-gradient(135deg, hsl(239 84% 60%), hsl(38 92% 50%))
+--gradient-hero:    linear-gradient(140deg, hsl(239 84% 60% / .12), hsl(38 92% 50% / .08))
+--shadow-elegant:   0 18px 40px -18px hsl(239 84% 60% / .35)
+```
 
-### Files touched
-- `src/components/AppLayout.tsx`
-- `src/components/MobileBottomNav.tsx`
-- `src/components/PageHeader.tsx`
-- `src/components/viewer/ItemNavBar.tsx`
-- `src/pages/Viewer.tsx`
-- `src/pages/Login.tsx`
-- `src/pages/NotFoundPage.tsx`
-- `src/components/ProtectedRoute.tsx`
-- `src/index.css`
+Dark mode mirrored (deeper navy bg, indigo stays vibrant, coral as accent pop).
 
-### Verification
-After build, drive Playwright at 390×674 to:
-1. Scroll `/` to bottom — confirm last "Recently Added" card is fully visible above the bottom nav.
-2. Scroll `/view/<item>` — confirm Finish button reachable, nav bar flush with safe-area.
-3. Rotate viewport (drag the device toggle to tablet) — confirm no horizontal scrollbar appears on any route.
+Typography (via `@fontsource`): **Outfit** for headings, **Inter** for body. No purple gradients, no generic AI look.
+
+Component pass:
+- New gradient hero header on Dashboard with greeting + streak chip + WhatsApp CTA.
+- `PageHeader` — softer rounded breadcrumb pills, gradient icon tile uses `--gradient-primary`, mobile compact mode shrinks to 44px tile + single-line truncating title.
+- Course / Module / Item cards — `rounded-2xl`, `shadow-elegant` on hover, coral accent ring on "in progress", amber chip on "new".
+- `MobileBottomNav` — 64px tall, 5 slots max, active item gets gradient pill + label, blurred bg (`backdrop-blur`), safe-area aware.
+- `ItemNavBar` — pill-shaped floating bar on mobile, sits above bottom nav with 12px gap, prev/next as 44×44 tap targets, center shows progress ring.
+- `ItemDotsStrip` — horizontally scrollable on mobile with snap, current dot scales 1.4× with coral glow.
+- `Login` — split-card on desktop (gradient panel left, form right), single elegant card on mobile, large 48px touch inputs.
+- Admin pages — same tokens, denser tables on desktop, card list on mobile (no horizontal scroll).
+
+Mobile audit carry-over (already done previously) stays in place; this pass tightens spacing scale to a 4px base, ensures 16px page gutters on xs, 24px on sm+.
+
+## 7. Cleanup
+
+Delete: `public/passcodes.json`, batch-key UI, demo passcode hint on Login, `appConfig.session.storageKey` (Supabase manages session).
+
+Keep: existing content JSON, content navigation lib, viewer drawers/strips (rewired to DB progress).
+
+## Out of scope
+
+- Migrating content JSON into the DB (still file-driven).
+- Email customization (uses default Lovable auth emails for password reset only).
+- Multi-tenant batches (replaced by per-user enrollments).
+
+## Files (high-level)
+
+**New:** `src/contexts/AuthContext.tsx` (rewritten), `src/lib/progress.ts`, `src/hooks/useProgress.ts`, `src/hooks/useEnrollments.ts`, `src/components/AdminRoute.tsx`, `src/components/SupportFab.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/admin/AdminDashboard.tsx`, `src/pages/admin/Users.tsx`, `src/pages/admin/Enrollments.tsx`, `src/pages/admin/ProgressOverview.tsx`, `supabase/functions/admin-create-user/index.ts`.
+
+**Edited:** `src/App.tsx` (routes), `src/pages/Login.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Viewer.tsx`, `src/components/AppLayout.tsx`, `src/components/MobileBottomNav.tsx`, `src/components/PageHeader.tsx`, `src/components/viewer/*`, `src/index.css`, `tailwind.config.ts`, `src/theme/muiTheme.ts`, `src/config/app.config.ts` (add WhatsApp number).
+
+**Deleted:** `public/passcodes.json`, passcode hashing helpers in `src/lib/auth.ts` (file kept but trimmed or removed).

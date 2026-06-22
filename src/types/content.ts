@@ -50,17 +50,11 @@ export interface Course {
   status?: CourseStatus;
 }
 
+// Legacy batch type kept for editor compatibility (no longer used for access control).
 export interface Batch {
   name: string;
   description: string;
   courses: string[];
-}
-
-export interface PasscodeEntry {
-  hash: string;
-  batchKey: string;
-  label: string;
-  isAdmin?: boolean;
 }
 
 export interface ContentData {
@@ -70,14 +64,16 @@ export interface ContentData {
   items: Record<string, ContentItem>;
 }
 
-export interface SessionData {
-  batchKey: string;
-  batchLabel: string;
-  expiresAt: number;
-  isAdmin?: boolean;
-}
-
 export interface DraftContentData extends ContentData {
   lastModified: number;
   isDraft: boolean;
+}
+
+// Session info derived from Supabase auth + role tables
+export interface SessionUser {
+  id: string;
+  email: string;
+  fullName: string | null;
+  phone: string | null;
+  isAdmin: boolean;
 }

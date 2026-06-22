@@ -49,11 +49,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getItem, getModule, getCourse } from '@/lib/content';
 import {
   getAdjacentItems,
-  rememberVisitedItem,
-  rememberVisitedModule,
-  markItemVisited,
   getVisitedItems,
 } from '@/lib/contentNavigation';
+import {
+  markItemVisited as dbMarkVisited,
+  setResume as dbSetResume,
+  addTimeSpent,
+} from '@/lib/progress';
+import { useProgress } from '@/hooks/useProgress';
 import { AppLayout } from '@/components/AppLayout';
 import { ItemNavBar } from '@/components/viewer/ItemNavBar';
 import { ModuleOutlineDrawer } from '@/components/viewer/ModuleOutlineDrawer';
@@ -117,13 +120,21 @@ export default function ViewerPage() {
   // Compute navigation context
   const adj = content && itemId ? getAdjacentItems(content, itemId) : null;
 
-  // Remember last visited
+  // Ensure progress cache loaded
+  useProgress();
+
+  // Mark item visited + set resume in DB; track time spent.
   useEffect(() => {
-    if (adj?.course && itemId) {
-      rememberVisitedItem(adj.course.id, itemId);
-      markItemVisited(adj.course.id, itemId);
-      if (adj.module) rememberVisitedModule(adj.course.id, adj.module.id);
-    }
+    if (!adj?.course || !adj?.module || !itemId) return;
+    const courseId = adj.course.id;
+    const moduleId = adj.module.id;
+    dbMarkVisited({ itemId, courseId, moduleId });
+    dbSetResume({ itemId, courseId, moduleId });
+    const startedAt = Date.now();
+    return () => {
+      const seconds = Math.round((Date.now() - startedAt) / 1000);
+      if (seconds > 2) addTimeSpent(itemId, seconds);
+    };
   }, [adj?.course?.id, adj?.module?.id, itemId]);
 
   const visited = adj?.course ? getVisitedItems(adj.course.id) : new Set<string>();
@@ -185,7 +196,7 @@ export default function ViewerPage() {
       `📚 Homework Submission`,
       ``,
       `Student Name: ${studentName || '[Your Name]'}`,
-      `Batch: ${session?.batchLabel || 'Unknown'}`,
+      `Student: ${session?.fullName || session?.email || 'Unknown'}`,
       `Course: ${course?.title || 'Unknown'}`,
       `Module: ${module?.title || 'Unknown'}`,
       `Assignment: ${item.title}`,

@@ -13,6 +13,8 @@ import {
   ListItemText,
   Alert,
   Chip,
+  Button,
+  Stack,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -20,9 +22,7 @@ import {
   School as SchoolIcon,
   Assignment as AssignmentIcon,
   WhatsApp as WhatsAppIcon,
-  Email as EmailIcon,
   Lock as LockIcon,
-  Search as SearchIcon,
   PlayArrow as PlayIcon,
   Description as DocIcon,
 } from '@mui/icons-material';
@@ -31,217 +31,164 @@ import { appConfig } from '@/config/app.config';
 
 const faqItems = [
   {
+    question: 'How do I get an account?',
+    answer:
+      'Your instructor creates your account and shares your email and temporary password personally. There is no public sign up.',
+  },
+  {
     question: 'How do I access my course materials?',
-    answer: 'After logging in with your batch passcode, you\'ll see your dashboard with all available courses. Click on any course to see its modules, then click on any module to access the learning materials.',
+    answer:
+      'Once logged in, your dashboard shows all courses you have been enrolled in. Click a course → choose a module → open any item.',
+  },
+  {
+    question: 'Will my progress sync across devices?',
+    answer:
+      'Yes. Progress, last opened item, and quiz attempts are stored in your account, so signing in on a different device will pick up exactly where you left off.',
   },
   {
     question: 'How do I submit homework?',
-    answer: 'Navigate to the homework item in any module. You\'ll see a submission panel where you can enter your name and submit via WhatsApp or Email. The message template will be pre-filled with your batch and course information.',
+    answer:
+      'Open a homework item and use the WhatsApp or Email submission button. The message is pre-filled with your name and course context.',
   },
   {
-    question: 'Can I download the materials?',
-    answer: 'Yes! Most materials (PDFs, documents, presentations, spreadsheets) have a download option. Click the "Download" button when viewing the material.',
-  },
-  {
-    question: 'How do I search for specific content?',
-    answer: 'Go to the Courses page and use the search bar at the top. You can also filter by content type (video, PDF, etc.) or by tags.',
-  },
-  {
-    question: 'Why can\'t I view some documents?',
-    answer: 'Some documents require an external viewer. Click "View in Google Docs" or "View in Microsoft Office" to open them in a compatible viewer.',
-  },
-  {
-    question: 'How long does my login session last?',
-    answer: `Your session lasts for ${appConfig.session.expiryHours} hours. After that, you'll need to log in again with your batch passcode.`,
+    question: 'I forgot my password — what now?',
+    answer:
+      'Tap "Support" or message the WhatsApp number below and an admin will reset your password.',
   },
 ];
 
 export default function HelpPage() {
+  const waUrl = `https://wa.me/${appConfig.support.whatsappNumber}?text=${encodeURIComponent(
+    `Hi! I need help with ${appConfig.appName}.`,
+  )}`;
+
   return (
     <AppLayout>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
-          Help & Instructions
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" fontWeight={800} gutterBottom>
+          Help & instructions
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Learn how to use the learning platform effectively
+          Quick answers and a direct line to support.
         </Typography>
       </Box>
 
-      {/* Quick Start Guide */}
+      <Card
+        sx={{
+          mb: 4,
+          borderRadius: 3,
+          background: 'var(--gradient-hero)',
+          border: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <CardContent
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 2,
+            p: { xs: 2.5, sm: 3 },
+          }}
+        >
+          <Box>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+              <WhatsAppIcon sx={{ color: '#25D366' }} />
+              <Typography variant="h6" fontWeight={800}>
+                Talk to support on WhatsApp
+              </Typography>
+            </Stack>
+            <Typography variant="body2" color="text.secondary">
+              We&apos;ll reply quickly at {appConfig.support.label}.
+            </Typography>
+          </Box>
+          <Button
+            href={waUrl}
+            target="_blank"
+            rel="noopener"
+            variant="contained"
+            size="large"
+            startIcon={<WhatsAppIcon />}
+            sx={{
+              bgcolor: '#25D366',
+              '&:hover': { bgcolor: '#1ebe5d' },
+              px: 3,
+            }}
+          >
+            Open WhatsApp
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card sx={{ mb: 4 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
             <SchoolIcon color="primary" />
-            <Typography variant="h5" fontWeight={600}>
-              Quick Start Guide
+            <Typography variant="h6" fontWeight={700}>
+              Quick start
             </Typography>
-          </Box>
+          </Stack>
           <List>
-            <ListItem>
-              <ListItemIcon>
-                <Chip label="1" size="small" color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Login with your Batch Passcode"
-                secondary="Your instructor will provide you with a passcode for your batch"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <Chip label="2" size="small" color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Browse Courses"
-                secondary="View all available courses on your dashboard or the Courses page"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <Chip label="3" size="small" color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Access Learning Materials"
-                secondary="Click on modules to see videos, documents, and other resources"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <Chip label="4" size="small" color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Submit Homework"
-                secondary="Use the WhatsApp or Email submission options for assignments"
-              />
-            </ListItem>
+            {['Sign in with your email and password', 'Open a course from your dashboard', 'Pick a module and view items', 'Submit homework via WhatsApp/Email'].map(
+              (text, i) => (
+                <ListItem key={i}>
+                  <ListItemIcon>
+                    <Chip label={i + 1} size="small" color="primary" sx={{ fontWeight: 800 }} />
+                  </ListItemIcon>
+                  <ListItemText primary={text} primaryTypographyProps={{ fontWeight: 600 }} />
+                </ListItem>
+              ),
+            )}
           </List>
         </CardContent>
       </Card>
 
-      {/* Content Types */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
             <DocIcon color="primary" />
-            <Typography variant="h5" fontWeight={600}>
-              Content Types
+            <Typography variant="h6" fontWeight={700}>
+              Content types
             </Typography>
-          </Box>
+          </Stack>
           <List dense>
             <ListItem>
-              <ListItemIcon>
-                <PlayIcon sx={{ color: '#1976D2' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary="Videos"
-                secondary="Watch directly in the app with playback controls"
-              />
+              <ListItemIcon><PlayIcon sx={{ color: 'hsl(217, 92%, 60%)' }} /></ListItemIcon>
+              <ListItemText primary="Videos" secondary="Watch directly in the app" />
             </ListItem>
             <ListItem>
-              <ListItemIcon>
-                <DocIcon sx={{ color: '#D32F2F' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary="PDFs"
-                secondary="View inline or download for offline reading"
-              />
+              <ListItemIcon><DocIcon sx={{ color: 'hsl(0, 84%, 60%)' }} /></ListItemIcon>
+              <ListItemText primary="PDFs & documents" secondary="View inline or download" />
             </ListItem>
             <ListItem>
-              <ListItemIcon>
-                <DocIcon sx={{ color: '#2196F3' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary="Documents, Presentations, Spreadsheets"
-                secondary="Download or preview using Google Docs / Microsoft Office viewer"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <AssignmentIcon sx={{ color: '#FF9800' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary="Homework"
-                secondary="View instructions and submit via WhatsApp or Email"
-              />
+              <ListItemIcon><AssignmentIcon sx={{ color: 'hsl(38, 92%, 50%)' }} /></ListItemIcon>
+              <ListItemText primary="Homework" secondary="Submit via WhatsApp or Email" />
             </ListItem>
           </List>
         </CardContent>
       </Card>
 
-      {/* Homework Submission */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <AssignmentIcon color="primary" />
-            <Typography variant="h5" fontWeight={600}>
-              Homework Submission
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            When you complete a homework assignment, follow these steps:
-          </Typography>
-          <List dense>
-            <ListItem>
-              <ListItemIcon>
-                <Chip label="1" size="small" />
-              </ListItemIcon>
-              <ListItemText primary="Navigate to the homework item" />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <Chip label="2" size="small" />
-              </ListItemIcon>
-              <ListItemText primary="Enter your name in the submission form" />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon>
-                <Chip label="3" size="small" />
-              </ListItemIcon>
-              <ListItemText primary="Choose your submission method:" />
-            </ListItem>
-          </List>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', ml: 4, mt: 1 }}>
-            <Chip
-              icon={<WhatsAppIcon />}
-              label={`WhatsApp: +${appConfig.submission.whatsappNumber}`}
-              color="success"
-              variant="outlined"
-            />
-            <Chip
-              icon={<EmailIcon />}
-              label={`Email: ${appConfig.submission.email}`}
-              color="primary"
-              variant="outlined"
-            />
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Security Notice */}
-      <Alert severity="info" sx={{ mb: 4 }} icon={<LockIcon />}>
-        <Typography variant="subtitle2" fontWeight={600}>
-          Security Notice
+      <Alert severity="info" sx={{ mb: 4, borderRadius: 3 }} icon={<LockIcon />}>
+        <Typography variant="subtitle2" fontWeight={700}>
+          Your data is private
         </Typography>
         <Typography variant="body2">
-          This platform uses client-side passcode validation for basic access control. 
-          This is suitable for limiting access to educational materials but is not intended 
-          for protecting highly sensitive information. All passcodes are stored as SHA-256 hashes.
+          You can only see your own progress and enrolled courses. Admins see everything for moderation.
         </Typography>
       </Alert>
 
-      {/* FAQ */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+      <Box>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <HelpIcon color="primary" />
-          <Typography variant="h5" fontWeight={600}>
-            Frequently Asked Questions
+          <Typography variant="h6" fontWeight={700}>
+            Frequently asked questions
           </Typography>
-        </Box>
+        </Stack>
         {faqItems.map((item, index) => (
-          <Accordion key={index} sx={{ mb: 1 }}>
+          <Accordion key={index} sx={{ mb: 1, borderRadius: 2, '&:before': { display: 'none' } }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography fontWeight={500}>{item.question}</Typography>
+              <Typography fontWeight={600}>{item.question}</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2" color="text.secondary">
@@ -251,29 +198,6 @@ export default function HelpPage() {
           </Accordion>
         ))}
       </Box>
-
-      {/* Contact */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" fontWeight={600} gutterBottom>
-            Need More Help?
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Contact your instructor or batch coordinator for:
-          </Typography>
-          <List dense>
-            <ListItem>
-              <ListItemText primary="• Forgotten or lost batch passcodes" />
-            </ListItem>
-            <ListItem>
-              <ListItemText primary="• Technical issues with viewing content" />
-            </ListItem>
-            <ListItem>
-              <ListItemText primary="• Questions about homework or course material" />
-            </ListItem>
-          </List>
-        </CardContent>
-      </Card>
     </AppLayout>
   );
 }
