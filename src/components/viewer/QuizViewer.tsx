@@ -19,12 +19,16 @@ import {
   Replay as RetryIcon,
 } from '@mui/icons-material';
 import type { ContentItem, QuizQuestion } from '@/types/content';
+import { saveQuizAttempt } from '@/lib/progress';
+import { getModule, getCourse } from '@/lib/content';
+import { useContent } from '@/contexts/ContentContext';
 
 interface QuizViewerProps {
   item: ContentItem;
 }
 
 export function QuizViewer({ item }: QuizViewerProps) {
+  const { content } = useContent();
   const questions = item.quizQuestions || [];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -32,6 +36,23 @@ export function QuizViewer({ item }: QuizViewerProps) {
   const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>(new Array(questions.length).fill(null));
+  const [savedAttempt, setSavedAttempt] = useState(false);
+
+  // Save quiz attempt to DB on completion (once)
+  React.useEffect(() => {
+    if (isComplete && !savedAttempt) {
+      const module = content ? getModule(content, item.moduleId) : null;
+      const course = module && content ? getCourse(content, module.courseId) : null;
+      saveQuizAttempt({
+        itemId: item.id,
+        courseId: course?.id,
+        score,
+        maxScore: questions.length,
+        answers,
+      });
+      setSavedAttempt(true);
+    }
+  }, [isComplete, savedAttempt, content, item, score, questions.length, answers]);
 
   if (questions.length === 0) {
     return (
