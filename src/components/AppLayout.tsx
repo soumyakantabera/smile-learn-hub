@@ -19,6 +19,7 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Chip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -30,25 +31,31 @@ import {
   Logout as LogoutIcon,
   Person as PersonIcon,
   Edit as EditIcon,
+  AdminPanelSettings as AdminIcon,
+  Group as GroupIcon,
+  Insights as InsightsIcon,
+  Workspaces as WorkspacesIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { appConfig } from '@/config/app.config';
 import { MobileBottomNav, MOBILE_BOTTOM_NAV_HEIGHT } from '@/components/MobileBottomNav';
+import { SupportFab } from '@/components/SupportFab';
 
-const DRAWER_WIDTH = 260;
+const DRAWER_WIDTH = 272;
 
-const getNavItems = (isAdmin: boolean) => {
-  const items = [
-    { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
-    { label: 'Courses', path: '/courses', icon: <SchoolIcon /> },
-    { label: 'Help', path: '/help', icon: <HelpIcon /> },
-  ];
-  if (isAdmin) {
-    items.push({ label: 'Course Editor', path: '/editor', icon: <EditIcon /> });
-  }
-  return items;
-};
+const baseNav = [
+  { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
+  { label: 'Courses', path: '/courses', icon: <SchoolIcon /> },
+  { label: 'Help', path: '/help', icon: <HelpIcon /> },
+];
+const adminNav = [
+  { label: 'Admin Console', path: '/admin', icon: <AdminIcon /> },
+  { label: 'Users', path: '/admin/users', icon: <GroupIcon /> },
+  { label: 'Enrollments', path: '/admin/enrollments', icon: <WorkspacesIcon /> },
+  { label: 'Progress', path: '/admin/progress', icon: <InsightsIcon /> },
+  { label: 'Content Editor', path: '/editor', icon: <EditIcon /> },
+];
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -64,39 +71,58 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
+  const handleDrawerToggle = () => setMobileOpen((v) => !v);
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleLogout = async () => {
     handleMenuClose();
-    logout();
+    await logout();
     navigate('/login');
   };
 
+  const isAdmin = !!session?.isAdmin;
+  const nav = [...baseNav, ...(isAdmin ? adminNav : [])];
+
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <SchoolIcon color="primary" sx={{ fontSize: 32 }} />
-        <Typography variant="h6" color="primary" fontWeight={700}>
-          {appConfig.appName}
-        </Typography>
+      <Box
+        sx={{
+          p: 2.5,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          background: 'var(--gradient-primary)',
+          color: 'primary.contrastText',
+        }}
+      >
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: 1.5,
+            bgcolor: 'rgba(255,255,255,0.18)',
+            display: 'grid',
+            placeItems: 'center',
+          }}
+        >
+          <SchoolIcon />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="subtitle1" fontWeight={800} sx={{ lineHeight: 1.1 }} noWrap>
+            {appConfig.appName}
+          </Typography>
+          <Typography variant="caption" sx={{ opacity: 0.85 }}>
+            Learning portal
+          </Typography>
+        </Box>
       </Box>
-      <Divider />
-      <List sx={{ flex: 1, pt: 2 }}>
-        {getNavItems(session?.isAdmin || false).map((item) => {
-          const isActive = location.pathname === item.path || 
+      <List sx={{ flex: 1, py: 1.5, px: 1 }}>
+        {nav.map((item) => {
+          const isActive =
+            location.pathname === item.path ||
             (item.path !== '/' && location.pathname.startsWith(item.path));
           return (
-            <ListItem key={item.path} disablePadding sx={{ px: 1, mb: 0.5 }}>
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 component={Link}
                 to={item.path}
@@ -104,20 +130,21 @@ export function AppLayout({ children }: AppLayoutProps) {
                 onClick={() => isMobile && setMobileOpen(false)}
                 sx={{
                   borderRadius: 2,
+                  py: 1.25,
                   '&.Mui-selected': {
-                    bgcolor: 'primary.main',
+                    background: 'var(--gradient-primary)',
                     color: 'primary.contrastText',
-                    '&:hover': {
-                      bgcolor: 'primary.dark',
-                    },
-                    '& .MuiListItemIcon-root': {
-                      color: 'inherit',
-                    },
+                    '&:hover': { filter: 'brightness(1.05)' },
+                    '& .MuiListItemIcon-root': { color: 'inherit' },
                   },
+                  '&:hover': { bgcolor: 'action.hover' },
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.label} />
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
+                />
               </ListItemButton>
             </ListItem>
           );
@@ -125,31 +152,41 @@ export function AppLayout({ children }: AppLayoutProps) {
       </List>
       <Divider />
       <Box sx={{ p: 2 }}>
-        <Typography variant="caption" color="text.secondary">
-          Logged in as
-        </Typography>
-        <Typography variant="body2" fontWeight={500} noWrap>
-          {session?.batchLabel || 'Guest'}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar
+            sx={{
+              width: 38,
+              height: 38,
+              background: 'var(--gradient-primary)',
+              fontSize: 14,
+              fontWeight: 700,
+            }}
+          >
+            {(session?.fullName || session?.email || '?').slice(0, 1).toUpperCase()}
+          </Avatar>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="body2" fontWeight={700} noWrap>
+              {session?.fullName || session?.email?.split('@')[0] || 'Guest'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {session?.email}
+            </Typography>
+          </Box>
+          {isAdmin && (
+            <Chip label="Admin" size="small" color="secondary" sx={{ fontWeight: 700 }} />
+          )}
+        </Box>
       </Box>
     </Box>
   );
 
   const isViewer = location.pathname.startsWith('/view/');
-  // Bottom padding accounts for floating ItemNavBar on /view/* and MobileBottomNav elsewhere
   const mobileBottomPad = isViewer
     ? `calc(180px + env(safe-area-inset-bottom))`
     : `calc(${MOBILE_BOTTOM_NAV_HEIGHT + 24}px + env(safe-area-inset-bottom))`;
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        minHeight: ['100vh', '100dvh'],
-        overflowX: 'hidden',
-      }}
-    >
-      {/* App Bar */}
+    <Box sx={{ display: 'flex', minHeight: ['100vh', '100dvh'], overflowX: 'hidden' }}>
       <AppBar
         position="fixed"
         color="inherit"
@@ -159,6 +196,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           ml: { md: `${DRAWER_WIDTH}px` },
           borderBottom: 1,
           borderColor: 'divider',
+          backdropFilter: 'saturate(180%) blur(8px)',
+          backgroundColor: (t) =>
+            t.palette.mode === 'dark' ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.85)',
         }}
       >
         <Toolbar>
@@ -166,17 +206,23 @@ export function AppLayout({ children }: AppLayoutProps) {
             color="inherit"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ mr: 1, display: { md: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}>
-            {getNavItems(session?.isAdmin || false).find(item => 
-              location.pathname === item.path || 
-              (item.path !== '/' && location.pathname.startsWith(item.path))
+          <Typography
+            variant="subtitle1"
+            component="div"
+            fontWeight={700}
+            sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
+          >
+            {nav.find(
+              (item) =>
+                location.pathname === item.path ||
+                (item.path !== '/' && location.pathname.startsWith(item.path)),
             )?.label || appConfig.appName}
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
               <IconButton onClick={toggleTheme} color="inherit">
                 {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
@@ -184,8 +230,16 @@ export function AppLayout({ children }: AppLayoutProps) {
             </Tooltip>
             <Tooltip title="Account">
               <IconButton onClick={handleMenuOpen} sx={{ p: 0.5 }}>
-                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                  <PersonIcon fontSize="small" />
+                <Avatar
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    background: 'var(--gradient-primary)',
+                    fontSize: 14,
+                    fontWeight: 700,
+                  }}
+                >
+                  {(session?.fullName || session?.email || '?').slice(0, 1).toUpperCase()}
                 </Avatar>
               </IconButton>
             </Tooltip>
@@ -198,9 +252,14 @@ export function AppLayout({ children }: AppLayoutProps) {
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           >
             <MenuItem disabled>
-              <Typography variant="body2" color="text.secondary">
-                {session?.batchLabel}
-              </Typography>
+              <Box sx={{ minWidth: 180 }}>
+                <Typography variant="body2" fontWeight={700} noWrap>
+                  {session?.fullName || session?.email?.split('@')[0]}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {session?.email}
+                </Typography>
+              </Box>
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout}>
@@ -213,12 +272,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar */}
-      <Box
-        component="nav"
-        sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
-      >
-        {/* Mobile drawer */}
+      <Box component="nav" sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}>
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -234,7 +288,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         >
           {drawer}
         </Drawer>
-        {/* Desktop drawer */}
         <Drawer
           variant="permanent"
           sx={{
@@ -252,7 +305,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         </Drawer>
       </Box>
 
-      {/* Main content */}
       <Box
         component="main"
         sx={{
@@ -274,6 +326,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </Box>
       </Box>
       <MobileBottomNav />
+      {session && <SupportFab />}
     </Box>
   );
 }
