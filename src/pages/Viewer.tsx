@@ -49,11 +49,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getItem, getModule, getCourse } from '@/lib/content';
 import {
   getAdjacentItems,
-  rememberVisitedItem,
-  rememberVisitedModule,
-  markItemVisited,
   getVisitedItems,
 } from '@/lib/contentNavigation';
+import {
+  markItemVisited as dbMarkVisited,
+  setResume as dbSetResume,
+  addTimeSpent,
+} from '@/lib/progress';
+import { useProgress } from '@/hooks/useProgress';
 import { AppLayout } from '@/components/AppLayout';
 import { ItemNavBar } from '@/components/viewer/ItemNavBar';
 import { ModuleOutlineDrawer } from '@/components/viewer/ModuleOutlineDrawer';
