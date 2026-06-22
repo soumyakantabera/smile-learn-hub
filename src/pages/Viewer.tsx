@@ -185,7 +185,7 @@ export default function ViewerPage() {
       `📚 Homework Submission`,
       ``,
       `Student Name: ${studentName || '[Your Name]'}`,
-      `Batch: ${session?.batchLabel || 'Unknown'}`,
+      `Student: ${session?.fullName || session?.email || 'Unknown'}`,
       `Course: ${course?.title || 'Unknown'}`,
       `Module: ${module?.title || 'Unknown'}`,
       `Assignment: ${item.title}`,
