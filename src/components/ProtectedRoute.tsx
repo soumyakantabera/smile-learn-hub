@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
+import { loadProgress, isProgressLoaded, resetProgressCache } from '@/lib/progress';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { session, isLoading } = useAuth();
+  const { session, isLoading, user } = useAuth();
   const location = useLocation();
+
+  // Load progress cache once per signed-in user so all child pages have access.
+  useEffect(() => {
+    if (user) {
+      if (!isProgressLoaded()) loadProgress();
+    } else {
+      resetProgressCache();
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
