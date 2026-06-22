@@ -1,167 +1,102 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 
-// Shared theme options
 const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
   palette: {
     mode,
     ...(mode === 'light'
       ? {
-          // Light mode
           primary: {
-            main: 'hsl(173, 58%, 39%)',
-            light: 'hsl(173, 58%, 55%)',
-            dark: 'hsl(173, 58%, 29%)',
+            main: 'hsl(239, 84%, 60%)',
+            light: 'hsl(250, 92%, 72%)',
+            dark: 'hsl(239, 84%, 48%)',
             contrastText: '#ffffff',
           },
           secondary: {
-            main: 'hsl(16, 85%, 66%)',
-            light: 'hsl(16, 85%, 76%)',
-            dark: 'hsl(16, 85%, 50%)',
-            contrastText: '#ffffff',
+            main: 'hsl(38, 92%, 50%)',
+            light: 'hsl(38, 92%, 65%)',
+            dark: 'hsl(38, 92%, 40%)',
+            contrastText: 'hsl(222, 47%, 11%)',
           },
           background: {
-            default: 'hsl(210, 20%, 98%)',
+            default: 'hsl(210, 40%, 98%)',
             paper: '#ffffff',
           },
           text: {
             primary: 'hsl(222, 47%, 11%)',
             secondary: 'hsl(215, 16%, 47%)',
           },
-          success: {
-            main: 'hsl(142, 71%, 45%)',
-          },
-          warning: {
-            main: 'hsl(38, 92%, 50%)',
-          },
-          info: {
-            main: 'hsl(199, 89%, 48%)',
-          },
-          error: {
-            main: 'hsl(0, 84%, 60%)',
-          },
-          divider: 'hsl(214, 32%, 91%)',
+          success: { main: 'hsl(152, 65%, 44%)' },
+          warning: { main: 'hsl(38, 92%, 50%)' },
+          info: { main: 'hsl(217, 92%, 60%)' },
+          error: { main: 'hsl(0, 84%, 60%)' },
+          divider: 'hsl(220, 20%, 90%)',
         }
       : {
-          // Dark mode
           primary: {
-            main: 'hsl(173, 58%, 45%)',
-            light: 'hsl(173, 58%, 55%)',
-            dark: 'hsl(173, 58%, 35%)',
-            contrastText: '#ffffff',
+            main: 'hsl(239, 90%, 70%)',
+            light: 'hsl(250, 95%, 80%)',
+            dark: 'hsl(239, 90%, 60%)',
+            contrastText: 'hsl(222, 47%, 8%)',
           },
           secondary: {
-            main: 'hsl(16, 85%, 60%)',
-            light: 'hsl(16, 85%, 70%)',
-            dark: 'hsl(16, 85%, 45%)',
-            contrastText: '#ffffff',
+            main: 'hsl(38, 92%, 55%)',
+            light: 'hsl(38, 92%, 70%)',
+            dark: 'hsl(38, 92%, 45%)',
+            contrastText: 'hsl(222, 47%, 11%)',
           },
           background: {
-            default: 'hsl(222, 47%, 8%)',
-            paper: 'hsl(222, 47%, 11%)',
+            default: 'hsl(222, 47%, 6%)',
+            paper: 'hsl(222, 47%, 10%)',
           },
           text: {
             primary: 'hsl(210, 40%, 98%)',
-            secondary: 'hsl(215, 20%, 65%)',
+            secondary: 'hsl(215, 20%, 70%)',
           },
-          success: {
-            main: 'hsl(142, 71%, 40%)',
-          },
-          warning: {
-            main: 'hsl(38, 92%, 45%)',
-          },
-          info: {
-            main: 'hsl(199, 89%, 45%)',
-          },
-          error: {
-            main: 'hsl(0, 63%, 50%)',
-          },
-          divider: 'hsl(217, 33%, 20%)',
+          success: { main: 'hsl(152, 65%, 50%)' },
+          warning: { main: 'hsl(38, 92%, 55%)' },
+          info: { main: 'hsl(217, 92%, 65%)' },
+          error: { main: 'hsl(0, 78%, 62%)' },
+          divider: 'hsl(217, 33%, 22%)',
         }),
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 700,
-      fontSize: '2.5rem',
-    },
-    h2: {
-      fontWeight: 600,
-      fontSize: '2rem',
-    },
-    h3: {
-      fontWeight: 600,
-      fontSize: '1.5rem',
-    },
-    h4: {
-      fontWeight: 600,
-      fontSize: '1.25rem',
-    },
-    h5: {
-      fontWeight: 600,
-      fontSize: '1rem',
-    },
-    h6: {
-      fontWeight: 600,
-      fontSize: '0.875rem',
-    },
-    button: {
-      textTransform: 'none',
-      fontWeight: 500,
-    },
+    h1: { fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 800, fontSize: '2.5rem', letterSpacing: '-0.02em' },
+    h2: { fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 700, fontSize: '2rem', letterSpacing: '-0.015em' },
+    h3: { fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 700, fontSize: '1.5rem', letterSpacing: '-0.01em' },
+    h4: { fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 700, fontSize: '1.25rem' },
+    h5: { fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 700, fontSize: '1.1rem' },
+    h6: { fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 700, fontSize: '0.95rem' },
+    button: { textTransform: 'none', fontWeight: 600 },
   },
-  shape: {
-    borderRadius: 8,
-  },
+  shape: { borderRadius: 12 },
   components: {
     MuiButton: {
       styleOverrides: {
-        root: {
-          borderRadius: 8,
-          padding: '8px 16px',
-        },
+        root: { borderRadius: 12, padding: '10px 18px', fontWeight: 600 },
         contained: {
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          },
+          boxShadow: '0 6px 18px -8px hsl(239 84% 30% / 0.25)',
+          '&:hover': { boxShadow: '0 10px 28px -12px hsl(239 84% 30% / 0.4)' },
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          borderRadius: 16,
+          boxShadow: '0 6px 18px -10px hsl(222 47% 11% / 0.12)',
         },
       },
     },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-        },
-      },
+    MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
+    MuiAppBar: { styleOverrides: { root: { backgroundImage: 'none' } } },
+    MuiDrawer: { styleOverrides: { paper: { borderRight: 'none' } } },
+    MuiChip: { styleOverrides: { root: { fontWeight: 600, borderRadius: 8 } } },
+    MuiTextField: {
+      defaultProps: { variant: 'outlined' },
     },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-        },
-      },
-    },
-    MuiDrawer: {
-      styleOverrides: {
-        paper: {
-          borderRight: 'none',
-        },
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          fontWeight: 500,
-        },
-      },
+    MuiOutlinedInput: {
+      styleOverrides: { root: { borderRadius: 12 } },
     },
   },
 });
