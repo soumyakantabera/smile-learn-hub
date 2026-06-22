@@ -1,28 +1,28 @@
-import type { ContentData, ContentItem, Course, Module, Batch } from '@/types/content';
+import type { ContentData, ContentItem, Course, Module } from '@/types/content';
 
 let contentCache: ContentData | null = null;
 
 export async function loadContent(): Promise<ContentData> {
   if (contentCache) return contentCache;
-  
   const response = await fetch(`${import.meta.env.BASE_URL}content/index.json`);
-  if (!response.ok) {
-    throw new Error('Failed to load content');
-  }
-  
+  if (!response.ok) throw new Error('Failed to load content');
   contentCache = await response.json();
   return contentCache!;
 }
 
-export function getBatchCourses(content: ContentData, batchKey: string): Course[] {
-  const batch = content.batches[batchKey];
-  if (!batch) return [];
+/** Get all published courses visible to a learner given their enrollment list. */
+export function getEnrolledCourses(content: ContentData, enrolledCourseIds: string[]): Course[] {
+  const set = new Set(enrolledCourseIds);
+  return Object.values(content.courses)
+    .filter((c) => set.has(c.id))
+    .filter((c) => (c.status || 'published') === 'published');
+}
 
-  return batch.courses
-    .map(courseId => content.courses[courseId])
-    .filter(Boolean)
-    // Hide draft/archived courses from students; admin batch sees everything
-    .filter(course => batchKey === 'batch-admin' || (course.status || 'published') === 'published');
+/** Admin / catalog view: all courses regardless of enrollment. */
+export function getAllCourses(content: ContentData, includeDrafts = false): Course[] {
+  return Object.values(content.courses).filter(
+    (c) => includeDrafts || (c.status || 'published') === 'published',
+  );
 }
 
 export function getCourse(content: ContentData, courseId: string): Course | null {
@@ -32,9 +32,8 @@ export function getCourse(content: ContentData, courseId: string): Course | null
 export function getCourseModules(content: ContentData, courseId: string): Module[] {
   const course = content.courses[courseId];
   if (!course) return [];
-  
   return course.modules
-    .map(moduleId => content.modules[moduleId])
+    .map((moduleId) => content.modules[moduleId])
     .filter(Boolean)
     .sort((a, b) => a.order - b.order);
 }
@@ -46,115 +45,105 @@ export function getModule(content: ContentData, moduleId: string): Module | null
 export function getModuleItems(content: ContentData, moduleId: string): ContentItem[] {
   const module = content.modules[moduleId];
   if (!module) return [];
-  
-  return module.items
-    .map(itemId => content.items[itemId])
-    .filter(Boolean);
+  return module.items.map((itemId) => content.items[itemId]).filter(Boolean);
 }
 
 export function getItem(content: ContentData, itemId: string): ContentItem | null {
   return content.items[itemId] || null;
 }
 
-export function getRecentItems(content: ContentData, batchKey: string, limit: number = 5): ContentItem[] {
-  const batch = content.batches[batchKey];
-  if (!batch) return [];
-  
-  const allItems: ContentItem[] = [];
-  
-  batch.courses.forEach(courseId => {
-    const course = content.courses[courseId];
-    if (!course) return;
-    
-    course.modules.forEach(moduleId => {
+/** Recent items across the given courses, newest first. */
+export function getRecentItemsForCourses(
+  content: ContentData,
+  courseIds: string[],
+  limit = 5,
+): ContentItem[] {
+  const idSet = new Set(courseIds);
+  const items: ContentItem[] = [];
+  Object.values(content.courses).forEach((course) => {
+    if (!idSet.has(course.id)) return;
+    course.modules.forEach((moduleId) => {
       const module = content.modules[moduleId];
       if (!module) return;
-      
-      module.items.forEach(itemId => {
+      module.items.forEach((itemId) => {
         const item = content.items[itemId];
-        if (item) allItems.push(item);
+        if (item) items.push(item);
       });
     });
   });
-  
-  return allItems
+  return items
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     .slice(0, limit);
 }
 
-export function searchItems(
+export function searchItemsInCourses(
   content: ContentData,
-  batchKey: string,
+  courseIds: string[],
   query: string,
-  filters?: { type?: string; tag?: string }
+  filters?: { type?: string; tag?: string },
 ): ContentItem[] {
-  const batch = content.batches[batchKey];
-  if (!batch) return [];
-  
-  const queryLower = query.toLowerCase();
-  const results: ContentItem[] = [];
-  
-  batch.courses.forEach(courseId => {
-    const course = content.courses[courseId];
-    if (!course) return;
-    
-    course.modules.forEach(moduleId => {
-      const module = content.modules[moduleId];
-      if (!module) return;
-      
-      module.items.forEach(itemId => {
-        const item = content.items[itemId];
-        if (!item) return;
-        
-        // Apply type filter
-        if (filters?.type && item.type !== filters.type) return;
-        
-        // Apply tag filter
-        if (filters?.tag && !item.tags.includes(filters.tag)) return;
-        
-        // Apply search query
-        if (query) {
-          const matchesTitle = item.title.toLowerCase().includes(queryLower);
-          const matchesDescription = item.description.toLowerCase().includes(queryLower);
-          const matchesTags = item.tags.some(tag => tag.toLowerCase().includes(queryLower));
-          
-          if (!matchesTitle && !matchesDescription && !matchesTags) return;
+  const idSet = new Set(courseIds);
+  const q = query.toLowerCase();
+  const out: ContentItem[] = [];
+  Object.values(content.courses).forEach((course) => {
+    if (!idSet.has(course.id)) return;
+    course.modules.forEach((mid) => {
+      const m = content.modules[mid];
+      if (!m) return;
+      m.items.forEach((iid) => {
+        const it = content.items[iid];
+        if (!it) return;
+        if (filters?.type && it.type !== filters.type) return;
+        if (filters?.tag && !it.tags.includes(filters.tag)) return;
+        if (q) {
+          const hit =
+            it.title.toLowerCase().includes(q) ||
+            it.description.toLowerCase().includes(q) ||
+            it.tags.some((t) => t.toLowerCase().includes(q));
+          if (!hit) return;
         }
-        
-        results.push(item);
+        out.push(it);
       });
     });
   });
-  
-  return results;
+  return out;
 }
 
-export function getAllTags(content: ContentData, batchKey: string): string[] {
-  const batch = content.batches[batchKey];
-  if (!batch) return [];
-  
+export function getAllTagsForCourses(content: ContentData, courseIds: string[]): string[] {
+  const idSet = new Set(courseIds);
   const tags = new Set<string>();
-  
-  batch.courses.forEach(courseId => {
-    const course = content.courses[courseId];
-    if (!course) return;
-    
-    course.modules.forEach(moduleId => {
-      const module = content.modules[moduleId];
-      if (!module) return;
-      
-      module.items.forEach(itemId => {
-        const item = content.items[itemId];
-        if (item) {
-          item.tags.forEach(tag => tags.add(tag));
-        }
+  Object.values(content.courses).forEach((course) => {
+    if (!idSet.has(course.id)) return;
+    course.modules.forEach((mid) => {
+      const m = content.modules[mid];
+      if (!m) return;
+      m.items.forEach((iid) => {
+        const it = content.items[iid];
+        if (it) it.tags.forEach((t) => tags.add(t));
       });
     });
   });
-  
   return Array.from(tags).sort();
 }
 
-export function getBatch(content: ContentData, batchKey: string): Batch | null {
+/* -------- Legacy compatibility (used by editor only) -------- */
+export function getBatchCourses(content: ContentData, _batchKey: string): Course[] {
+  return getAllCourses(content);
+}
+export function getBatch(content: ContentData, batchKey: string) {
   return content.batches[batchKey] || null;
+}
+export function getRecentItems(content: ContentData, _batchKey: string, limit = 5): ContentItem[] {
+  return getRecentItemsForCourses(content, Object.keys(content.courses), limit);
+}
+export function searchItems(
+  content: ContentData,
+  _batchKey: string,
+  query: string,
+  filters?: { type?: string; tag?: string },
+) {
+  return searchItemsInCourses(content, Object.keys(content.courses), query, filters);
+}
+export function getAllTags(content: ContentData, _batchKey: string) {
+  return getAllTagsForCourses(content, Object.keys(content.courses));
 }
