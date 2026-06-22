@@ -14,16 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      enrollments: {
+        Row: {
+          course_id: string
+          enrolled_at: string
+          enrolled_by: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          enrolled_at?: string
+          enrolled_by?: string | null
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          enrolled_at?: string
+          enrolled_by?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      progress: {
+        Row: {
+          completed: boolean
+          course_id: string
+          id: string
+          item_id: string
+          module_id: string
+          time_spent_seconds: number
+          updated_at: string
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          completed?: boolean
+          course_id: string
+          id?: string
+          item_id: string
+          module_id: string
+          time_spent_seconds?: number
+          updated_at?: string
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          completed?: boolean
+          course_id?: string
+          id?: string
+          item_id?: string
+          module_id?: string
+          time_spent_seconds?: number
+          updated_at?: string
+          user_id?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          answers: Json | null
+          attempted_at: string
+          course_id: string | null
+          id: string
+          item_id: string
+          max_score: number
+          score: number
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          attempted_at?: string
+          course_id?: string | null
+          id?: string
+          item_id: string
+          max_score: number
+          score: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          attempted_at?: string
+          course_id?: string | null
+          id?: string
+          item_id?: string
+          max_score?: number
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resume_state: {
+        Row: {
+          course_id: string
+          id: string
+          last_item_id: string
+          last_module_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          id?: string
+          last_item_id: string
+          last_module_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          id?: string
+          last_item_id?: string
+          last_module_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +329,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "student"],
+    },
   },
 } as const
