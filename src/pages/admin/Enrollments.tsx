@@ -125,7 +125,7 @@ export default function AdminEnrollmentsPage() {
                       variant="contained"
                       onClick={() => save(u)}
                       disabled={savingFor === u.id}
-                      sx={{ background: 'var(--gradient-primary)' }}
+                      sx={gradientPrimaryBtnSx}
                     >
                       {savingFor === u.id ? 'Saving…' : 'Save changes'}
                     </Button>

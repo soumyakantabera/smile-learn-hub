@@ -106,7 +106,7 @@ export default function AdminUsersPage() {
             variant="contained"
             startIcon={<PersonAddIcon />}
             onClick={() => setCreateOpen(true)}
-            sx={{ background: 'var(--gradient-primary)' }}
+            sx={gradientPrimaryBtnSx}
           >
             New user
           </Button>
@@ -386,7 +386,7 @@ function CreateUserDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={submitting} sx={{ background: 'var(--gradient-primary)' }}>
+        <Button variant="contained" onClick={submit} disabled={submitting} sx={gradientPrimaryBtnSx}>
           {submitting ? 'Creating…' : 'Create user'}
         </Button>
       </DialogActions>
@@ -456,7 +456,7 @@ function EnrollDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving} sx={{ background: 'var(--gradient-primary)' }}>
+        <Button variant="contained" onClick={submit} disabled={saving} sx={gradientPrimaryBtnSx}>
           {saving ? 'Saving…' : 'Save'}
         </Button>
       </DialogActions>
@@ -514,7 +514,7 @@ function ResetPasswordDialog({ user, onClose }: { user: AdminUser; onClose: () =
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={saving} sx={{ background: 'var(--gradient-primary)' }}>
+        <Button variant="contained" onClick={submit} disabled={saving} sx={gradientPrimaryBtnSx}>
           {saving ? 'Saving…' : 'Reset password'}
         </Button>
       </DialogActions>

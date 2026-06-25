@@ -133,7 +133,7 @@ export default function ResetPasswordPage() {
                 size="large"
                 fullWidth
                 disabled={submitting}
-                sx={{ py: 1.5, background: 'var(--gradient-primary)' }}
+                sx={{ ...gradientPrimaryBtnSx, py: 1.5 }}
               >
                 {submitting ? <CircularProgress size={20} color="inherit" /> : 'Update password'}
               </Button>
