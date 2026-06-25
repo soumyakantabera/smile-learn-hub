@@ -248,9 +248,9 @@ export default function LoginPage() {
               size="large"
               disabled={submitting || isLoading || !email.trim() || !password}
               sx={{
+                ...gradientPrimaryBtnSx,
                 py: 1.5,
                 fontSize: '1rem',
-                background: 'var(--gradient-primary)',
               }}
             >
               {submitting ? <CircularProgress size={22} color="inherit" /> : 'Sign in'}
