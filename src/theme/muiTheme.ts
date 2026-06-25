@@ -71,12 +71,49 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
   },
   shape: { borderRadius: 12 },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        '*:focus-visible': {
+          outline: `2px solid ${mode === 'dark' ? 'hsl(239 90% 75%)' : 'hsl(239 84% 55%)'}`,
+          outlineOffset: 2,
+        },
+        '::selection': {
+          background: mode === 'dark' ? 'hsl(239 90% 70% / 0.45)' : 'hsl(239 84% 60% / 0.25)',
+          color: mode === 'dark' ? '#fff' : 'hsl(222 47% 11%)',
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: { borderRadius: 12, padding: '10px 18px', fontWeight: 600 },
         contained: {
           boxShadow: '0 6px 18px -8px hsl(239 84% 30% / 0.25)',
           '&:hover': { boxShadow: '0 10px 28px -12px hsl(239 84% 30% / 0.4)' },
+          '&.Mui-disabled': {
+            // Standard MUI disabled fallback for non-gradient contained buttons.
+            color: mode === 'dark' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)',
+          },
+        },
+        outlined: {
+          '&.Mui-disabled': {
+            color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+            borderColor: mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.18)',
+          },
+        },
+        text: {
+          '&.Mui-disabled': {
+            color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          '&.Mui-disabled': {
+            color: mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+          },
         },
       },
     },
@@ -85,18 +122,81 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
         root: {
           borderRadius: 16,
           boxShadow: '0 6px 18px -10px hsl(222 47% 11% / 0.12)',
+          backgroundImage: 'none',
         },
       },
     },
     MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
     MuiAppBar: { styleOverrides: { root: { backgroundImage: 'none' } } },
     MuiDrawer: { styleOverrides: { paper: { borderRight: 'none' } } },
-    MuiChip: { styleOverrides: { root: { fontWeight: 600, borderRadius: 8 } } },
-    MuiTextField: {
-      defaultProps: { variant: 'outlined' },
+    MuiChip: {
+      styleOverrides: {
+        root: { fontWeight: 600, borderRadius: 8 },
+        // Ensure outlined chips are visible on tinted/gradient surfaces.
+        outlined: {
+          borderColor: mode === 'dark' ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.18)',
+        },
+      },
     },
+    MuiTextField: { defaultProps: { variant: 'outlined' } },
     MuiOutlinedInput: {
-      styleOverrides: { root: { borderRadius: 12 } },
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          // Ensure input text remains legible even when parent uses inherit/gradient color.
+          color: mode === 'dark' ? 'hsl(210 40% 98%)' : 'hsl(222 47% 11%)',
+          backgroundColor: mode === 'dark' ? 'hsl(222 47% 12%)' : '#ffffff',
+        },
+        input: {
+          '&::placeholder': {
+            color: mode === 'dark' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+            opacity: 1,
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: mode === 'dark' ? 'hsl(215 20% 75%)' : 'hsl(215 16% 40%)',
+          '&.Mui-focused': {
+            color: mode === 'dark' ? 'hsl(239 90% 75%)' : 'hsl(239 84% 50%)',
+          },
+        },
+      },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: mode === 'dark' ? 'hsl(222 47% 18%)' : 'hsl(222 47% 11%)',
+          color: '#fff',
+          fontSize: 12,
+          fontWeight: 500,
+        },
+        arrow: { color: mode === 'dark' ? 'hsl(222 47% 18%)' : 'hsl(222 47% 11%)' },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        root: { borderRadius: 12 },
+      },
+    },
+    MuiLinearProgress: {
+      styleOverrides: {
+        root: {
+          backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+          borderRadius: 6,
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        head: {
+          fontWeight: 700,
+          color: mode === 'dark' ? 'hsl(210 40% 98%)' : 'hsl(222 47% 11%)',
+          backgroundColor: mode === 'dark' ? 'hsl(222 47% 12%)' : 'hsl(220 18% 97%)',
+        },
+      },
     },
   },
 });
