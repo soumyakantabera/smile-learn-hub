@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import { supabase } from '@/integrations/supabase/client';
 
+import { gradientPrimaryBtnSx } from '@/theme/sxPresets';
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');

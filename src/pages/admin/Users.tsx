@@ -37,6 +37,7 @@ import { toast } from 'sonner';
 import { AppLayout } from '@/components/AppLayout';
 import { PageHeader } from '@/components/PageHeader';
 import { useContent } from '@/contexts/ContentContext';
+import { gradientPrimaryBtnSx } from '@/theme/sxPresets';
 import {
   listUsers,
   createUser,
