@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import { supabase } from '@/integrations/supabase/client';
 
+import { gradientPrimaryBtnSx } from '@/theme/sxPresets';
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -132,7 +133,7 @@ export default function ResetPasswordPage() {
                 size="large"
                 fullWidth
                 disabled={submitting}
-                sx={{ py: 1.5, background: 'var(--gradient-primary)' }}
+                sx={{ ...gradientPrimaryBtnSx, py: 1.5 }}
               >
                 {submitting ? <CircularProgress size={20} color="inherit" /> : 'Update password'}
               </Button>

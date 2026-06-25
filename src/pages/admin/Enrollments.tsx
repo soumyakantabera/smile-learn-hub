@@ -19,6 +19,7 @@ import { useContent } from '@/contexts/ContentContext';
 import { listUsers, setEnrollments, type AdminUser } from '@/lib/adminApi';
 import { toast } from 'sonner';
 
+import { gradientPrimaryBtnSx } from '@/theme/sxPresets';
 export default function AdminEnrollmentsPage() {
   const { content } = useContent();
   const [users, setUsers] = useState<AdminUser[] | null>(null);
@@ -124,7 +125,7 @@ export default function AdminEnrollmentsPage() {
                       variant="contained"
                       onClick={() => save(u)}
                       disabled={savingFor === u.id}
-                      sx={{ background: 'var(--gradient-primary)' }}
+                      sx={gradientPrimaryBtnSx}
                     >
                       {savingFor === u.id ? 'Saving…' : 'Save changes'}
                     </Button>
