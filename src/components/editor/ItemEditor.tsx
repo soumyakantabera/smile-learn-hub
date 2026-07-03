@@ -588,15 +588,130 @@ export function ItemEditor() {
             {formData.type === 'quiz' && (
               <>
                 <Divider sx={{ my: 1 }} />
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Quiz Questions
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Quiz Questions
+                  </Typography>
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Presentation mode</InputLabel>
+                    <Select
+                      label="Presentation mode"
+                      value={formData.quizMode}
+                      onChange={(e) =>
+                        setFormData({ ...formData, quizMode: e.target.value as 'classic' | 'step' })
+                      }
+                    >
+                      <MenuItem value="classic">Classic (all on one page)</MenuItem>
+                      <MenuItem value="step">Step-by-step (Duolingo-like)</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
                 <QuizEditor
                   questions={formData.quizQuestions}
                   onChange={(questions) => setFormData({ ...formData, quizQuestions: questions })}
                 />
               </>
             )}
+
+            {formData.type === 'conversation' && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Conversation Practice
+                </Typography>
+                <ConversationEditor
+                  value={formData.conversation}
+                  onChange={(conversation) => setFormData({ ...formData, conversation })}
+                />
+              </>
+            )}
+
+            <Divider sx={{ my: 1 }} />
+            <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography fontWeight={600}>Customization & metadata</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Visibility</InputLabel>
+                      <Select
+                        label="Visibility"
+                        value={formData.visibility}
+                        onChange={(e) =>
+                          setFormData({ ...formData, visibility: e.target.value as 'published' | 'draft' | 'hidden' })
+                        }
+                      >
+                        <MenuItem value="published">Published</MenuItem>
+                        <MenuItem value="draft">Draft</MenuItem>
+                        <MenuItem value="hidden">Hidden</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      label="Estimated minutes"
+                      type="number"
+                      size="small"
+                      value={formData.estimatedMinutes}
+                      onChange={(e) => setFormData({ ...formData, estimatedMinutes: e.target.value })}
+                      fullWidth
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      label="Accent color (hex)"
+                      size="small"
+                      value={formData.accentColor}
+                      onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
+                      placeholder="#0F3D2E"
+                      fullWidth
+                      InputProps={{
+                        startAdornment: formData.accentColor ? (
+                          <Box
+                            sx={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: '50%',
+                              bgcolor: formData.accentColor,
+                              mr: 1,
+                              border: 1,
+                              borderColor: 'divider',
+                            }}
+                          />
+                        ) : null,
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <TextField
+                      label="Learning objectives (one per line)"
+                      size="small"
+                      value={formData.objectivesText}
+                      onChange={(e) => setFormData({ ...formData, objectivesText: e.target.value })}
+                      fullWidth
+                      multiline
+                      rows={3}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <TextField
+                      label="Extra resources (one per line, format: Label | https://url)"
+                      size="small"
+                      value={formData.resourcesText}
+                      onChange={(e) => setFormData({ ...formData, resourcesText: e.target.value })}
+                      fullWidth
+                      multiline
+                      rows={3}
+                      helperText="Optional links shown alongside the item"
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
+
+
 
             <TagAutocomplete
               value={formData.tags}
