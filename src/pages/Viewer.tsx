@@ -65,6 +65,8 @@ import { CourseProgressRail } from '@/components/viewer/CourseProgressRail';
 import { PageHeader } from '@/components/PageHeader';
 import { appConfig } from '@/config/app.config';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
+import { StepQuizViewer } from '@/components/viewer/StepQuizViewer';
+import { ConversationViewer } from '@/components/viewer/ConversationViewer';
 import type { ItemType } from '@/types/content';
 
 const typeIcons: Record<ItemType, React.ReactNode> = {
