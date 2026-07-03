@@ -98,6 +98,14 @@ interface ItemFormData {
   tags: string[];
   audioDuration: string;
   quizQuestions: QuizQuestion[];
+  quizMode: 'classic' | 'step';
+  conversation: ConversationData;
+  // Customization
+  accentColor: string;
+  visibility: 'published' | 'draft' | 'hidden';
+  estimatedMinutes: string;
+  objectivesText: string; // one per line
+  resourcesText: string;  // "label|url" per line
 }
 
 const defaultFormData: ItemFormData = {
@@ -112,6 +120,13 @@ const defaultFormData: ItemFormData = {
   tags: [],
   audioDuration: '',
   quizQuestions: [],
+  quizMode: 'classic',
+  conversation: { lines: [] },
+  accentColor: '',
+  visibility: 'published',
+  estimatedMinutes: '',
+  objectivesText: '',
+  resourcesText: '',
 };
 
 export function ItemEditor() {
