@@ -40,6 +40,7 @@ import {
   Keyboard as KeyboardIcon,
   Storage as StorageIcon,
   Edit as EditIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -206,83 +207,28 @@ function EditorContent() {
         }
         actions={
           <>
-            <Tooltip title="Undo (Ctrl+Z)">
-              <span>
-                <IconButton size="small" onClick={undo} disabled={!canUndo} aria-label="Undo">
-                  <UndoIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="Redo (Ctrl+Shift+Z)">
-              <span>
-                <IconButton size="small" onClick={redo} disabled={!canRedo} aria-label="Redo">
-                  <RedoIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="Restore from snapshot">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => setSnapAnchor(e.currentTarget)}
-                  disabled={snapshots.length === 0}
-                  aria-label="Snapshots"
-                >
-                  <HistoryIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="Keyboard shortcuts">
-              <IconButton size="small" onClick={() => setShortcutsOpen(true)} aria-label="Keyboard shortcuts">
-                <KeyboardIcon fontSize="small" />
+            {/* Desktop actions */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, flexWrap: 'wrap' }}>
+              <Tooltip title="Undo (Ctrl+Z)"><span><IconButton size="small" onClick={undo} disabled={!canUndo}><UndoIcon fontSize="small" /></IconButton></span></Tooltip>
+              <Tooltip title="Redo (Ctrl+Shift+Z)"><span><IconButton size="small" onClick={redo} disabled={!canRedo}><RedoIcon fontSize="small" /></IconButton></span></Tooltip>
+              <Tooltip title="Snapshots"><span><IconButton size="small" onClick={(e) => setSnapAnchor(e.currentTarget)} disabled={snapshots.length === 0}><HistoryIcon fontSize="small" /></IconButton></span></Tooltip>
+              <Tooltip title="Shortcuts"><IconButton size="small" onClick={() => setShortcutsOpen(true)}><KeyboardIcon fontSize="small" /></IconButton></Tooltip>
+              <Button variant="outlined" startIcon={<UploadIcon />} onClick={handleImportClick} size="small">Import</Button>
+              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleExport} size="small">Export</Button>
+              <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setResetConfirm(true)} size="small" color="warning">Reset</Button>
+              <Button variant="contained" color="success" startIcon={<PublishIcon />} onClick={() => setPublishOpen(true)} size="small">Publish</Button>
+              <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={!isDirty} size="small" sx={{ bgcolor: '#0F3D2E', '&:hover': { bgcolor: '#0a2c22' } }}>Save</Button>
+            </Box>
+            <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleImportFile} />
+            {/* Mobile compact actions */}
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 0.5, alignItems: 'center' }}>
+              <IconButton size="small" onClick={undo} disabled={!canUndo}><UndoIcon fontSize="small" /></IconButton>
+              <IconButton size="small" onClick={redo} disabled={!canRedo}><RedoIcon fontSize="small" /></IconButton>
+              <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleSave} disabled={!isDirty} sx={{ bgcolor: '#0F3D2E', '&:hover': { bgcolor: '#0a2c22' } }}>Save</Button>
+              <IconButton size="small" onClick={(e) => setSnapAnchor(e.currentTarget as HTMLElement & { __menu?: string })} aria-label="More actions">
+                <MoreVertIcon />
               </IconButton>
-            </Tooltip>
-            <Tooltip title="Import JSON">
-              <Button variant="outlined" startIcon={<UploadIcon />} onClick={handleImportClick} size="small">
-                Import
-              </Button>
-            </Tooltip>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/json"
-              hidden
-              onChange={handleImportFile}
-            />
-            <Tooltip title="Download as JSON">
-              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleExport} size="small">
-                Export
-              </Button>
-            </Tooltip>
-            <Tooltip title="Discard draft and reload production">
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={() => setResetConfirm(true)}
-                size="small"
-                color="warning"
-              >
-                Reset
-              </Button>
-            </Tooltip>
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<PublishIcon />}
-              onClick={() => setPublishOpen(true)}
-              size="small"
-            >
-              Publish
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon />}
-              onClick={handleSave}
-              disabled={!isDirty}
-              size="small"
-            >
-              Save Draft
-            </Button>
+            </Box>
           </>
         }
       />
