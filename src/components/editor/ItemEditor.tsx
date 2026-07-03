@@ -43,14 +43,16 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  Forum as ConversationIcon,
   DragIndicator as DragIcon,
   ContentCopy as DuplicateIcon,
   DriveFileMove as MoveIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useEditor } from '@/contexts/EditorContext';
-import type { ContentItem, ItemType, QuizQuestion } from '@/types/content';
+import type { ContentItem, ItemType, QuizQuestion, ConversationData } from '@/types/content';
 import { QuizEditor } from './QuizEditor';
+import { ConversationEditor } from './ConversationEditor';
 import { ConfirmDialog } from './ConfirmDialog';
 import { EmptyState } from './EmptyState';
 import { TagAutocomplete } from './TagAutocomplete';
@@ -67,6 +69,7 @@ const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = 
   { value: 'link', label: 'External Link', icon: <LinkIcon /> },
   { value: 'homework', label: 'Homework', icon: <HomeworkIcon /> },
   { value: 'quiz', label: 'Interactive Quiz', icon: <QuizIcon /> },
+  { value: 'conversation', label: 'Conversation Practice', icon: <ConversationIcon /> },
 ];
 
 const typeColors: Record<ItemType, string> = {
