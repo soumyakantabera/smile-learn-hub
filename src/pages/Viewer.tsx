@@ -39,6 +39,7 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  Forum as ConversationIcon,
   ListAlt as ListAltIcon,
   School as SchoolIcon,
   MenuBook as MenuBookIcon,
@@ -77,6 +78,7 @@ const typeIcons: Record<ItemType, React.ReactNode> = {
   youtube: <YouTubeIcon />,
   audio: <AudioIcon />,
   quiz: <QuizIcon />,
+  conversation: <ConversationIcon />,
 };
 
 const typeColors: Record<ItemType, string> = {
@@ -90,6 +92,7 @@ const typeColors: Record<ItemType, string> = {
   youtube: '#FF0000',
   audio: '#E91E63',
   quiz: '#673AB7',
+  conversation: '#0F3D2E',
 };
 
 const typeLabels: Record<ItemType, string> = {
