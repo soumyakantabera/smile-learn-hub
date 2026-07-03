@@ -80,6 +80,7 @@ const typeColors: Record<ItemType, string> = {
   youtube: '#FF0000',
   audio: '#E91E63',
   quiz: '#673AB7',
+  conversation: '#0F3D2E',
 };
 
 interface ItemFormData {
