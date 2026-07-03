@@ -168,12 +168,33 @@ export function ItemEditor() {
       tags: item.tags || [],
       audioDuration: item.audioDuration || '',
       quizQuestions: item.quizQuestions || [],
+      quizMode: item.quizMode || 'classic',
+      conversation: item.conversation || { lines: [] },
+      accentColor: item.accentColor || '',
+      visibility: item.visibility || 'published',
+      estimatedMinutes: item.estimatedMinutes ? String(item.estimatedMinutes) : '',
+      objectivesText: (item.objectives || []).join('\n'),
+      resourcesText: (item.resources || []).map((r) => `${r.label}|${r.url}`).join('\n'),
     });
     setDialogOpen(true);
   };
 
   const handleSubmit = () => {
     if (!formData.title.trim() || !formData.moduleId) return;
+    const objectives = formData.objectivesText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const resources = formData.resourcesText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [label, url] = line.split('|').map((s) => s.trim());
+        return { label: label || url || '', url: url || '' };
+      })
+      .filter((r) => r.url);
+    const estMin = parseInt(formData.estimatedMinutes, 10);
     const itemData = {
       moduleId: formData.moduleId,
       title: formData.title,
@@ -187,6 +208,13 @@ export function ItemEditor() {
       publishedAt: editingItem?.publishedAt || new Date().toISOString(),
       audioDuration: formData.audioDuration || undefined,
       quizQuestions: formData.type === 'quiz' ? formData.quizQuestions : undefined,
+      quizMode: formData.type === 'quiz' ? formData.quizMode : undefined,
+      conversation: formData.type === 'conversation' ? formData.conversation : undefined,
+      accentColor: formData.accentColor || undefined,
+      visibility: formData.visibility === 'published' ? undefined : formData.visibility,
+      estimatedMinutes: !isNaN(estMin) && estMin > 0 ? estMin : undefined,
+      objectives: objectives.length ? objectives : undefined,
+      resources: resources.length ? resources : undefined,
     };
     if (editingItem) {
       editItem({ ...itemData, id: editingItem.id });
