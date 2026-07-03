@@ -135,13 +135,66 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
 
             <Collapse in={expandedIndex === qIndex}>
               <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TextField
-                  label="Question"
-                  value={q.question}
-                  onChange={(e) => updateQuestion(qIndex, { question: e.target.value })}
-                  fullWidth
-                  placeholder="e.g., What is the correct greeting for morning?"
-                />
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Question type</InputLabel>
+                    <Select
+                      label="Question type"
+                      value={q.type || 'mcq'}
+                      onChange={(e) =>
+                        updateQuestion(qIndex, { type: e.target.value as QuestionType })
+                      }
+                    >
+                      <MenuItem value="mcq">Multiple choice</MenuItem>
+                      <MenuItem value="listen-choose">Listen &amp; choose (TTS)</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {(q.type || 'mcq') === 'listen-choose' && (
+                    <Chip
+                      size="small"
+                      color="info"
+                      label="Learner hears audio, picks matching text"
+                    />
+                  )}
+                </Box>
+
+                {(q.type || 'mcq') === 'listen-choose' ? (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                    <TextField
+                      label="Text to speak"
+                      value={q.audioText || ''}
+                      onChange={(e) => updateQuestion(qIndex, { audioText: e.target.value })}
+                      fullWidth
+                      multiline
+                      placeholder="e.g., Good morning, how are you?"
+                    />
+                    <TextField
+                      label="Lang"
+                      size="small"
+                      value={q.audioLang || 'en-US'}
+                      onChange={(e) => updateQuestion(qIndex, { audioLang: e.target.value })}
+                      sx={{ width: 110 }}
+                    />
+                    <IconButton
+                      onClick={() =>
+                        q.audioText && speak(q.audioText, { lang: q.audioLang || 'en-US' })
+                      }
+                      disabled={!ttsSupported || !q.audioText}
+                      aria-label="Preview audio"
+                      sx={{ color: '#0F3D2E', mt: 1 }}
+                    >
+                      <ListenIcon />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <TextField
+                    label="Question"
+                    value={q.question}
+                    onChange={(e) => updateQuestion(qIndex, { question: e.target.value })}
+                    fullWidth
+                    placeholder="e.g., What is the correct greeting for morning?"
+                  />
+                )}
 
                 <Typography variant="body2" fontWeight={500}>
                   Options (select correct answer):
