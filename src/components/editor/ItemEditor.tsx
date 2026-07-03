@@ -43,14 +43,16 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  Forum as ConversationIcon,
   DragIndicator as DragIcon,
   ContentCopy as DuplicateIcon,
   DriveFileMove as MoveIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useEditor } from '@/contexts/EditorContext';
-import type { ContentItem, ItemType, QuizQuestion } from '@/types/content';
+import type { ContentItem, ItemType, QuizQuestion, ConversationData } from '@/types/content';
 import { QuizEditor } from './QuizEditor';
+import { ConversationEditor } from './ConversationEditor';
 import { ConfirmDialog } from './ConfirmDialog';
 import { EmptyState } from './EmptyState';
 import { TagAutocomplete } from './TagAutocomplete';
@@ -67,6 +69,7 @@ const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = 
   { value: 'link', label: 'External Link', icon: <LinkIcon /> },
   { value: 'homework', label: 'Homework', icon: <HomeworkIcon /> },
   { value: 'quiz', label: 'Interactive Quiz', icon: <QuizIcon /> },
+  { value: 'conversation', label: 'Conversation Practice', icon: <ConversationIcon /> },
 ];
 
 const typeColors: Record<ItemType, string> = {
@@ -80,6 +83,7 @@ const typeColors: Record<ItemType, string> = {
   youtube: '#FF0000',
   audio: '#E91E63',
   quiz: '#673AB7',
+  conversation: '#0F3D2E',
 };
 
 interface ItemFormData {
@@ -94,6 +98,14 @@ interface ItemFormData {
   tags: string[];
   audioDuration: string;
   quizQuestions: QuizQuestion[];
+  quizMode: 'classic' | 'step';
+  conversation: ConversationData;
+  // Customization
+  accentColor: string;
+  visibility: 'published' | 'draft' | 'hidden';
+  estimatedMinutes: string;
+  objectivesText: string; // one per line
+  resourcesText: string;  // "label|url" per line
 }
 
 const defaultFormData: ItemFormData = {
@@ -108,6 +120,13 @@ const defaultFormData: ItemFormData = {
   tags: [],
   audioDuration: '',
   quizQuestions: [],
+  quizMode: 'classic',
+  conversation: { lines: [] },
+  accentColor: '',
+  visibility: 'published',
+  estimatedMinutes: '',
+  objectivesText: '',
+  resourcesText: '',
 };
 
 export function ItemEditor() {
@@ -149,12 +168,33 @@ export function ItemEditor() {
       tags: item.tags || [],
       audioDuration: item.audioDuration || '',
       quizQuestions: item.quizQuestions || [],
+      quizMode: item.quizMode || 'classic',
+      conversation: item.conversation || { lines: [] },
+      accentColor: item.accentColor || '',
+      visibility: item.visibility || 'published',
+      estimatedMinutes: item.estimatedMinutes ? String(item.estimatedMinutes) : '',
+      objectivesText: (item.objectives || []).join('\n'),
+      resourcesText: (item.resources || []).map((r) => `${r.label}|${r.url}`).join('\n'),
     });
     setDialogOpen(true);
   };
 
   const handleSubmit = () => {
     if (!formData.title.trim() || !formData.moduleId) return;
+    const objectives = formData.objectivesText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const resources = formData.resourcesText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [label, url] = line.split('|').map((s) => s.trim());
+        return { label: label || url || '', url: url || '' };
+      })
+      .filter((r) => r.url);
+    const estMin = parseInt(formData.estimatedMinutes, 10);
     const itemData = {
       moduleId: formData.moduleId,
       title: formData.title,
@@ -168,6 +208,13 @@ export function ItemEditor() {
       publishedAt: editingItem?.publishedAt || new Date().toISOString(),
       audioDuration: formData.audioDuration || undefined,
       quizQuestions: formData.type === 'quiz' ? formData.quizQuestions : undefined,
+      quizMode: formData.type === 'quiz' ? formData.quizMode : undefined,
+      conversation: formData.type === 'conversation' ? formData.conversation : undefined,
+      accentColor: formData.accentColor || undefined,
+      visibility: formData.visibility === 'published' ? undefined : formData.visibility,
+      estimatedMinutes: !isNaN(estMin) && estMin > 0 ? estMin : undefined,
+      objectives: objectives.length ? objectives : undefined,
+      resources: resources.length ? resources : undefined,
     };
     if (editingItem) {
       editItem({ ...itemData, id: editingItem.id });
@@ -541,15 +588,130 @@ export function ItemEditor() {
             {formData.type === 'quiz' && (
               <>
                 <Divider sx={{ my: 1 }} />
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Quiz Questions
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Quiz Questions
+                  </Typography>
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Presentation mode</InputLabel>
+                    <Select
+                      label="Presentation mode"
+                      value={formData.quizMode}
+                      onChange={(e) =>
+                        setFormData({ ...formData, quizMode: e.target.value as 'classic' | 'step' })
+                      }
+                    >
+                      <MenuItem value="classic">Classic (all on one page)</MenuItem>
+                      <MenuItem value="step">Step-by-step (Duolingo-like)</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
                 <QuizEditor
                   questions={formData.quizQuestions}
                   onChange={(questions) => setFormData({ ...formData, quizQuestions: questions })}
                 />
               </>
             )}
+
+            {formData.type === 'conversation' && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Conversation Practice
+                </Typography>
+                <ConversationEditor
+                  value={formData.conversation}
+                  onChange={(conversation) => setFormData({ ...formData, conversation })}
+                />
+              </>
+            )}
+
+            <Divider sx={{ my: 1 }} />
+            <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography fontWeight={600}>Customization & metadata</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Visibility</InputLabel>
+                      <Select
+                        label="Visibility"
+                        value={formData.visibility}
+                        onChange={(e) =>
+                          setFormData({ ...formData, visibility: e.target.value as 'published' | 'draft' | 'hidden' })
+                        }
+                      >
+                        <MenuItem value="published">Published</MenuItem>
+                        <MenuItem value="draft">Draft</MenuItem>
+                        <MenuItem value="hidden">Hidden</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      label="Estimated minutes"
+                      type="number"
+                      size="small"
+                      value={formData.estimatedMinutes}
+                      onChange={(e) => setFormData({ ...formData, estimatedMinutes: e.target.value })}
+                      fullWidth
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      label="Accent color (hex)"
+                      size="small"
+                      value={formData.accentColor}
+                      onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
+                      placeholder="#0F3D2E"
+                      fullWidth
+                      InputProps={{
+                        startAdornment: formData.accentColor ? (
+                          <Box
+                            sx={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: '50%',
+                              bgcolor: formData.accentColor,
+                              mr: 1,
+                              border: 1,
+                              borderColor: 'divider',
+                            }}
+                          />
+                        ) : null,
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <TextField
+                      label="Learning objectives (one per line)"
+                      size="small"
+                      value={formData.objectivesText}
+                      onChange={(e) => setFormData({ ...formData, objectivesText: e.target.value })}
+                      fullWidth
+                      multiline
+                      rows={3}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <TextField
+                      label="Extra resources (one per line, format: Label | https://url)"
+                      size="small"
+                      value={formData.resourcesText}
+                      onChange={(e) => setFormData({ ...formData, resourcesText: e.target.value })}
+                      fullWidth
+                      multiline
+                      rows={3}
+                      helperText="Optional links shown alongside the item"
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
+
+
 
             <TagAutocomplete
               value={formData.tags}

@@ -36,6 +36,7 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  Forum as ConversationIcon,
   ExpandMore as ExpandMoreIcon,
   Visibility as ViewIcon,
   Person as PersonIcon,
@@ -55,6 +56,7 @@ const typeIcons: Record<ItemType, React.ReactNode> = {
   youtube: <YouTubeIcon />,
   audio: <AudioIcon />,
   quiz: <QuizIcon />,
+  conversation: <ConversationIcon />,
 };
 
 const typeLabels: Record<ItemType, string> = {
@@ -68,6 +70,7 @@ const typeLabels: Record<ItemType, string> = {
   youtube: 'YouTube',
   audio: 'Audio',
   quiz: 'Quiz',
+  conversation: 'Conversation',
 };
 
 export function ContentPreview() {

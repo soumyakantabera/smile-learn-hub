@@ -27,6 +27,7 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  Forum as ConversationIcon,
 } from '@mui/icons-material';
 import type { SequenceEntry } from '@/lib/contentNavigation';
 import type { ItemType } from '@/types/content';
@@ -42,6 +43,7 @@ const typeIcons: Record<ItemType, React.ReactNode> = {
   youtube: <YouTubeIcon />,
   audio: <AudioIcon />,
   quiz: <QuizIcon />,
+  conversation: <ConversationIcon />,
 };
 
 interface Props {

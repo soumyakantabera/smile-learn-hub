@@ -39,6 +39,7 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  Forum as ConversationIcon,
   ListAlt as ListAltIcon,
   School as SchoolIcon,
   MenuBook as MenuBookIcon,
@@ -64,6 +65,8 @@ import { CourseProgressRail } from '@/components/viewer/CourseProgressRail';
 import { PageHeader } from '@/components/PageHeader';
 import { appConfig } from '@/config/app.config';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
+import { StepQuizViewer } from '@/components/viewer/StepQuizViewer';
+import { ConversationViewer } from '@/components/viewer/ConversationViewer';
 import type { ItemType } from '@/types/content';
 
 const typeIcons: Record<ItemType, React.ReactNode> = {
@@ -77,6 +80,7 @@ const typeIcons: Record<ItemType, React.ReactNode> = {
   youtube: <YouTubeIcon />,
   audio: <AudioIcon />,
   quiz: <QuizIcon />,
+  conversation: <ConversationIcon />,
 };
 
 const typeColors: Record<ItemType, string> = {
@@ -90,6 +94,7 @@ const typeColors: Record<ItemType, string> = {
   youtube: '#FF0000',
   audio: '#E91E63',
   quiz: '#673AB7',
+  conversation: '#0F3D2E',
 };
 
 const typeLabels: Record<ItemType, string> = {
@@ -103,6 +108,7 @@ const typeLabels: Record<ItemType, string> = {
   youtube: 'YouTube Video',
   audio: 'Audio Recording',
   quiz: 'Interactive Quiz',
+  conversation: 'Conversation Practice',
 };
 
 export default function ViewerPage() {
@@ -315,7 +321,11 @@ export default function ViewerPage() {
         );
 
       case 'quiz':
-        return <QuizViewer item={item} />;
+        return item.quizMode === 'step' ? <StepQuizViewer item={item} /> : <QuizViewer item={item} />;
+
+      case 'conversation':
+        return <ConversationViewer item={item} />;
+
 
       case 'pdf':
         return (
