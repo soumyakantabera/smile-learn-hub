@@ -11,6 +11,11 @@ import {
   RadioGroup,
   FormControlLabel,
   Collapse,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -19,9 +24,11 @@ import {
   ExpandLess as ExpandLessIcon,
   DragIndicator as DragIcon,
   PlayArrow as PlayIcon,
+  VolumeUp as ListenIcon,
 } from '@mui/icons-material';
-import type { QuizQuestion } from '@/types/content';
+import type { QuizQuestion, QuestionType } from '@/types/content';
 import { QuizPreviewDialog } from './QuizPreviewDialog';
+import { useTTS } from '@/hooks/useTTS';
 
 interface QuizEditorProps {
   questions: QuizQuestion[];
@@ -33,6 +40,7 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const dragFrom = useRef<number | null>(null);
   const dragOver = useRef<number | null>(null);
+  const { supported: ttsSupported, speak } = useTTS();
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
@@ -41,6 +49,7 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
       options: ['', '', '', ''],
       correctIndex: 0,
       explanation: '',
+      type: 'mcq',
     };
     onChange([...questions, newQuestion]);
     setExpandedIndex(questions.length);
