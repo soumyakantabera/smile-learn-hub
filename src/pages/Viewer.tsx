@@ -106,6 +106,7 @@ const typeLabels: Record<ItemType, string> = {
   youtube: 'YouTube Video',
   audio: 'Audio Recording',
   quiz: 'Interactive Quiz',
+  conversation: 'Conversation Practice',
 };
 
 export default function ViewerPage() {
