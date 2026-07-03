@@ -321,7 +321,11 @@ export default function ViewerPage() {
         );
 
       case 'quiz':
-        return <QuizViewer item={item} />;
+        return item.quizMode === 'step' ? <StepQuizViewer item={item} /> : <QuizViewer item={item} />;
+
+      case 'conversation':
+        return <ConversationViewer item={item} />;
+
 
       case 'pdf':
         return (
