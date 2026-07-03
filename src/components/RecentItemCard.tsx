@@ -20,6 +20,7 @@ import {
   YouTube as YouTubeIcon,
   Audiotrack as AudioIcon,
   Quiz as QuizIcon,
+  Forum as ConversationIcon,
 } from '@mui/icons-material';
 import type { ContentItem, ItemType } from '@/types/content';
 
@@ -34,6 +35,7 @@ const typeConfig: Record<ItemType, { icon: React.ReactNode; color: string; label
   youtube: { icon: <YouTubeIcon />, color: '#FF0000', label: 'YouTube' },
   audio: { icon: <AudioIcon />, color: '#E91E63', label: 'Audio' },
   quiz: { icon: <QuizIcon />, color: '#673AB7', label: 'Quiz' },
+  conversation: { icon: <ConversationIcon />, color: '#0F3D2E', label: 'Conversation' },
 };
 
 interface RecentItemCardProps {
