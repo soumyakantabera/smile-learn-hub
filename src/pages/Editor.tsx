@@ -269,19 +269,32 @@ function EditorContent() {
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
+            sx={{
+              minHeight: { xs: 44, sm: 56 },
+              '& .MuiTab-root': {
+                minHeight: { xs: 44, sm: 56 },
+                minWidth: { xs: 48, sm: 90 },
+                px: { xs: 1, sm: 2 },
+              },
+            }}
           >
             {TABS.map((tab) => (
               <Tab
                 key={tab.label}
-                label={tab.label}
+                label={
+                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                    {tab.label}
+                  </Box>
+                }
                 icon={tab.icon}
                 iconPosition="start"
-                sx={{ minHeight: 56, textTransform: 'none', fontWeight: 600 }}
+                aria-label={tab.label}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
               />
             ))}
           </Tabs>
         </Box>
-        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 3 } }}>
           {tabIndex === 0 && <EditorDashboard />}
           {tabIndex === 1 && <BatchEditor />}
           {tabIndex === 2 && <CourseEditor />}
@@ -290,6 +303,39 @@ function EditorContent() {
           {tabIndex === 5 && <ContentPreview />}
         </CardContent>
       </Card>
+
+      {/* Sticky mobile save pill above bottom nav */}
+      {isDirty && (
+        <Box
+          sx={{
+            display: { xs: 'flex', md: 'none' },
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: 'calc(72px + env(safe-area-inset-bottom))',
+            justifyContent: 'center',
+            zIndex: (t) => t.zIndex.appBar - 1,
+            pointerEvents: 'none',
+          }}
+        >
+          <Button
+            variant="contained"
+            startIcon={<SaveIcon />}
+            onClick={handleSave}
+            sx={{
+              pointerEvents: 'auto',
+              bgcolor: 'hsl(var(--brand-forest))',
+              color: '#fff',
+              boxShadow: '0 10px 24px -10px hsl(var(--brand-forest) / 0.6)',
+              borderRadius: 999,
+              px: 3,
+              '&:hover': { bgcolor: 'hsl(var(--brand-forest) / 0.9)' },
+            }}
+          >
+            Save changes
+          </Button>
+        </Box>
+      )}
 
       <ConfirmDialog
         open={resetConfirm}
