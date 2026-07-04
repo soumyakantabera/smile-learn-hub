@@ -60,6 +60,13 @@
     --info: 217 92% 60%;
     --info-foreground: 0 0% 100%;
 
+    /* Learn With Smile brand palette (editor/admin accents) */
+    --brand-forest: 158 61% 15%;   /* #0F3D2E */
+    --brand-mint:   140 40% 84%;   /* #C8E6D3 */
+    --brand-amber:  42 91% 55%;    /* #F5B921 */
+    --brand-coral:  6 86% 66%;     /* #F26B5E */
+    --brand-cream:  40 100% 96%;   /* #FFF8EC */
+
     /* Branded gradients & shadows */
     --gradient-primary: linear-gradient(135deg, hsl(239 84% 60%), hsl(250 92% 72%));
     --gradient-warm:    linear-gradient(135deg, hsl(239 84% 60%), hsl(38 92% 55%));
