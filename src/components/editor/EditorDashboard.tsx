@@ -69,27 +69,32 @@ export function EditorDashboard() {
     .slice(0, 5);
 
   const statCards = [
-    { label: 'Courses', value: courses.length, icon: <SchoolIcon />, color: '#1976D2' },
-    { label: 'Modules', value: modules.length, icon: <FolderIcon />, color: '#2E7D32' },
-    { label: 'Content Items', value: items.length, icon: <ItemIcon />, color: '#ED6C02' },
-    { label: 'Batches', value: batches.length, icon: <GroupIcon />, color: '#9C27B0' },
-    { label: 'Quizzes', value: quizCount, icon: <QuizIcon />, color: '#673AB7' },
-    { label: 'Videos', value: videoCount, icon: <YouTubeIcon />, color: '#D32F2F' },
+    { label: 'Courses', value: courses.length, icon: <SchoolIcon fontSize="small" />, color: 'hsl(var(--brand-forest))' },
+    { label: 'Modules', value: modules.length, icon: <FolderIcon fontSize="small" />, color: 'hsl(var(--brand-amber))' },
+    { label: 'Items', value: items.length, icon: <ItemIcon fontSize="small" />, color: 'hsl(var(--brand-coral))' },
+    { label: 'Batches', value: batches.length, icon: <GroupIcon fontSize="small" />, color: '#9C27B0' },
+    { label: 'Quizzes', value: quizCount, icon: <QuizIcon fontSize="small" />, color: '#673AB7' },
+    { label: 'Videos', value: videoCount, icon: <YouTubeIcon fontSize="small" />, color: '#D32F2F' },
   ];
 
   return (
     <Box>
-      {/* Stats Grid */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* Stats Grid — 3 per row on mobile, dense */}
+      <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: 3 }}>
         {statCards.map((stat) => (
-          <Grid size={{ xs: 6, sm: 4, md: 2 }} key={stat.label}>
+          <Grid size={{ xs: 4, sm: 4, md: 2 }} key={stat.label}>
             <Card sx={{ textAlign: 'center' }}>
-              <CardContent sx={{ py: 2, px: 1, '&:last-child': { pb: 2 } }}>
-                <Avatar sx={{ bgcolor: stat.color, width: 36, height: 36, mx: 'auto', mb: 1 }}>
-                  {stat.icon}
-                </Avatar>
-                <Typography variant="h5" fontWeight={800}>{stat.value}</Typography>
-                <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
+              <CardContent sx={{ py: { xs: 1.25, sm: 2 }, px: { xs: 0.75, sm: 1 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75, mb: 0.5 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color, flexShrink: 0 }} />
+                  <Box sx={{ color: stat.color, display: { xs: 'none', sm: 'inline-flex' } }}>{stat.icon}</Box>
+                </Box>
+                <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: '1.1rem', sm: '1.4rem' }, lineHeight: 1.1 }}>
+                  {stat.value}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>
+                  {stat.label}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
