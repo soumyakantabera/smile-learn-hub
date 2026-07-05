@@ -147,15 +147,24 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
                     >
                       <MenuItem value="mcq">Multiple choice</MenuItem>
                       <MenuItem value="listen-choose">Listen &amp; choose (TTS)</MenuItem>
+                      <MenuItem value="tap-order">Tap to arrange (word order)</MenuItem>
+                      <MenuItem value="match">Match pairs</MenuItem>
+                      <MenuItem value="fill-blank">Fill in the blank</MenuItem>
                     </Select>
                   </FormControl>
                   {(q.type || 'mcq') === 'listen-choose' && (
-                    <Chip
-                      size="small"
-                      color="info"
-                      label="Learner hears audio, picks matching text"
-                    />
+                    <Chip size="small" color="info" label="Learner hears audio, picks matching text" />
                   )}
+                  {q.type === 'tap-order' && (
+                    <Chip size="small" color="warning" label="Learner arranges shuffled words into correct order" />
+                  )}
+                  {q.type === 'match' && (
+                    <Chip size="small" color="success" label="Learner matches left items to right items" />
+                  )}
+                  {q.type === 'fill-blank' && (
+                    <Chip size="small" color="secondary" label='Use "___" in sentence for each blank' />
+                  )}
+
                 </Box>
 
                 {(q.type || 'mcq') === 'listen-choose' ? (
