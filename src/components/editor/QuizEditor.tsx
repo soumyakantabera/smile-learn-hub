@@ -167,7 +167,7 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
 
                 </Box>
 
-                {(q.type || 'mcq') === 'listen-choose' ? (
+                {q.type === 'listen-choose' ? (
                   <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                     <TextField
                       label="Text to speak"
@@ -185,9 +185,7 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
                       sx={{ width: 110 }}
                     />
                     <IconButton
-                      onClick={() =>
-                        q.audioText && speak(q.audioText, { lang: q.audioLang || 'en-US' })
-                      }
+                      onClick={() => q.audioText && speak(q.audioText, { lang: q.audioLang || 'en-US' })}
                       disabled={!ttsSupported || !q.audioText}
                       aria-label="Preview audio"
                       sx={{ color: '#0F3D2E', mt: 1 }}
@@ -197,39 +195,142 @@ export function QuizEditor({ questions, onChange }: QuizEditorProps) {
                   </Box>
                 ) : (
                   <TextField
-                    label="Question"
+                    label={q.type === 'fill-blank' ? 'Sentence (use ___ for each blank)' : 'Question'}
                     value={q.question}
                     onChange={(e) => updateQuestion(qIndex, { question: e.target.value })}
                     fullWidth
-                    placeholder="e.g., What is the correct greeting for morning?"
+                    multiline={q.type === 'fill-blank'}
+                    placeholder={
+                      q.type === 'fill-blank'
+                        ? 'e.g., I ___ coffee every ___ morning.'
+                        : 'e.g., What is the correct greeting for morning?'
+                    }
                   />
                 )}
 
-                <Typography variant="body2" fontWeight={500}>
-                  Options (select correct answer):
-                </Typography>
-                <RadioGroup
-                  value={q.correctIndex}
-                  onChange={(e) => updateQuestion(qIndex, { correctIndex: parseInt(e.target.value) })}
-                >
-                  {q.options.map((opt, optIndex) => (
-                    <Box key={optIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <FormControlLabel value={optIndex} control={<Radio size="small" />} label="" sx={{ mr: 0 }} />
+                {q.type === 'tap-order' ? (
+                  <>
+                    <TextField
+                      label="Correct sentence (words separated by spaces)"
+                      value={(q.correctOrder || []).join(' ')}
+                      onChange={(e) => {
+                        const words = e.target.value.split(/\s+/).filter(Boolean);
+                        updateQuestion(qIndex, { correctOrder: words, tokens: words });
+                      }}
+                      fullWidth
+                      placeholder="e.g., I would like a coffee please"
+                      helperText="Learner will see these words shuffled and must tap them in this order."
+                    />
+                  </>
+                ) : q.type === 'match' ? (
+                  <Box>
+                    <Typography variant="body2" fontWeight={500} sx={{ mb: 1 }}>
+                      Pairs to match:
+                    </Typography>
+                    {(q.pairs || []).map((p, pi) => (
+                      <Box key={pi} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                        <TextField
+                          size="small"
+                          label={`Left ${pi + 1}`}
+                          value={p.left}
+                          onChange={(e) => {
+                            const pairs = [...(q.pairs || [])];
+                            pairs[pi] = { ...pairs[pi], left: e.target.value };
+                            updateQuestion(qIndex, { pairs });
+                          }}
+                          fullWidth
+                        />
+                        <TextField
+                          size="small"
+                          label={`Right ${pi + 1}`}
+                          value={p.right}
+                          onChange={(e) => {
+                            const pairs = [...(q.pairs || [])];
+                            pairs[pi] = { ...pairs[pi], right: e.target.value };
+                            updateQuestion(qIndex, { pairs });
+                          }}
+                          fullWidth
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            const pairs = (q.pairs || []).filter((_, i) => i !== pi);
+                            updateQuestion(qIndex, { pairs });
+                          }}
+                          aria-label="Remove pair"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                    <Button
+                      size="small"
+                      startIcon={<AddIcon />}
+                      onClick={() =>
+                        updateQuestion(qIndex, {
+                          pairs: [...(q.pairs || []), { left: '', right: '' }],
+                        })
+                      }
+                    >
+                      Add pair
+                    </Button>
+                  </Box>
+                ) : q.type === 'fill-blank' ? (
+                  <Box>
+                    <Typography variant="body2" fontWeight={500} sx={{ mb: 1 }}>
+                      Answers for each ___ (in order):
+                    </Typography>
+                    {((q.question || '').match(/___/g) || []).map((_, bi) => (
                       <TextField
+                        key={bi}
                         size="small"
-                        value={opt}
-                        onChange={(e) => updateOption(qIndex, optIndex, e.target.value)}
-                        placeholder={`Option ${optIndex + 1}`}
-                        fullWidth
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            bgcolor: q.correctIndex === optIndex ? 'success.50' : 'transparent',
-                          },
+                        label={`Blank ${bi + 1}`}
+                        value={(q.blanks || [])[bi] || ''}
+                        onChange={(e) => {
+                          const blanks = [...(q.blanks || [])];
+                          blanks[bi] = e.target.value;
+                          updateQuestion(qIndex, { blanks });
                         }}
+                        fullWidth
+                        sx={{ mb: 1 }}
                       />
-                    </Box>
-                  ))}
-                </RadioGroup>
+                    ))}
+                    {(q.question || '').match(/___/g) === null && (
+                      <Typography variant="caption" color="text.secondary">
+                        Add one or more "___" in the sentence above to create blanks.
+                      </Typography>
+                    )}
+                  </Box>
+                ) : (
+                  <>
+                    <Typography variant="body2" fontWeight={500}>
+                      Options (select correct answer):
+                    </Typography>
+                    <RadioGroup
+                      value={q.correctIndex}
+                      onChange={(e) => updateQuestion(qIndex, { correctIndex: parseInt(e.target.value) })}
+                    >
+                      {q.options.map((opt, optIndex) => (
+                        <Box key={optIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <FormControlLabel value={optIndex} control={<Radio size="small" />} label="" sx={{ mr: 0 }} />
+                          <TextField
+                            size="small"
+                            value={opt}
+                            onChange={(e) => updateOption(qIndex, optIndex, e.target.value)}
+                            placeholder={`Option ${optIndex + 1}`}
+                            fullWidth
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                bgcolor: q.correctIndex === optIndex ? 'success.50' : 'transparent',
+                              },
+                            }}
+                          />
+                        </Box>
+                      ))}
+                    </RadioGroup>
+                  </>
+                )}
+
 
                 <TextField
                   label="Explanation (optional)"
