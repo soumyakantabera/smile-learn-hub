@@ -2,65 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Learn with Smile — Indigo + Coral design system
-   Primary: Indigo (4F46E5) — focus, professionalism
-   Accent:  Amber  (F59E0B) — warmth, friendliness
-   Highlight: Coral (EF4444) — gentle alerting / progress accents
+/* Learn With Smile — Forest + Amber + Coral palette
+   Primary:   Forest Green #0F3D2E — trust, focus
+   Secondary: Amber        #F5B921 — warmth, highlight
+   Accent:    Mint         #C8E6D3 — soft surfaces
+   Alert:     Coral        #F26B5E — errors / streak
+   Surface:   Cream        #FFF8EC — page bg
 */
 
 @layer base {
   :root {
-    --background: 210 40% 98%;          /* #F8FAFC */
-    --foreground: 222 47% 11%;          /* #0F172A */
+    --background: 40 100% 97%;          /* Cream */
+    --foreground: 158 61% 12%;          /* Deep forest ink */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 158 61% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 158 61% 12%;
 
-    --primary: 239 84% 60%;             /* #4F46E5 Indigo */
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 239 84% 96%;
-    --primary-dark:  239 84% 48%;
-    --primary-glow:  250 92% 72%;
+    --primary: 158 61% 15%;             /* Forest #0F3D2E */
+    --primary-foreground: 40 100% 97%;
+    --primary-light: 140 40% 84%;       /* Mint */
+    --primary-dark:  158 61% 10%;
+    --primary-glow:  140 40% 70%;
 
-    --secondary: 38 92% 50%;            /* #F59E0B Amber */
-    --secondary-foreground: 222 47% 11%;
-    --secondary-light: 38 92% 95%;
+    --secondary: 42 91% 55%;            /* Amber */
+    --secondary-foreground: 158 61% 12%;
+    --secondary-light: 42 91% 90%;
 
-    --muted: 220 18% 95%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 140 20% 94%;
+    --muted-foreground: 158 20% 35%;
 
-    --accent: 188 86% 53%;              /* Cyan accent */
-    --accent-foreground: 222 47% 11%;
+    --accent: 140 40% 84%;              /* Mint */
+    --accent-foreground: 158 61% 12%;
 
-    --destructive: 0 84% 60%;           /* #EF4444 Coral */
+    --destructive: 6 86% 66%;           /* Coral */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 90%;
-    --input: 220 20% 90%;
-    --ring: 239 84% 60%;
+    --border: 140 20% 86%;
+    --input: 140 20% 86%;
+    --ring: 158 61% 25%;
 
     --radius: 0.875rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 239 84% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 239 84% 96%;
-    --sidebar-accent-foreground: 239 84% 38%;
-    --sidebar-border: 220 20% 90%;
-    --sidebar-ring: 239 84% 60%;
+    --sidebar-foreground: 158 61% 12%;
+    --sidebar-primary: 158 61% 15%;
+    --sidebar-primary-foreground: 40 100% 97%;
+    --sidebar-accent: 140 40% 92%;
+    --sidebar-accent-foreground: 158 61% 15%;
+    --sidebar-border: 140 20% 86%;
+    --sidebar-ring: 158 61% 25%;
 
-    --success: 152 65% 44%;
+    --success: 152 65% 36%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
-    --info: 217 92% 60%;
+    --warning: 42 91% 55%;
+    --warning-foreground: 158 61% 12%;
+    --info: 200 80% 45%;
     --info-foreground: 0 0% 100%;
 
-    /* Learn With Smile brand palette (editor/admin accents) */
+    /* Learn With Smile brand palette */
     --brand-forest: 158 61% 15%;   /* #0F3D2E */
     --brand-mint:   140 40% 84%;   /* #C8E6D3 */
     --brand-amber:  42 91% 55%;    /* #F5B921 */
@@ -68,65 +70,67 @@
     --brand-cream:  40 100% 96%;   /* #FFF8EC */
 
     /* Branded gradients & shadows */
-    --gradient-primary: linear-gradient(135deg, hsl(239 84% 60%), hsl(250 92% 72%));
-    --gradient-warm:    linear-gradient(135deg, hsl(239 84% 60%), hsl(38 92% 55%));
-    --gradient-hero:    linear-gradient(140deg, hsl(239 84% 60% / 0.14) 0%, hsl(38 92% 55% / 0.10) 60%, hsl(0 84% 60% / 0.06) 100%);
-    --gradient-card:    linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(158 61% 15%), hsl(158 55% 25%));
+    --gradient-warm:    linear-gradient(135deg, hsl(42 91% 55%), hsl(6 86% 66%));
+    --gradient-hero:    linear-gradient(140deg, hsl(158 61% 15% / 0.12) 0%, hsl(42 91% 55% / 0.10) 60%, hsl(6 86% 66% / 0.06) 100%);
+    --gradient-card:    linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40 100% 98%) 100%);
 
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.06);
-    --shadow-md: 0 6px 18px -8px hsl(222 47% 11% / 0.12);
-    --shadow-lg: 0 18px 40px -18px hsl(239 84% 30% / 0.28);
-    --shadow-elegant: 0 20px 50px -22px hsl(239 84% 50% / 0.38);
-    --shadow-glow: 0 0 0 4px hsl(239 84% 60% / 0.14);
+    --shadow-sm: 0 1px 2px 0 hsl(158 61% 12% / 0.06);
+    --shadow-md: 0 6px 18px -8px hsl(158 61% 12% / 0.14);
+    --shadow-lg: 0 18px 40px -18px hsl(158 61% 15% / 0.28);
+    --shadow-elegant: 0 20px 50px -22px hsl(158 61% 15% / 0.36);
+    --shadow-glow: 0 0 0 4px hsl(158 61% 25% / 0.14);
   }
+
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 158 40% 6%;
+    --foreground: 40 100% 96%;
 
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 98%;
+    --card: 158 40% 10%;
+    --card-foreground: 40 100% 96%;
 
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 158 40% 10%;
+    --popover-foreground: 40 100% 96%;
 
-    --primary: 239 90% 70%;
-    --primary-foreground: 222 47% 8%;
-    --primary-light: 239 70% 18%;
-    --primary-dark:  239 90% 60%;
-    --primary-glow:  250 95% 80%;
+    --primary: 140 40% 70%;
+    --primary-foreground: 158 61% 10%;
+    --primary-light: 158 40% 18%;
+    --primary-dark:  140 40% 60%;
+    --primary-glow:  140 50% 78%;
 
-    --secondary: 38 92% 55%;
-    --secondary-foreground: 222 47% 11%;
-    --secondary-light: 38 50% 18%;
+    --secondary: 42 91% 60%;
+    --secondary-foreground: 158 61% 10%;
+    --secondary-light: 42 40% 18%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 70%;
+    --muted: 158 30% 15%;
+    --muted-foreground: 140 20% 72%;
 
-    --accent: 188 86% 60%;
-    --accent-foreground: 222 47% 8%;
+    --accent: 140 40% 30%;
+    --accent-foreground: 40 100% 96%;
 
-    --destructive: 0 78% 62%;
+    --destructive: 6 80% 62%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 22%;
-    --input: 217 33% 22%;
-    --ring: 239 90% 70%;
+    --border: 158 30% 20%;
+    --input: 158 30% 20%;
+    --ring: 140 40% 70%;
 
-    --sidebar-background: 222 47% 9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 239 90% 70%;
-    --sidebar-primary-foreground: 222 47% 8%;
-    --sidebar-accent: 239 70% 18%;
-    --sidebar-accent-foreground: 239 90% 85%;
-    --sidebar-border: 217 33% 22%;
-    --sidebar-ring: 239 90% 70%;
+    --sidebar-background: 158 40% 8%;
+    --sidebar-foreground: 40 100% 96%;
+    --sidebar-primary: 140 40% 70%;
+    --sidebar-primary-foreground: 158 61% 10%;
+    --sidebar-accent: 158 30% 18%;
+    --sidebar-accent-foreground: 140 40% 85%;
+    --sidebar-border: 158 30% 20%;
+    --sidebar-ring: 140 40% 70%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(239 90% 70%), hsl(250 95% 80%));
-    --gradient-warm:    linear-gradient(135deg, hsl(239 90% 65%), hsl(38 92% 60%));
-    --gradient-hero:    linear-gradient(140deg, hsl(239 90% 65% / 0.18) 0%, hsl(38 92% 60% / 0.10) 60%, hsl(0 84% 65% / 0.06) 100%);
-    --gradient-card:    linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(222 47% 8%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(158 55% 25%), hsl(140 40% 40%));
+    --gradient-warm:    linear-gradient(135deg, hsl(42 91% 55%), hsl(6 86% 60%));
+    --gradient-hero:    linear-gradient(140deg, hsl(140 40% 40% / 0.18) 0%, hsl(42 91% 55% / 0.10) 60%, hsl(6 86% 60% / 0.06) 100%);
+    --gradient-card:    linear-gradient(180deg, hsl(158 40% 11%) 0%, hsl(158 40% 8%) 100%);
   }
+
 }
 
 @layer base {
