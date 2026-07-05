@@ -75,11 +75,11 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiCssBaseline: {
       styleOverrides: {
         '*:focus-visible': {
-          outline: `2px solid ${mode === 'dark' ? 'hsl(239 90% 75%)' : 'hsl(239 84% 55%)'}`,
+          outline: `2px solid ${mode === 'dark' ? 'hsl(140 40% 78%)' : 'hsl(158 61% 25%)'}`,
           outlineOffset: 2,
         },
         '::selection': {
-          background: mode === 'dark' ? 'hsl(239 90% 70% / 0.45)' : 'hsl(239 84% 60% / 0.25)',
+          background: mode === 'dark' ? 'hsl(140 40% 70% / 0.45)' : 'hsl(158 61% 25% / 0.25)',
           color: mode === 'dark' ? '#fff' : 'hsl(222 47% 11%)',
         },
       },
@@ -88,8 +88,8 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
       styleOverrides: {
         root: { borderRadius: 12, padding: '10px 18px', fontWeight: 600 },
         contained: {
-          boxShadow: '0 6px 18px -8px hsl(239 84% 30% / 0.25)',
-          '&:hover': { boxShadow: '0 10px 28px -12px hsl(239 84% 30% / 0.4)' },
+          boxShadow: '0 6px 18px -8px hsl(158 61% 12% / 0.25)',
+          '&:hover': { boxShadow: '0 10px 28px -12px hsl(158 61% 12% / 0.4)' },
           '&.Mui-disabled': {
             // Standard MUI disabled fallback for non-gradient contained buttons.
             color: mode === 'dark' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
@@ -161,7 +161,7 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
         root: {
           color: mode === 'dark' ? 'hsl(215 20% 75%)' : 'hsl(215 16% 40%)',
           '&.Mui-focused': {
-            color: mode === 'dark' ? 'hsl(239 90% 75%)' : 'hsl(239 84% 50%)',
+            color: mode === 'dark' ? 'hsl(140 40% 78%)' : 'hsl(158 61% 20%)',
           },
         },
       },
