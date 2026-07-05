@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import {
   Chip,
   Alert,
   IconButton,
+  TextField,
 } from '@mui/material';
 import {
   CheckCircle as CheckIcon,
@@ -16,6 +17,7 @@ import {
   Replay as RetryIcon,
   VolumeUp as ListenIcon,
   Favorite as HeartIcon,
+  Close as ClearIcon,
 } from '@mui/icons-material';
 import type { ContentItem, QuizQuestion } from '@/types/content';
 import { saveQuizAttempt } from '@/lib/progress';
@@ -28,9 +30,52 @@ interface Props {
   hearts?: number;
 }
 
+const FOREST = '#0F3D2E';
+const FOREST_DARK = '#0a2c22';
+const AMBER = '#F5B921';
+const CORAL = '#F26B5E';
+const MINT = '#C8E6D3';
+const SUCCESS_BG = '#DCFCE7';
+const SUCCESS = '#16A34A';
+const ERROR_BG = '#FEE2E2';
+const ERROR = '#DC2626';
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function evaluate(q: QuizQuestion, state: any): boolean {
+  switch (q.type) {
+    case 'tap-order': {
+      const expected = q.correctOrder || [];
+      const given: string[] = state.order || [];
+      if (given.length !== expected.length) return false;
+      return given.every((w, i) => w.trim().toLowerCase() === expected[i].trim().toLowerCase());
+    }
+    case 'match': {
+      const pairs = q.pairs || [];
+      const map: Record<string, string> = state.matches || {};
+      return pairs.every((p) => (map[p.left] || '').trim().toLowerCase() === p.right.trim().toLowerCase());
+    }
+    case 'fill-blank': {
+      const expected = q.blanks || [];
+      const given: string[] = state.blanks || [];
+      if (given.length < expected.length) return false;
+      return expected.every((b, i) => (given[i] || '').trim().toLowerCase() === b.trim().toLowerCase());
+    }
+    default:
+      return state.selected === q.correctIndex;
+  }
+}
+
 /**
  * Duolingo-style one-question-at-a-time quiz viewer.
- * Supports `mcq` and `listen-choose` question types (fallback to MCQ).
+ * Supports mcq, listen-choose, tap-order, match, fill-blank.
  */
 export function StepQuizViewer({ item, hearts = 3 }: Props) {
   const { content } = useContent();
@@ -38,29 +83,50 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
   const questions = item.quizQuestions || [];
 
   const [idx, setIdx] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
   const [score, setScore] = useState(0);
-  const [answers, setAnswers] = useState<(number | null)[]>(
-    new Array(questions.length).fill(null),
-  );
   const [remainingHearts, setRemainingHearts] = useState(hearts);
   const [done, setDone] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Per-question interactive state
+  const [selected, setSelected] = useState<number | null>(null);
+  const [order, setOrder] = useState<string[]>([]);
+  const [bankIndices, setBankIndices] = useState<number[]>([]); // indices into shuffled bank still available
+  const [matches, setMatches] = useState<Record<string, string>>({});
+  const [pickedLeft, setPickedLeft] = useState<string | null>(null);
+  const [blanks, setBlanks] = useState<string[]>([]);
+
   const q = questions[idx];
 
-  // Auto-play TTS for listen-choose
+  // Shuffled token bank for tap-order (stable per question index)
+  const shuffledTokens = useMemo(() => {
+    if (!q || q.type !== 'tap-order') return [];
+    const src = q.tokens && q.tokens.length ? q.tokens : q.correctOrder || [];
+    return shuffle(src);
+  }, [q, idx]);
+
+  // Shuffled right column for match (stable per question index)
+  const shuffledRights = useMemo(() => {
+    if (!q || q.type !== 'match') return [];
+    return shuffle((q.pairs || []).map((p) => p.right));
+  }, [q, idx]);
+
+  // Reset per-question state when idx changes
   useEffect(() => {
     if (!q) return;
+    setChecked(false);
+    setSelected(null);
+    setOrder([]);
+    setBankIndices(shuffledTokens.map((_, i) => i));
+    setMatches({});
+    setPickedLeft(null);
+    setBlanks(new Array(((q.question || '').match(/___/g) || q.blanks || []).length).fill(''));
     if (q.type === 'listen-choose' && q.audioText && ttsSupported) {
-      const t = setTimeout(
-        () => speak(q.audioText!, { lang: q.audioLang || 'en-US' }),
-        250,
-      );
+      const t = setTimeout(() => speak(q.audioText!, { lang: q.audioLang || 'en-US' }), 250);
       return () => clearTimeout(t);
     }
-  }, [idx, q, ttsSupported, speak]);
+  }, [idx, q, shuffledTokens, ttsSupported, speak]);
 
   useEffect(() => {
     if (done && !saved) {
@@ -71,11 +137,11 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
         courseId: course?.id,
         score,
         maxScore: questions.length,
-        answers,
+        answers: [],
       });
       setSaved(true);
     }
-  }, [done, saved, content, item, score, questions.length, answers]);
+  }, [done, saved, content, item, score, questions.length]);
 
   if (questions.length === 0) {
     return <Alert severity="info">This activity has no questions configured yet.</Alert>;
@@ -83,24 +149,44 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
 
   const reset = () => {
     setIdx(0);
-    setSelected(null);
-    setChecked(false);
     setScore(0);
-    setAnswers(new Array(questions.length).fill(null));
     setRemainingHearts(hearts);
     setDone(false);
     setSaved(false);
   };
 
+  const canCheck = (() => {
+    if (checked) return false;
+    switch (q.type) {
+      case 'tap-order':
+        return order.length === (q.correctOrder || []).length && order.length > 0;
+      case 'match':
+        return (q.pairs || []).every((p) => matches[p.left]);
+      case 'fill-blank':
+        return blanks.length > 0 && blanks.every((b) => b.trim().length > 0);
+      default:
+        return selected !== null;
+    }
+  })();
+
+  const isCorrect = (() => {
+    switch (q.type) {
+      case 'tap-order':
+        return evaluate(q, { order });
+      case 'match':
+        return evaluate(q, { matches });
+      case 'fill-blank':
+        return evaluate(q, { blanks });
+      default:
+        return selected === q.correctIndex;
+    }
+  })();
+
   const check = () => {
-    if (selected === null) return;
+    if (!canCheck) return;
     setChecked(true);
-    const correct = selected === q.correctIndex;
-    if (correct) setScore((s) => s + 1);
+    if (isCorrect) setScore((s) => s + 1);
     else setRemainingHearts((h) => Math.max(0, h - 1));
-    const next = [...answers];
-    next[idx] = selected;
-    setAnswers(next);
   };
 
   const goNext = () => {
@@ -109,8 +195,6 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
       return;
     }
     setIdx((i) => i + 1);
-    setSelected(null);
-    setChecked(false);
   };
 
   if (done) {
@@ -128,13 +212,11 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
               borderRadius: '50%',
               display: 'grid',
               placeItems: 'center',
-              bgcolor: passed ? '#0F3D2E' : '#F26B5E',
+              bgcolor: passed ? FOREST : CORAL,
               color: '#fff',
             }}
           >
-            <Typography variant="h4" fontWeight={800}>
-              {pct}%
-            </Typography>
+            <Typography variant="h4" fontWeight={800}>{pct}%</Typography>
           </Box>
           <Typography variant="h5" fontWeight={700} gutterBottom>
             {passed ? 'Nice work!' : 'Almost there'}
@@ -147,7 +229,7 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
             variant="contained"
             startIcon={<RetryIcon />}
             onClick={reset}
-            sx={{ bgcolor: '#0F3D2E', '&:hover': { bgcolor: '#0a2c22' } }}
+            sx={{ bgcolor: FOREST, '&:hover': { bgcolor: FOREST_DARK } }}
           >
             Try again
           </Button>
@@ -157,7 +239,21 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
   }
 
   const progress = ((idx + (checked ? 1 : 0)) / questions.length) * 100;
-  const isListen = q.type === 'listen-choose';
+
+  const prompt = (() => {
+    switch (q.type) {
+      case 'listen-choose':
+        return 'Tap what you hear';
+      case 'tap-order':
+        return q.question || 'Tap the words in the correct order';
+      case 'match':
+        return q.question || 'Match the pairs';
+      case 'fill-blank':
+        return 'Fill in the blanks';
+      default:
+        return q.question || 'Choose the correct answer';
+    }
+  })();
 
   return (
     <Card>
@@ -171,7 +267,8 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
               flex: 1,
               height: 10,
               borderRadius: 5,
-              '& .MuiLinearProgress-bar': { bgcolor: '#0F3D2E' },
+              bgcolor: MINT,
+              '& .MuiLinearProgress-bar': { bgcolor: FOREST },
             }}
           />
           <Box sx={{ display: 'flex', gap: 0.25 }}>
@@ -179,7 +276,7 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
               <HeartIcon
                 key={i}
                 fontSize="small"
-                sx={{ color: i < remainingHearts ? '#F26B5E' : 'action.disabled' }}
+                sx={{ color: i < remainingHearts ? CORAL : 'action.disabled' }}
               />
             ))}
           </Box>
@@ -188,73 +285,284 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
         <Chip label={`Question ${idx + 1} of ${questions.length}`} size="small" sx={{ mb: 2 }} />
 
         <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
-          {isListen ? 'Tap what you hear' : q.question || 'Choose the correct answer'}
+          {prompt}
         </Typography>
 
-        {isListen && q.audioText && (
+        {/* ===== LISTEN & CHOOSE ===== */}
+        {q.type === 'listen-choose' && q.audioText && (
           <Box sx={{ mb: 3, textAlign: 'center' }}>
             <IconButton
               onClick={() => speak(q.audioText!, { lang: q.audioLang || 'en-US' })}
               disabled={!ttsSupported}
-              sx={{
-                width: 88,
-                height: 88,
-                bgcolor: '#0F3D2E',
-                color: '#fff',
-                '&:hover': { bgcolor: '#0a2c22' },
-              }}
+              sx={{ width: 88, height: 88, bgcolor: FOREST, color: '#fff', '&:hover': { bgcolor: FOREST_DARK } }}
             >
               <ListenIcon sx={{ fontSize: 44 }} />
             </IconButton>
           </Box>
         )}
 
-        {/* Options */}
-        <Box sx={{ display: 'grid', gap: 1.5 }}>
-          {q.options.map((opt, i) => {
-            const isSelected = selected === i;
-            const isCorrect = checked && i === q.correctIndex;
-            const isWrongPick = checked && isSelected && i !== q.correctIndex;
-            const bg = isCorrect
-              ? '#DCFCE7'
-              : isWrongPick
-                ? '#FEE2E2'
-                : isSelected
-                  ? '#FEF3C7'
-                  : 'background.paper';
-            const border = isCorrect
-              ? '#16A34A'
-              : isWrongPick
-                ? '#DC2626'
-                : isSelected
-                  ? '#F5B921'
-                  : 'divider';
-            return (
+        {/* ===== TAP-ORDER ===== */}
+        {q.type === 'tap-order' ? (
+          <Box>
+            {/* Answer tray */}
+            <Box
+              sx={{
+                minHeight: 64,
+                p: 1.5,
+                mb: 2,
+                borderRadius: 2,
+                border: 2,
+                borderStyle: 'dashed',
+                borderColor: checked ? (isCorrect ? SUCCESS : ERROR) : 'divider',
+                bgcolor: checked ? (isCorrect ? SUCCESS_BG : ERROR_BG) : 'background.default',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
+                alignItems: 'center',
+              }}
+            >
+              {order.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  Tap words below to build the sentence…
+                </Typography>
+              )}
+              {order.map((w, i) => (
+                <Chip
+                  key={`${w}-${i}`}
+                  label={w}
+                  onDelete={
+                    checked
+                      ? undefined
+                      : () => {
+                          // Return token to bank
+                          const returnIdx = shuffledTokens.findIndex(
+                            (t, ti) => t === w && !bankIndices.includes(ti) && !order.slice(0, i).includes(t),
+                          );
+                          setOrder(order.filter((_, k) => k !== i));
+                          if (returnIdx >= 0) setBankIndices([...bankIndices, returnIdx].sort((a, b) => a - b));
+                        }
+                  }
+                  sx={{ bgcolor: '#fff', border: 1, borderColor: FOREST, color: FOREST, fontWeight: 600 }}
+                />
+              ))}
+            </Box>
+            {/* Token bank */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {shuffledTokens.map((tok, ti) => {
+                const available = bankIndices.includes(ti);
+                return (
+                  <Button
+                    key={ti}
+                    onClick={() => {
+                      if (checked || !available) return;
+                      setOrder([...order, tok]);
+                      setBankIndices(bankIndices.filter((b) => b !== ti));
+                    }}
+                    disabled={checked || !available}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      color: FOREST,
+                      bgcolor: available ? '#fff' : MINT,
+                      border: 2,
+                      borderColor: available ? FOREST : 'transparent',
+                      borderRadius: 2,
+                      px: 2,
+                      opacity: available ? 1 : 0.35,
+                      '&:hover': { bgcolor: MINT },
+                    }}
+                  >
+                    {tok}
+                  </Button>
+                );
+              })}
+            </Box>
+            {checked && !isCorrect && (
+              <Typography variant="body2" sx={{ mt: 2, color: ERROR }}>
+                Correct: <strong>{(q.correctOrder || []).join(' ')}</strong>
+              </Typography>
+            )}
+          </Box>
+        ) : q.type === 'match' ? (
+          /* ===== MATCH ===== */
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+            <Box sx={{ display: 'grid', gap: 1 }}>
+              {(q.pairs || []).map((p) => {
+                const matched = !!matches[p.left];
+                const rightMatched = matches[p.left];
+                const correctPair = rightMatched === p.right;
+                const bg = checked
+                  ? correctPair
+                    ? SUCCESS_BG
+                    : matched
+                      ? ERROR_BG
+                      : '#fff'
+                  : pickedLeft === p.left
+                    ? '#FEF3C7'
+                    : matched
+                      ? MINT
+                      : '#fff';
+                return (
+                  <Button
+                    key={p.left}
+                    onClick={() => !checked && !matched && setPickedLeft(p.left)}
+                    disabled={checked || matched}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textAlign: 'left',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      color: FOREST,
+                      bgcolor: bg,
+                      border: 2,
+                      borderColor: pickedLeft === p.left ? AMBER : matched ? FOREST : 'divider',
+                      borderRadius: 2,
+                      p: 1.5,
+                    }}
+                  >
+                    {p.left}
+                    {matched && (
+                      <Chip
+                        size="small"
+                        label={rightMatched}
+                        sx={{ ml: 'auto', bgcolor: '#fff', color: FOREST }}
+                      />
+                    )}
+                  </Button>
+                );
+              })}
+            </Box>
+            <Box sx={{ display: 'grid', gap: 1 }}>
+              {shuffledRights.map((right, ri) => {
+                const usedByLeft = Object.entries(matches).find(([, v]) => v === right)?.[0];
+                const used = !!usedByLeft;
+                return (
+                  <Button
+                    key={ri}
+                    onClick={() => {
+                      if (checked || used || !pickedLeft) return;
+                      setMatches({ ...matches, [pickedLeft]: right });
+                      setPickedLeft(null);
+                    }}
+                    disabled={checked || used || !pickedLeft}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textAlign: 'left',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      color: FOREST,
+                      bgcolor: used ? MINT : '#fff',
+                      border: 2,
+                      borderColor: used ? FOREST : 'divider',
+                      borderRadius: 2,
+                      p: 1.5,
+                      opacity: used ? 0.5 : 1,
+                    }}
+                  >
+                    {right}
+                  </Button>
+                );
+              })}
+            </Box>
+            {Object.keys(matches).length > 0 && !checked && (
               <Button
-                key={i}
-                onClick={() => !checked && setSelected(i)}
-                disabled={checked && !isSelected && !isCorrect}
-                sx={{
-                  justifyContent: 'space-between',
-                  textAlign: 'left',
-                  p: 2,
-                  borderRadius: 2,
-                  border: 2,
-                  borderColor: border,
-                  bgcolor: bg,
-                  color: 'text.primary',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  '&:hover': { bgcolor: isSelected ? bg : 'action.hover' },
+                size="small"
+                startIcon={<ClearIcon />}
+                onClick={() => {
+                  setMatches({});
+                  setPickedLeft(null);
                 }}
+                sx={{ gridColumn: '1 / -1', color: FOREST }}
               >
-                <span>{opt}</span>
-                {isCorrect && <CheckIcon sx={{ color: '#16A34A' }} />}
-                {isWrongPick && <WrongIcon sx={{ color: '#DC2626' }} />}
+                Reset matches
               </Button>
-            );
-          })}
-        </Box>
+            )}
+          </Box>
+        ) : q.type === 'fill-blank' ? (
+          /* ===== FILL-BLANK ===== */
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', lineHeight: 2.5 }}>
+            {(() => {
+              const parts = (q.question || '').split('___');
+              return parts.map((part, i) => (
+                <React.Fragment key={i}>
+                  <Typography component="span" variant="h6" sx={{ color: 'text.primary' }}>
+                    {part}
+                  </Typography>
+                  {i < parts.length - 1 && (
+                    <TextField
+                      size="small"
+                      value={blanks[i] || ''}
+                      onChange={(e) => {
+                        const next = [...blanks];
+                        next[i] = e.target.value;
+                        setBlanks(next);
+                      }}
+                      disabled={checked}
+                      placeholder="…"
+                      sx={{
+                        width: 120,
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: checked
+                            ? (blanks[i] || '').trim().toLowerCase() ===
+                              (q.blanks?.[i] || '').trim().toLowerCase()
+                              ? SUCCESS_BG
+                              : ERROR_BG
+                            : '#fff',
+                        },
+                      }}
+                    />
+                  )}
+                </React.Fragment>
+              ));
+            })()}
+            {checked && !isCorrect && (
+              <Typography variant="body2" sx={{ mt: 2, color: ERROR, width: '100%' }}>
+                Correct: <strong>{(q.blanks || []).join(', ')}</strong>
+              </Typography>
+            )}
+          </Box>
+        ) : (
+          /* ===== MCQ / LISTEN-CHOOSE options ===== */
+          <Box sx={{ display: 'grid', gap: 1.5 }}>
+            {q.options.map((opt, i) => {
+              const isSel = selected === i;
+              const isRight = checked && i === q.correctIndex;
+              const isWrongPick = checked && isSel && i !== q.correctIndex;
+              const bg = isRight
+                ? SUCCESS_BG
+                : isWrongPick
+                  ? ERROR_BG
+                  : isSel
+                    ? '#FEF3C7'
+                    : 'background.paper';
+              const border = isRight ? SUCCESS : isWrongPick ? ERROR : isSel ? AMBER : 'divider';
+              return (
+                <Button
+                  key={i}
+                  onClick={() => !checked && setSelected(i)}
+                  disabled={checked && !isSel && !isRight}
+                  sx={{
+                    justifyContent: 'space-between',
+                    textAlign: 'left',
+                    p: 2,
+                    borderRadius: 2,
+                    border: 2,
+                    borderColor: border,
+                    bgcolor: bg,
+                    color: 'text.primary',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: isSel ? bg : 'action.hover' },
+                  }}
+                >
+                  <span>{opt}</span>
+                  {isRight && <CheckIcon sx={{ color: SUCCESS }} />}
+                  {isWrongPick && <WrongIcon sx={{ color: ERROR }} />}
+                </Button>
+              );
+            })}
+          </Box>
+        )}
 
         {/* Feedback / Actions bar */}
         <Box
@@ -267,11 +575,7 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
             py: 2,
             borderTop: 1,
             borderColor: 'divider',
-            bgcolor: checked
-              ? selected === q.correctIndex
-                ? '#DCFCE7'
-                : '#FEE2E2'
-              : 'background.paper',
+            bgcolor: checked ? (isCorrect ? SUCCESS_BG : ERROR_BG) : 'background.paper',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -282,8 +586,8 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
           <Box sx={{ minWidth: 0, flex: 1 }}>
             {checked && (
               <>
-                <Typography variant="subtitle2" fontWeight={800} sx={{ color: selected === q.correctIndex ? '#166534' : '#991B1B' }}>
-                  {selected === q.correctIndex ? 'Correct!' : 'Not quite'}
+                <Typography variant="subtitle2" fontWeight={800} sx={{ color: isCorrect ? '#166534' : '#991B1B' }}>
+                  {isCorrect ? 'Correct!' : 'Not quite'}
                 </Typography>
                 {q.explanation && (
                   <Typography variant="body2" color="text.secondary">
@@ -296,9 +600,9 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
           {!checked ? (
             <Button
               variant="contained"
-              disabled={selected === null}
+              disabled={!canCheck}
               onClick={check}
-              sx={{ bgcolor: '#0F3D2E', '&:hover': { bgcolor: '#0a2c22' } }}
+              sx={{ bgcolor: FOREST, '&:hover': { bgcolor: FOREST_DARK } }}
             >
               Check
             </Button>
@@ -307,8 +611,8 @@ export function StepQuizViewer({ item, hearts = 3 }: Props) {
               variant="contained"
               onClick={goNext}
               sx={{
-                bgcolor: selected === q.correctIndex ? '#16A34A' : '#F26B5E',
-                '&:hover': { bgcolor: selected === q.correctIndex ? '#15803d' : '#dc4a3d' },
+                bgcolor: isCorrect ? SUCCESS : CORAL,
+                '&:hover': { bgcolor: isCorrect ? '#15803d' : '#dc4a3d' },
               }}
             >
               Continue

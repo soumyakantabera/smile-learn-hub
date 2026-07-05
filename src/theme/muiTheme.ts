@@ -6,58 +6,59 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     ...(mode === 'light'
       ? {
           primary: {
-            main: 'hsl(239, 84%, 60%)',
-            light: 'hsl(250, 92%, 72%)',
-            dark: 'hsl(239, 84%, 48%)',
-            contrastText: '#ffffff',
+            main: '#0F3D2E',
+            light: '#C8E6D3',
+            dark: '#0a2c22',
+            contrastText: '#FFF8EC',
           },
           secondary: {
-            main: 'hsl(38, 92%, 50%)',
-            light: 'hsl(38, 92%, 65%)',
-            dark: 'hsl(38, 92%, 40%)',
-            contrastText: 'hsl(222, 47%, 11%)',
+            main: '#F5B921',
+            light: '#FFD873',
+            dark: '#C89112',
+            contrastText: '#0F3D2E',
           },
           background: {
-            default: 'hsl(210, 40%, 98%)',
+            default: '#FFF8EC',
             paper: '#ffffff',
           },
           text: {
-            primary: 'hsl(222, 47%, 11%)',
-            secondary: 'hsl(215, 16%, 47%)',
+            primary: '#0F3D2E',
+            secondary: 'hsl(158, 20%, 35%)',
           },
-          success: { main: 'hsl(152, 65%, 44%)' },
-          warning: { main: 'hsl(38, 92%, 50%)' },
-          info: { main: 'hsl(217, 92%, 60%)' },
-          error: { main: 'hsl(0, 84%, 60%)' },
-          divider: 'hsl(220, 20%, 90%)',
+          success: { main: 'hsl(152, 65%, 36%)' },
+          warning: { main: '#F5B921' },
+          info: { main: 'hsl(200, 80%, 45%)' },
+          error: { main: '#F26B5E' },
+          divider: 'hsl(140, 20%, 86%)',
         }
       : {
           primary: {
-            main: 'hsl(239, 90%, 70%)',
-            light: 'hsl(250, 95%, 80%)',
-            dark: 'hsl(239, 90%, 60%)',
-            contrastText: 'hsl(222, 47%, 8%)',
+            main: 'hsl(140, 40%, 70%)',
+            light: 'hsl(140, 50%, 82%)',
+            dark: 'hsl(140, 40%, 60%)',
+            contrastText: 'hsl(158, 61%, 10%)',
           },
           secondary: {
-            main: 'hsl(38, 92%, 55%)',
-            light: 'hsl(38, 92%, 70%)',
-            dark: 'hsl(38, 92%, 45%)',
-            contrastText: 'hsl(222, 47%, 11%)',
+            main: 'hsl(42, 91%, 60%)',
+            light: 'hsl(42, 91%, 74%)',
+            dark: 'hsl(42, 91%, 48%)',
+            contrastText: 'hsl(158, 61%, 10%)',
           },
           background: {
-            default: 'hsl(222, 47%, 6%)',
-            paper: 'hsl(222, 47%, 10%)',
+            default: 'hsl(158, 40%, 6%)',
+            paper: 'hsl(158, 40%, 10%)',
           },
           text: {
-            primary: 'hsl(210, 40%, 98%)',
-            secondary: 'hsl(215, 20%, 70%)',
+            primary: 'hsl(40, 100%, 96%)',
+            secondary: 'hsl(140, 20%, 72%)',
           },
           success: { main: 'hsl(152, 65%, 50%)' },
-          warning: { main: 'hsl(38, 92%, 55%)' },
-          info: { main: 'hsl(217, 92%, 65%)' },
-          error: { main: 'hsl(0, 78%, 62%)' },
-          divider: 'hsl(217, 33%, 22%)',
+          warning: { main: 'hsl(42, 91%, 60%)' },
+          info: { main: 'hsl(200, 80%, 60%)' },
+          error: { main: 'hsl(6, 80%, 62%)' },
+          divider: 'hsl(158, 30%, 22%)',
         }),
+
   },
   typography: {
     fontFamily: '"Manrope", ui-sans-serif, system-ui, "Roboto", "Helvetica", "Arial", sans-serif',
@@ -74,11 +75,11 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiCssBaseline: {
       styleOverrides: {
         '*:focus-visible': {
-          outline: `2px solid ${mode === 'dark' ? 'hsl(239 90% 75%)' : 'hsl(239 84% 55%)'}`,
+          outline: `2px solid ${mode === 'dark' ? 'hsl(140 40% 78%)' : 'hsl(158 61% 25%)'}`,
           outlineOffset: 2,
         },
         '::selection': {
-          background: mode === 'dark' ? 'hsl(239 90% 70% / 0.45)' : 'hsl(239 84% 60% / 0.25)',
+          background: mode === 'dark' ? 'hsl(140 40% 70% / 0.45)' : 'hsl(158 61% 25% / 0.25)',
           color: mode === 'dark' ? '#fff' : 'hsl(222 47% 11%)',
         },
       },
@@ -87,8 +88,8 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
       styleOverrides: {
         root: { borderRadius: 12, padding: '10px 18px', fontWeight: 600 },
         contained: {
-          boxShadow: '0 6px 18px -8px hsl(239 84% 30% / 0.25)',
-          '&:hover': { boxShadow: '0 10px 28px -12px hsl(239 84% 30% / 0.4)' },
+          boxShadow: '0 6px 18px -8px hsl(158 61% 12% / 0.25)',
+          '&:hover': { boxShadow: '0 10px 28px -12px hsl(158 61% 12% / 0.4)' },
           '&.Mui-disabled': {
             // Standard MUI disabled fallback for non-gradient contained buttons.
             color: mode === 'dark' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
@@ -160,7 +161,7 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
         root: {
           color: mode === 'dark' ? 'hsl(215 20% 75%)' : 'hsl(215 16% 40%)',
           '&.Mui-focused': {
-            color: mode === 'dark' ? 'hsl(239 90% 75%)' : 'hsl(239 84% 50%)',
+            color: mode === 'dark' ? 'hsl(140 40% 78%)' : 'hsl(158 61% 20%)',
           },
         },
       },
