@@ -1,80 +1,77 @@
-## Goal
-Rework the `/editor` (LMS Editor) so it feels compact on mobile, adopts the Learn With Smile palette, exposes richer per-item customization, and supports two new activity formats: **Conversation Practice** (browser TTS) and **Step Quiz** (Duolingo-style).
 
-## 1. Editor UI redesign — compact + cross-platform
+# Elegant redesign — Warm Boutique (LWS)
 
-### Palette (from learnwithsmile.app, applied as tokens in `src/index.css` + `tailwind.config.ts` + `muiTheme.ts`)
-- `--brand-forest`: deep green `#0F3D2E` (primary surfaces, admin chrome)
-- `--brand-mint`: soft mint `#C8E6D3` (hover / pill backgrounds)
-- `--brand-amber`: warm yellow `#F5B921` (primary CTA, highlights)
-- `--brand-coral`: warm coral `#F26B5E` (accent, live/alert)
-- `--brand-cream`: off-white `#FFF8EC` (cards)
-- Existing Indigo stays for learner-facing screens; the LWS palette scopes to `/editor` and `/admin` to keep the brand cohesive without a full site retheme.
+A whole-app visual refresh in the "warm boutique" register: cream canvas, forest ink, amber + coral accents, tactile rounded cards, soft layered shadows, quiet motion. Typography stays Sora (display) + Manrope (body). Density = 3 (balanced — comfortable but not sparse).
 
-### Layout changes in `src/pages/Editor.tsx` + `src/components/editor/*`
-- Replace the current wide top toolbar with a **two-row compact header**:
-  - Row 1 (always): title + status pill (Saved / Unsaved / Size).
-  - Row 2 (desktop): tabs + action buttons; on mobile the actions collapse into a single "Editor menu" icon-button (`MoreVert`) opening a bottom sheet with Save / Publish / Import / Export / Reset / Undo / Redo / Snapshots / Shortcuts.
-- Tabs become **icon-only pills on mobile** (label hidden < sm), 44px tall instead of 56.
-- Dashboard stat grid: 3-per-row on mobile (currently 2), icon+number stacked tight, remove the avatar circle in favor of a small colored dot.
-- Card padding reduced (`px: {xs: 1.5, sm: 3}`), `Grid spacing 1.5` on mobile.
-- Sticky mobile floating "Save" pill above the bottom nav only when `isDirty`, so the primary action is always one tap away without eating vertical space.
-- Verified against three viewports (360×640, 768×1024, 1440×900) via Playwright before shipping.
+Only presentation code changes. No business logic, routes, data model, or auth changes.
 
-## 2. Comprehensive content customization
+## Design commitments
 
-Extend `ContentItem` (in `src/types/content.ts`) with optional per-item presentation fields the editor exposes:
-- `accentColor?: string` — chip / header color override.
-- `icon?: string` — pick from a curated `lucide-react` icon set (`Book`, `Headphones`, `MessageCircle`, …).
-- `visibility?: 'published' | 'draft' | 'hidden'`.
-- `estimatedMinutes?: number`.
-- `objectives?: string[]` — bulleted "you will learn".
-- `resources?: { label: string; url: string }[]` — supplementary links.
-- `prerequisiteItemIds?: string[]` — gate item until prereqs completed.
+**Palette (locked to LWS)**
+- Canvas: cream `#FFF8EC`
+- Ink: forest `#0F3D2E`
+- Highlight: amber `#F5B921`
+- Alert / warm accent: coral `#F26B5E`
+- Soft surface: mint `#C8E6D3`
+- Dark mode: deep forest surfaces, mint primary, amber/coral kept as accents
 
-`ItemEditor.tsx` gets a **tabbed drawer** (Details / Media / Customize / Advanced) replacing the current single tall form. Live preview card on the right on desktop, collapsible on mobile.
+**Type & rhythm**
+- Sora 700–800 for display / section headers, tighter tracking (-0.02em)
+- Manrope 400/500/600 body, 15–16px base, 1.55 line-height
+- One serif-free hierarchy; use size + weight, not color, for hierarchy
 
-## 3. New item type: Conversation Practice
+**Surfaces**
+- Card radius 16–20, layered shadows: `0 1px 0 rgba(15,61,46,.04), 0 12px 32px -18px rgba(15,61,46,.22)`
+- Subtle 1px hairline borders in `forest / 8%`
+- Cream page bg with faint radial amber wash top-right, mint wash bottom-left (hero pages only)
 
-- `ItemType` gains `'conversation'`.
-- New `ConversationLine` shape:
-  ```ts
-  interface ConversationLine {
-    id: string;
-    speaker: string;         // "Anna", "Ravi"
-    voice?: string;          // preferred SpeechSynthesis voice URI/lang
-    text: string;
-    translation?: string;
-    rate?: number;           // 0.5–1.5
-    pitch?: number;          // 0.5–1.5
-  }
-  ContentItem.conversation?: {
-    scenario?: string;
-    lines: ConversationLine[];
-    autoPlay?: boolean;
-  }
-  ```
-- Editor: new `ConversationEditor.tsx` — add/reorder lines, per-line speaker + voice picker populated from `window.speechSynthesis.getVoices()`, inline "Preview" button that speaks the line.
-- Viewer: new `ConversationViewer.tsx` — chat-bubble UI with speaker avatars in alternating colors (mint / coral). Each bubble has a **Listen icon** (`Volume2` from lucide) that calls `speechSynthesis.speak(new SpeechSynthesisUtterance(...))`. A top "Play all" button walks the dialog sequentially, respecting per-line `rate/pitch`. Translations reveal on tap. Graceful fallback text if the browser lacks TTS.
-- Register `conversation` in `typeColors`, `ITEM_TYPES`, `EditorDashboard` stats, filters, and quiz-adjacent code paths.
+**Motion (quiet)**
+- 180–240ms cubic-bezier(.2,.7,.2,1) on hover/scale
+- Cards lift 2px + shadow deepen on hover
+- Route transitions: 200ms fade+2px rise
+- Respect `prefers-reduced-motion`
 
-## 4. Step-Quiz (Duolingo-style)
+## Scope — screens touched
 
-Add a second quiz mode alongside the current single-page MCQ.
+**Shell**
+- `AppLayout` sidebar: replace flat forest gradient header with cream header + small forest logo mark + amber dot; nav items get pill hover, active state = forest pill with cream text and amber left indicator (3px)
+- AppBar: cream translucent, hairline bottom border, page title in Sora 600
+- `MobileBottomNav`: cream with forest icons, active = amber underline + forest icon; reduce height to 60px
 
-- Extend `QuizQuestion` with `type: 'mcq' | 'tap-order' | 'match' | 'listen-choose' | 'fill-blank'` (default `mcq`) and optional fields per variant (`pairs`, `tokens`, `blanks`, `audioText`).
-- Extend `ContentItem` with `quizMode?: 'classic' | 'step'`.
-- Editor: `QuizEditor.tsx` gains a mode toggle. In `step` mode each question is authored one-at-a-time with a variant picker; `listen-choose` uses browser TTS (reuse the voice picker from conversation).
-- Viewer: new `StepQuizViewer.tsx` — one question full-screen, big progress bar, instant right/wrong feedback bar with continue button, hearts/streak optional (config flag), correct-answer chime via `SpeechSynthesis` or a short beep. Reuses `saveQuizAttempt` for score persistence.
+**Auth**
+- `Login`: keep split layout but soften — left panel goes cream-on-forest with an amber sun-arc motif, right form on paper with generous padding, primary CTA becomes forest→forest-dark gradient with amber focus ring
+- `ResetPassword`: matching card treatment
 
-## 5. Technical notes
+**Learner surfaces**
+- `Dashboard`: hero greeting card (cream + amber wash, forest headline, coral streak chip), then a 3-up stat strip (icon dot + big Sora number), then Resume card and Recent items in a 2-col responsive grid
+- `Courses`: switch to a boutique card grid — cover image (or gradient placeholder), Sora title, Manrope meta row, progress rail in mint→amber
+- `CourseDetail` / `ModuleDetail`: editorial header (breadcrumb, Sora H1, meta chips), module list as tactile stacked cards with left rail color per item type (video=amber, pdf=coral, conversation=mint, quiz=forest)
+- `Viewer`: cream reading surface, sticky slim `ItemNavBar` (forest text, amber progress bar), `ModuleOutlineDrawer` gets rounded item chips
+- `RecentItemCard`, `ResumeCard`, `PageHeader`: unified card language
 
-- All TTS runs client-side via `window.speechSynthesis` — no backend, no API keys, no cost. Voice list is loaded lazily because Chrome fires `voiceschanged` asynchronously.
-- Type additions are additive and backward compatible; existing JSON keeps working (`type: 'quiz'` with no `quizMode` renders classic).
-- Palette tokens are added; existing indigo tokens remain so learner screens are untouched unless we opt in.
-- No schema/database changes required.
+**Admin & Editor**
+- `AdminDashboard`, `Users`, `Enrollments`, `ProgressOverview`: same boutique card + table treatment (cream table head, forest text, amber active row indicator)
+- `Editor` (`EditorDashboard`, `ItemEditor`, `QuizEditor`, `ConversationEditor`, `ModuleEditor`, `CourseEditor`, `BatchEditor`, `PublishWizard`): compact but elegant — sticky save pill becomes forest with amber label chip; tab bar gets underline indicator in amber; form sections wrapped in soft cards with Sora section titles
+
+## Token & theme changes
+
+- `src/index.css`: refine gradients, shadows, add `--surface-1/2/3`, `--hairline`, hero wash utility classes; keep existing brand vars
+- `src/theme/muiTheme.ts`: tune `MuiCard`, `MuiButton` (add `contained-primary` warmer shadow), `MuiTab` (amber underline), `MuiChip` (soft mint/amber variants), `MuiTableCell` head, `MuiOutlinedInput` focus ring
+- No new fonts; already loaded
+
+## Technical notes
+
+- All colors via semantic tokens / `hsl(var(--...))` — no hardcoded hex in components
+- Reuse existing shadcn/MUI primitives; only style overrides + small composition tweaks
+- Framer Motion already available for the quiet route + card hover transitions
+- Keep existing component APIs; edits are internal styling + minor JSX structure
 
 ## Out of scope
-- Server-side TTS or voice cloning.
-- Migrating content JSON into the database.
-- Retheming the learner-facing dashboard/viewer (kept on the current indigo palette).
+
+- No changes to data fetching, auth, RLS, edge functions, content JSON schema
+- No new features, no logo redraw, no image generation unless a hero placeholder is strictly needed
+
+## Verification
+
+- Playwright screenshots at 390×800 (mobile) and 1280×900 (desktop) for: Login, Dashboard, Courses, CourseDetail, Viewer, Editor, AdminDashboard
+- `bunx tsgo --noEmit` typecheck

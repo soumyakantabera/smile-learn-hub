@@ -9,7 +9,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const MOBILE_BOTTOM_NAV_HEIGHT = 64;
+export const MOBILE_BOTTOM_NAV_HEIGHT = 62;
 
 export function MobileBottomNav() {
   const theme = useTheme();
@@ -43,13 +43,13 @@ export function MobileBottomNav() {
         left: 0,
         right: 0,
         zIndex: (t) => t.zIndex.appBar,
-        borderTop: 1,
-        borderColor: 'divider',
+        borderTop: '1px solid',
+        borderColor: 'var(--hairline)',
         pb: 'env(safe-area-inset-bottom)',
         display: { xs: 'block', md: 'none' },
-        backdropFilter: 'saturate(180%) blur(10px)',
+        backdropFilter: 'saturate(180%) blur(12px)',
         backgroundColor: (t) =>
-          t.palette.mode === 'dark' ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.92)',
+          t.palette.mode === 'dark' ? 'hsl(158 40% 8% / 0.94)' : 'hsl(40 100% 97% / 0.94)',
       }}
     >
       <BottomNavigation
@@ -63,6 +63,7 @@ export function MobileBottomNav() {
             color: 'text.secondary',
             minWidth: 0,
             padding: '6px 4px',
+            transition: 'color 200ms ease',
           },
           '& .Mui-selected': {
             color: 'primary.main',
@@ -81,15 +82,20 @@ export function MobileBottomNav() {
                   position: 'relative',
                   display: 'grid',
                   placeItems: 'center',
-                  width: 36,
-                  height: 28,
-                  borderRadius: 14,
-                  transition: 'all 180ms ease',
-                  ...(current === t.value && {
-                    background: 'var(--gradient-primary)',
-                    color: 'primary.contrastText',
-                    boxShadow: '0 6px 14px -6px hsl(239 84% 30% / 0.5)',
-                  }),
+                  width: 40,
+                  height: 26,
+                  color: current === t.value ? 'primary.main' : 'inherit',
+                  '&::after': current === t.value
+                    ? {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: -6,
+                        width: 22,
+                        height: 3,
+                        borderRadius: 2,
+                        background: 'var(--gradient-amber)',
+                      }
+                    : {},
                 }}
               >
                 {t.icon}
