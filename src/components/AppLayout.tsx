@@ -228,9 +228,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           ml: { md: `${DRAWER_WIDTH}px` },
           borderBottom: 1,
           borderColor: 'divider',
-          backdropFilter: 'saturate(180%) blur(8px)',
+          backdropFilter: 'saturate(180%) blur(10px)',
           backgroundColor: (t) =>
-            t.palette.mode === 'dark' ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.85)',
+            t.palette.mode === 'dark' ? 'hsl(158 40% 8% / 0.85)' : 'hsl(40 100% 97% / 0.85)',
         }}
       >
         <Toolbar>
