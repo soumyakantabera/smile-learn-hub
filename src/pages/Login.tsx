@@ -77,13 +77,13 @@ export default function LoginPage() {
         elevation={0}
         sx={{
           width: '100%',
-          maxWidth: 960,
+          maxWidth: 980,
           mt: { xs: 4, md: 0 },
           overflow: 'hidden',
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '1.05fr 1fr' },
-          border: 1,
-          borderColor: 'divider',
+          border: '1px solid',
+          borderColor: 'var(--hairline)',
           borderRadius: 4,
           boxShadow: 'var(--shadow-elegant)',
         }}
@@ -96,71 +96,120 @@ export default function LoginPage() {
             justifyContent: 'space-between',
             background: 'var(--gradient-primary)',
             color: 'primary.contrastText',
-            p: 5,
+            p: 6,
             position: 'relative',
             overflow: 'hidden',
           }}
         >
+          {/* Amber sun-arc top-right */}
           <Box
             sx={{
               position: 'absolute',
-              right: -60,
-              top: -60,
-              width: 240,
-              height: 240,
+              right: -140,
+              top: -140,
+              width: 360,
+              height: 360,
               borderRadius: '50%',
-              bgcolor: 'rgba(255,255,255,0.12)',
+              background: 'radial-gradient(circle at 30% 70%, hsl(42 91% 55% / 0.55), transparent 65%)',
             }}
           />
+          {/* Mint bloom bottom-left */}
           <Box
             sx={{
               position: 'absolute',
-              left: -40,
-              bottom: -40,
-              width: 180,
-              height: 180,
+              left: -80,
+              bottom: -100,
+              width: 260,
+              height: 260,
               borderRadius: '50%',
-              bgcolor: 'rgba(255,255,255,0.08)',
+              background: 'radial-gradient(circle, hsl(140 40% 84% / 0.28), transparent 65%)',
             }}
           />
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          {/* Coral speck */}
+          <Box
+            sx={{
+              position: 'absolute',
+              right: 40,
+              bottom: 80,
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              bgcolor: '#F26B5E',
+              boxShadow: '0 0 24px 4px hsl(6 86% 66% / 0.5)',
+            }}
+          />
+
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ position: 'relative' }}>
             <Box
               sx={{
-                width: 48,
-                height: 48,
+                width: 46,
+                height: 46,
                 borderRadius: 2,
-                bgcolor: 'rgba(255,255,255,0.18)',
+                bgcolor: 'rgba(255,255,255,0.14)',
+                border: '1px solid rgba(255,255,255,0.2)',
                 display: 'grid',
                 placeItems: 'center',
+                backdropFilter: 'blur(6px)',
               }}
             >
-              <SchoolIcon sx={{ fontSize: 28 }} />
+              <SchoolIcon sx={{ fontSize: 24 }} />
             </Box>
-            <Typography variant="h6" fontWeight={800}>
+            <Typography variant="h6" fontWeight={800} letterSpacing="-0.01em">
               {appConfig.appName}
             </Typography>
           </Stack>
+
           <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Typography variant="h3" fontWeight={800} sx={{ lineHeight: 1.1 }} gutterBottom>
-              Learn at your own pace.
+            <Typography
+              variant="overline"
+              sx={{
+                opacity: 0.75,
+                letterSpacing: '0.14em',
+                fontWeight: 700,
+                color: '#F5B921',
+              }}
+            >
+              Welcome
             </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, maxWidth: 360 }}>
+            <Typography
+              variant="h3"
+              fontWeight={800}
+              sx={{ lineHeight: 1.05, mt: 0.5, mb: 2, letterSpacing: '-0.02em' }}
+            >
+              Learn at your{' '}
+              <Box component="span" sx={{ color: '#F5B921' }}>
+                own pace.
+              </Box>
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.88, mb: 3.5, maxWidth: 380 }}>
               Sign in to access your courses, track progress across devices, and pick up exactly where
               you left off.
             </Typography>
-            <Stack spacing={1.5} sx={{ opacity: 0.95 }}>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box sx={{ width: 6, height: 6, borderRadius: 4, bgcolor: '#fff' }} />
-                <Typography variant="body2">Personal dashboard with resume & streaks</Typography>
-              </Stack>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box sx={{ width: 6, height: 6, borderRadius: 4, bgcolor: '#fff' }} />
-                <Typography variant="body2">Cross-device progress sync</Typography>
-              </Stack>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box sx={{ width: 6, height: 6, borderRadius: 4, bgcolor: '#fff' }} />
-                <Typography variant="body2">Quizzes, videos, PDFs & homework</Typography>
-              </Stack>
+            <Stack spacing={1.75} sx={{ opacity: 0.95 }}>
+              {[
+                'Personal dashboard with resume & streaks',
+                'Cross-device progress sync',
+                'Quizzes, videos, PDFs & homework',
+              ].map((t) => (
+                <Stack key={t} direction="row" spacing={1.5} alignItems="center">
+                  <Box
+                    sx={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: '50%',
+                      background: 'var(--gradient-amber)',
+                      display: 'grid',
+                      placeItems: 'center',
+                      fontSize: 12,
+                      color: '#0F3D2E',
+                      fontWeight: 900,
+                    }}
+                  >
+                    ✓
+                  </Box>
+                  <Typography variant="body2">{t}</Typography>
+                </Stack>
+              ))}
             </Stack>
           </Box>
         </Box>
