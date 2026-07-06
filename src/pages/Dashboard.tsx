@@ -254,14 +254,18 @@ export default function DashboardPage() {
               return (
                 <Card
                   key={course.id}
+                  elevation={0}
                   sx={{
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
                     borderRadius: 3,
                     overflow: 'hidden',
-                    transition: 'transform 220ms ease, box-shadow 220ms ease',
-                    '&:hover': { transform: 'translateY(-4px)', boxShadow: 'var(--shadow-elegant)' },
+                    border: '1px solid',
+                    borderColor: 'var(--hairline)',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'transform 220ms cubic-bezier(.2,.7,.2,1), box-shadow 220ms ease',
+                    '&:hover': { transform: 'translateY(-3px)', boxShadow: 'var(--shadow-lg)' },
                   }}
                 >
                   <CardActionArea
