@@ -50,12 +50,17 @@ export function RecentItemCard({ item }: RecentItemCardProps) {
 
   return (
     <Card
+      elevation={0}
       sx={{
         height: '100%',
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        border: '1px solid',
+        borderColor: 'var(--hairline)',
+        borderRadius: 3,
+        overflow: 'hidden',
+        transition: 'transform 220ms cubic-bezier(.2,.7,.2,1), box-shadow 220ms ease',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: 3,
+          boxShadow: 'var(--shadow-md)',
         },
       }}
     >
