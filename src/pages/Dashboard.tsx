@@ -328,7 +328,7 @@ export default function DashboardPage() {
                           mb: 1.5,
                           bgcolor: 'action.hover',
                           '& .MuiLinearProgress-bar': {
-                            background: 'var(--gradient-primary)',
+                            background: 'var(--gradient-amber)',
                           },
                         }}
                       />
