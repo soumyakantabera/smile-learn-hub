@@ -84,39 +84,55 @@ export function AppLayout({ children }: AppLayoutProps) {
   const nav = [...baseNav, ...(isAdmin ? adminNav : [])];
 
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
       <Box
         sx={{
           p: 2.5,
           display: 'flex',
           alignItems: 'center',
           gap: 1.5,
-          background: 'var(--gradient-primary)',
-          color: 'primary.contrastText',
+          borderBottom: '1px solid',
+          borderColor: 'var(--hairline)',
         }}
       >
         <Box
           sx={{
             width: 40,
             height: 40,
-            borderRadius: 1.5,
-            bgcolor: 'rgba(255,255,255,0.18)',
+            borderRadius: 2,
+            background: 'var(--gradient-primary)',
             display: 'grid',
             placeItems: 'center',
+            color: 'primary.contrastText',
+            position: 'relative',
+            boxShadow: '0 8px 20px -10px hsl(158 61% 15% / 0.4)',
           }}
         >
-          <SchoolIcon />
+          <SchoolIcon sx={{ fontSize: 22 }} />
+          <Box
+            sx={{
+              position: 'absolute',
+              right: -3,
+              top: -3,
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              background: 'var(--gradient-amber)',
+              border: '2px solid',
+              borderColor: 'background.paper',
+            }}
+          />
         </Box>
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="subtitle1" fontWeight={800} sx={{ lineHeight: 1.1 }} noWrap>
+          <Typography variant="subtitle1" fontWeight={800} sx={{ lineHeight: 1.15, letterSpacing: '-0.01em' }} noWrap>
             {appConfig.appName}
           </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.85 }}>
-            Learning portal
+          <Typography variant="caption" color="text.secondary" sx={{ letterSpacing: '0.02em' }}>
+            Learn at your own pace
           </Typography>
         </Box>
       </Box>
-      <List sx={{ flex: 1, py: 1.5, px: 1 }}>
+      <List sx={{ flex: 1, py: 1.5, px: 1.25 }}>
         {nav.map((item) => {
           const isActive =
             location.pathname === item.path ||
@@ -130,17 +146,33 @@ export function AppLayout({ children }: AppLayoutProps) {
                 onClick={() => isMobile && setMobileOpen(false)}
                 sx={{
                   borderRadius: 2,
-                  py: 1.25,
+                  py: 1.15,
+                  pl: 2,
+                  position: 'relative',
+                  transition: 'all 200ms cubic-bezier(.2,.7,.2,1)',
+                  '&::before': isActive
+                    ? {
+                        content: '""',
+                        position: 'absolute',
+                        left: 6,
+                        top: 10,
+                        bottom: 10,
+                        width: 3,
+                        borderRadius: 2,
+                        background: 'var(--gradient-amber)',
+                      }
+                    : {},
                   '&.Mui-selected': {
-                    background: 'var(--gradient-primary)',
-                    color: 'primary.contrastText',
-                    '&:hover': { filter: 'brightness(1.05)' },
-                    '& .MuiListItemIcon-root': { color: 'inherit' },
+                    bgcolor: 'hsl(158 61% 15% / 0.06)',
+                    color: 'primary.main',
+                    '&:hover': { bgcolor: 'hsl(158 61% 15% / 0.1)' },
+                    '& .MuiListItemIcon-root': { color: 'primary.main' },
+                    '& .MuiListItemText-primary': { fontWeight: 700 },
                   },
                   '&:hover': { bgcolor: 'action.hover' },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ minWidth: 38 }}>{item.icon}</ListItemIcon>
                 <ListItemText
                   primary={item.label}
                   primaryTypographyProps={{ fontWeight: 600, fontSize: 14 }}
@@ -150,7 +182,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           );
         })}
       </List>
-      <Divider />
+      <Divider sx={{ borderColor: 'var(--hairline)' }} />
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar
