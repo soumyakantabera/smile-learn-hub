@@ -177,6 +177,8 @@
   .bg-gradient-primary { background: var(--gradient-primary); }
   .bg-gradient-warm    { background: var(--gradient-warm); }
   .bg-gradient-hero    { background: var(--gradient-hero); }
+  .bg-gradient-amber   { background: var(--gradient-amber); }
+  .border-hairline     { border-color: var(--hairline); }
 
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
   .shadow-glow    { box-shadow: var(--shadow-glow); }
