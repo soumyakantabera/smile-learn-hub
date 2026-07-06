@@ -92,29 +92,41 @@ export default function DashboardPage() {
           p: { xs: 2.5, sm: 4 },
           borderRadius: 4,
           background: 'var(--gradient-hero)',
-          border: 1,
-          borderColor: 'divider',
+          border: '1px solid',
+          borderColor: 'var(--hairline)',
           position: 'relative',
           overflow: 'hidden',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
+        {/* Amber ring accent */}
         <Box
           sx={{
             position: 'absolute',
-            right: -40,
-            top: -40,
-            width: 220,
-            height: 220,
+            right: -80,
+            top: -80,
+            width: 260,
+            height: 260,
             borderRadius: '50%',
-            background: 'var(--gradient-primary)',
-            opacity: 0.18,
-            filter: 'blur(8px)',
+            border: '1px solid hsl(42 91% 55% / 0.4)',
+            background: 'radial-gradient(circle at 30% 70%, hsl(42 91% 55% / 0.25), transparent 65%)',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            right: -30,
+            top: -30,
+            width: 160,
+            height: 160,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, hsl(140 40% 84% / 0.5), transparent 70%)',
           }}
         />
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           justifyContent="space-between"
-          spacing={2}
+          spacing={2.5}
           sx={{ position: 'relative' }}
         >
           <Box sx={{ minWidth: 0 }}>
@@ -122,47 +134,65 @@ export default function DashboardPage() {
               icon={<AutoAwesomeIcon />}
               label={isAdmin ? 'Admin overview' : 'Your learning hub'}
               size="small"
-              sx={{ mb: 1.5, fontWeight: 700, bgcolor: 'background.paper' }}
+              sx={{
+                mb: 1.5,
+                fontWeight: 700,
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'var(--hairline)',
+                '& .MuiChip-icon': { color: '#F5B921' },
+              }}
             />
-            <Typography variant="h4" fontWeight={800} sx={{ mb: 0.5 }}>
-              Hi {session.fullName?.split(' ')[0] || session.email.split('@')[0]} 👋
+            <Typography
+              variant="h4"
+              fontWeight={800}
+              sx={{ mb: 0.75, letterSpacing: '-0.02em', lineHeight: 1.1 }}
+            >
+              Hi {session.fullName?.split(' ')[0] || session.email.split('@')[0]}{' '}
+              <Box component="span" sx={{ display: 'inline-block', transform: 'rotate(8deg)' }}>
+                👋
+              </Box>
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 520 }}>
               {isAdmin
                 ? 'You have admin access to manage courses, users and enrollments.'
-                : `You're enrolled in ${courses.length} course${courses.length === 1 ? '' : 's'}. Keep going!`}
+                : `You're enrolled in ${courses.length} course${courses.length === 1 ? '' : 's'}. Keep going — small steps, every day.`}
             </Typography>
           </Box>
-          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
+          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ flexShrink: 0, flexWrap: 'wrap' }}>
             <Paper
-              variant="outlined"
+              elevation={0}
               sx={{
                 px: 2,
                 py: 1.25,
-                borderRadius: 3,
-                minWidth: 110,
+                borderRadius: 2.5,
+                minWidth: 118,
                 bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'var(--hairline)',
               }}
             >
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 10, fontWeight: 700 }}>
                 Items viewed
               </Typography>
-              <Typography variant="h6" fontWeight={800}>{totalVisited}</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: 'primary.main' }}>{totalVisited}</Typography>
             </Paper>
             <Paper
-              variant="outlined"
+              elevation={0}
               sx={{
                 px: 2,
                 py: 1.25,
-                borderRadius: 3,
-                minWidth: 110,
+                borderRadius: 2.5,
+                minWidth: 118,
                 bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'var(--hairline)',
               }}
             >
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 10, fontWeight: 700 }}>
                 Time learned
               </Typography>
-              <Typography variant="h6" fontWeight={800}>{formatDuration(totalSeconds)}</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: '#F5B921' }}>{formatDuration(totalSeconds)}</Typography>
             </Paper>
             <Button
               href={waUrl}
