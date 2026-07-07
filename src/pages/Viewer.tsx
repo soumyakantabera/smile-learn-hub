@@ -16,9 +16,12 @@ import {
   IconButton,
   LinearProgress,
   Tooltip,
+  Stack,
+  alpha,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import { gradientPrimaryBtnSx } from '@/theme/sxPresets';
 import {
   NavigateNext as NavigateNextIcon,
   ArrowBack as ArrowBackIcon,
