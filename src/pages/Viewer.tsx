@@ -86,18 +86,19 @@ const typeIcons: Record<ItemType, React.ReactNode> = {
   conversation: <ConversationIcon />,
 };
 
+// LWS palette: forest, amber, coral, mint — mirrors RecentItemCard
 const typeColors: Record<ItemType, string> = {
-  pdf: '#D32F2F',
-  video: '#1976D2',
-  doc: '#2196F3',
-  ppt: '#FF5722',
-  spreadsheet: '#4CAF50',
-  link: '#9C27B0',
-  homework: '#FF9800',
-  youtube: '#FF0000',
-  audio: '#E91E63',
-  quiz: '#673AB7',
-  conversation: '#0F3D2E',
+  pdf: '#F26B5E',          // coral
+  video: '#F5B921',        // amber
+  doc: '#0F3D2E',          // forest
+  ppt: '#F26B5E',          // coral
+  spreadsheet: '#3E8E5A',  // deep mint
+  link: '#0F3D2E',         // forest
+  homework: '#F5B921',     // amber
+  youtube: '#F26B5E',      // coral
+  audio: '#3E8E5A',        // deep mint
+  quiz: '#0F3D2E',         // forest
+  conversation: '#3E8E5A', // deep mint
 };
 
 const typeLabels: Record<ItemType, string> = {
@@ -113,6 +114,82 @@ const typeLabels: Record<ItemType, string> = {
   quiz: 'Interactive Quiz',
   conversation: 'Conversation Practice',
 };
+
+/**
+ * Consistent shell used by every non-embedded resource type so PDF, video,
+ * audio, docs, links and homework share the same header + spacing rhythm.
+ */
+const ResourceShell: React.FC<{
+  accent: string;
+  icon: React.ReactNode;
+  label: string;
+  title?: string;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ accent, icon, label, title, actions, children }) => (
+  <Card
+    elevation={0}
+    sx={{
+      borderRadius: 3,
+      border: '1px solid',
+      borderColor: 'var(--hairline)',
+      boxShadow: 'var(--shadow-md)',
+      overflow: 'hidden',
+      background: 'var(--gradient-card)',
+    }}
+  >
+    <Box
+      sx={{
+        px: { xs: 2, sm: 3 },
+        py: 1.75,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        borderBottom: '1px solid',
+        borderColor: 'var(--hairline)',
+        background: `linear-gradient(90deg, ${alpha(accent, 0.10)}, transparent 70%)`,
+      }}
+    >
+      <Box
+        sx={{
+          width: 34,
+          height: 34,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: alpha(accent, 0.14),
+          color: accent,
+          '& svg': { fontSize: 20 },
+        }}
+      >
+        {icon}
+      </Box>
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Typography
+          sx={{
+            fontFamily: '"Sora", "Manrope", sans-serif',
+            fontWeight: 700,
+            fontSize: '0.95rem',
+            lineHeight: 1.2,
+            color: 'text.primary',
+          }}
+          noWrap
+        >
+          {title || label}
+        </Typography>
+        {title && (
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+            {label}
+          </Typography>
+        )}
+      </Box>
+      {actions && <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>{actions}</Box>}
+    </Box>
+    <CardContent sx={{ p: { xs: 2, sm: 3 } }}>{children}</CardContent>
+  </Card>
+);
+
 
 export default function ViewerPage() {
   const { itemId } = useParams<{ itemId: string }>();
