@@ -319,85 +319,92 @@ export default function ViewerPage() {
   };
 
   const renderViewer = () => {
+    const accent = typeColors[item.type];
+    const icon = typeIcons[item.type];
+    const label = typeLabels[item.type];
+
+    const mediaFrame = (children: React.ReactNode) => (
+      <Box
+        sx={{
+          borderRadius: 2,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'var(--hairline)',
+          bgcolor: 'black',
+        }}
+      >
+        {children}
+      </Box>
+    );
+
     switch (item.type) {
       case 'video':
         return (
-          <Box sx={{ position: 'relative', paddingTop: '56.25%', bgcolor: 'black', borderRadius: 2, overflow: 'hidden' }}>
-            <video
-              controls
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-              }}
-              src={item.url}
-            >
-              Your browser does not support the video tag.
-            </video>
-          </Box>
+          <ResourceShell accent={accent} icon={icon} label={label}>
+            <Box sx={{ position: 'relative', paddingTop: '56.25%', bgcolor: 'black', borderRadius: 2, overflow: 'hidden' }}>
+              <video
+                controls
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                src={item.url}
+              >
+                Your browser does not support the video tag.
+              </video>
+            </Box>
+          </ResourceShell>
         );
 
       case 'youtube':
         return (
-          <Box sx={{ position: 'relative', paddingTop: '56.25%', borderRadius: 2, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
-            <iframe
-              src={item.embedUrl}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none',
-              }}
-              title={item.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </Box>
+          <ResourceShell accent={accent} icon={icon} label={label}>
+            <Box sx={{ position: 'relative', paddingTop: '56.25%', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
+              <iframe
+                src={item.embedUrl}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                title={item.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </Box>
+          </ResourceShell>
         );
 
       case 'audio':
         return (
-          <Card>
-            <CardContent sx={{ textAlign: 'center', py: 4 }}>
+          <ResourceShell accent={accent} icon={icon} label={label}>
+            <Stack alignItems="center" spacing={2} sx={{ py: 2 }}>
               <Box
                 sx={{
-                  width: 80,
-                  height: 80,
+                  width: 88,
+                  height: 88,
                   borderRadius: '50%',
-                  bgcolor: `${typeColors.audio}15`,
-                  color: typeColors.audio,
+                  bgcolor: alpha(accent, 0.12),
+                  color: accent,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  mx: 'auto',
-                  mb: 3,
+                  border: `1px solid ${alpha(accent, 0.25)}`,
+                  '& svg': { fontSize: 40 },
                 }}
               >
                 {typeIcons.audio}
               </Box>
-              <Typography variant="h6" gutterBottom>
+              <Typography
+                sx={{ fontFamily: '"Sora", "Manrope", sans-serif', fontWeight: 700, fontSize: '1.1rem' }}
+              >
                 {item.title}
               </Typography>
               {item.audioDuration && (
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary">
                   Duration: {item.audioDuration}
                 </Typography>
               )}
-              <Box sx={{ maxWidth: 500, mx: 'auto' }}>
-                <audio
-                  controls
-                  style={{ width: '100%' }}
-                  src={item.url}
-                >
+              <Box sx={{ width: '100%', maxWidth: 520 }}>
+                <audio controls style={{ width: '100%' }} src={item.url}>
                   Your browser does not support the audio element.
                 </audio>
               </Box>
-            </CardContent>
-          </Card>
+            </Stack>
+          </ResourceShell>
         );
 
       case 'quiz':
@@ -406,75 +413,98 @@ export default function ViewerPage() {
       case 'conversation':
         return <ConversationViewer item={item} />;
 
-
       case 'pdf':
         return (
-          <Box sx={{ borderRadius: 2, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
-            <iframe
-              src={getGoogleDocsViewerUrl(item.url!)}
-              style={{ width: '100%', height: '600px', border: 'none' }}
-              title={item.title}
-            />
-          </Box>
+          <ResourceShell
+            accent={accent}
+            icon={icon}
+            label={label}
+            actions={
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<OpenInNewIcon />}
+                href={item.url}
+                target="_blank"
+                sx={{ borderColor: alpha(accent, 0.4), color: accent, '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) } }}
+              >
+                Open
+              </Button>
+            }
+          >
+            <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
+              <iframe
+                src={getGoogleDocsViewerUrl(item.url!)}
+                style={{ width: '100%', height: '640px', border: 'none' }}
+                title={item.title}
+              />
+            </Box>
+          </ResourceShell>
         );
 
       case 'doc':
       case 'ppt':
       case 'spreadsheet':
         return (
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Document Preview
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
-                <Button
-                  variant="contained"
-                  startIcon={<DownloadIcon />}
-                  href={item.url}
-                  target="_blank"
-                >
-                  Download
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<OpenInNewIcon />}
-                  href={getGoogleDocsViewerUrl(item.url!)}
-                  target="_blank"
-                >
-                  View in Google Docs
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<OpenInNewIcon />}
-                  href={getMicrosoftViewerUrl(item.url!)}
-                  target="_blank"
-                >
-                  View in Microsoft Office
-                </Button>
-              </Box>
-              <Divider sx={{ my: 2 }} />
-              <Box sx={{ borderRadius: 2, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
-                <iframe
-                  src={getGoogleDocsViewerUrl(item.url!)}
-                  style={{ width: '100%', height: '500px', border: 'none' }}
-                  title={item.title}
-                />
-              </Box>
-            </CardContent>
-          </Card>
+          <ResourceShell accent={accent} icon={icon} label={label} title="Document Preview">
+            <Stack direction="row" spacing={1.5} flexWrap="wrap" sx={{ mb: 2.5, rowGap: 1.5 }}>
+              <Button
+                variant="contained"
+                startIcon={<DownloadIcon />}
+                href={item.url}
+                target="_blank"
+                sx={gradientPrimaryBtnSx}
+              >
+                Download
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<OpenInNewIcon />}
+                href={getGoogleDocsViewerUrl(item.url!)}
+                target="_blank"
+              >
+                Google Docs
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<OpenInNewIcon />}
+                href={getMicrosoftViewerUrl(item.url!)}
+                target="_blank"
+              >
+                Microsoft Office
+              </Button>
+            </Stack>
+            <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
+              <iframe
+                src={getGoogleDocsViewerUrl(item.url!)}
+                style={{ width: '100%', height: '520px', border: 'none' }}
+                title={item.title}
+              />
+            </Box>
+          </ResourceShell>
         );
 
       case 'link':
         return (
-          <Card>
-            <CardContent sx={{ textAlign: 'center', py: 4 }}>
-              <LinkIcon sx={{ fontSize: 48, color: typeColors.link, mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                External Resource
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                This link will open in a new tab
+          <ResourceShell accent={accent} icon={icon} label={label} title="External Resource">
+            <Stack alignItems="center" spacing={2} sx={{ py: 3, textAlign: 'center' }}>
+              <Box
+                sx={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 3,
+                  bgcolor: alpha(accent, 0.12),
+                  color: accent,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  '& svg': { fontSize: 34 },
+                }}
+              >
+                <LinkIcon />
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                This link will open in a new tab.
               </Typography>
               <Button
                 variant="contained"
@@ -482,24 +512,22 @@ export default function ViewerPage() {
                 href={item.url}
                 target="_blank"
                 size="large"
+                sx={gradientPrimaryBtnSx}
               >
                 Open Link
               </Button>
-            </CardContent>
-          </Card>
+            </Stack>
+          </ResourceShell>
         );
 
       case 'homework':
         return (
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Assignment Instructions
-              </Typography>
+          <Stack spacing={2.5}>
+            <ResourceShell accent={accent} icon={icon} label={label} title="Assignment Instructions">
               {item.dueDate && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <EventIcon color="warning" />
-                  <Typography variant="body2" color="warning.main" fontWeight={500}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                  <EventIcon sx={{ color: accent }} fontSize="small" />
+                  <Typography variant="body2" sx={{ color: accent, fontWeight: 600 }}>
                     Due: {new Date(item.dueDate).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -507,27 +535,25 @@ export default function ViewerPage() {
                       day: 'numeric',
                     })}
                   </Typography>
-                </Box>
+                </Stack>
               )}
               <Box
                 sx={{
-                  bgcolor: 'background.default',
-                  p: 2,
+                  bgcolor: 'var(--surface-3)',
+                  p: 2.5,
                   borderRadius: 2,
-                  mb: 3,
+                  border: '1px solid',
+                  borderColor: 'var(--hairline)',
                   whiteSpace: 'pre-wrap',
                 }}
               >
-                <Typography variant="body2">
+                <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
                   {item.instructions?.replace(/\\n/g, '\n')}
                 </Typography>
               </Box>
+            </ResourceShell>
 
-              <Divider sx={{ my: 3 }} />
-
-              <Typography variant="h6" gutterBottom>
-                Submit Your Work
-              </Typography>
+            <ResourceShell accent={accent} icon={<HomeworkIcon />} label="Submission" title="Submit Your Work">
               <TextField
                 fullWidth
                 label="Your Name"
@@ -536,21 +562,22 @@ export default function ViewerPage() {
                 placeholder="Enter your name"
                 sx={{ mb: 2 }}
               />
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" sx={{ rowGap: 1.5 }}>
                 <Button
                   variant="contained"
                   color="success"
                   startIcon={<WhatsAppIcon />}
                   onClick={handleWhatsApp}
                 >
-                  Submit via WhatsApp
+                  WhatsApp
                 </Button>
                 <Button
                   variant="contained"
                   startIcon={<EmailIcon />}
                   onClick={handleEmail}
+                  sx={gradientPrimaryBtnSx}
                 >
-                  Submit via Email
+                  Email
                 </Button>
                 <Button
                   variant="outlined"
@@ -559,9 +586,9 @@ export default function ViewerPage() {
                 >
                   Copy Message
                 </Button>
-              </Box>
-            </CardContent>
-          </Card>
+              </Stack>
+            </ResourceShell>
+          </Stack>
         );
 
       default:
@@ -569,15 +596,12 @@ export default function ViewerPage() {
           <Alert severity="info">
             This content type is not supported for inline viewing.
             {item.url && (
-              <Button
-                href={item.url}
-                target="_blank"
-                sx={{ ml: 2 }}
-              >
+              <Button href={item.url} target="_blank" sx={{ ml: 2 }}>
                 Open in new tab
               </Button>
             )}
           </Alert>
+
         );
     }
   };
