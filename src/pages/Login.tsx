@@ -216,18 +216,11 @@ export default function LoginPage() {
         <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
           <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1.5, mb: 3 }}>
             <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: 2,
-                background: 'var(--gradient-primary)',
-                display: 'grid',
-                placeItems: 'center',
-                color: '#fff',
-              }}
-            >
-              <SchoolIcon />
-            </Box>
+              component="img"
+              src="/favicon.svg"
+              alt={`${appConfig.appName} logo`}
+              sx={{ width: 44, height: 44, borderRadius: 2, display: 'block' }}
+            />
             <Typography variant="h6" fontWeight={800}>
               {appConfig.appName}
             </Typography>
