@@ -141,19 +141,17 @@ export default function LoginPage() {
 
           <Stack direction="row" spacing={1.5} alignItems="center" sx={{ position: 'relative' }}>
             <Box
+              component="img"
+              src="/favicon.svg"
+              alt={`${appConfig.appName} logo`}
               sx={{
                 width: 46,
                 height: 46,
                 borderRadius: 2,
-                bgcolor: 'rgba(255,255,255,0.14)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                display: 'grid',
-                placeItems: 'center',
-                backdropFilter: 'blur(6px)',
+                display: 'block',
+                boxShadow: '0 8px 20px -10px rgba(0,0,0,0.4)',
               }}
-            >
-              <SchoolIcon sx={{ fontSize: 24 }} />
-            </Box>
+            />
             <Typography variant="h6" fontWeight={800} letterSpacing="-0.01em">
               {appConfig.appName}
             </Typography>
@@ -218,18 +216,11 @@ export default function LoginPage() {
         <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
           <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1.5, mb: 3 }}>
             <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: 2,
-                background: 'var(--gradient-primary)',
-                display: 'grid',
-                placeItems: 'center',
-                color: '#fff',
-              }}
-            >
-              <SchoolIcon />
-            </Box>
+              component="img"
+              src="/favicon.svg"
+              alt={`${appConfig.appName} logo`}
+              sx={{ width: 44, height: 44, borderRadius: 2, display: 'block' }}
+            />
             <Typography variant="h6" fontWeight={800}>
               {appConfig.appName}
             </Typography>

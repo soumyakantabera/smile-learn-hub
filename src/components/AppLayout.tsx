@@ -96,33 +96,17 @@ export function AppLayout({ children }: AppLayoutProps) {
         }}
       >
         <Box
+          component="img"
+          src="/favicon.svg"
+          alt={`${appConfig.appName} logo`}
           sx={{
             width: 40,
             height: 40,
             borderRadius: 2,
-            background: 'var(--gradient-primary)',
-            display: 'grid',
-            placeItems: 'center',
-            color: 'primary.contrastText',
-            position: 'relative',
+            display: 'block',
             boxShadow: '0 8px 20px -10px hsl(158 61% 15% / 0.4)',
           }}
-        >
-          <SchoolIcon sx={{ fontSize: 22 }} />
-          <Box
-            sx={{
-              position: 'absolute',
-              right: -3,
-              top: -3,
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              background: 'var(--gradient-amber)',
-              border: '2px solid',
-              borderColor: 'background.paper',
-            }}
-          />
-        </Box>
+        />
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="subtitle1" fontWeight={800} sx={{ lineHeight: 1.15, letterSpacing: '-0.01em' }} noWrap>
             {appConfig.appName}
