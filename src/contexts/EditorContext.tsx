@@ -69,12 +69,14 @@ interface EditorContextType {
   exportContent: () => void;
   importContent: (data: ContentData) => void;
   resetToProduction: () => Promise<void>;
+  publishLive: () => Promise<void>;
 
   undo: () => void;
   redo: () => void;
   getSnapshots: () => Snapshot[];
   restoreFromSnapshot: (id: string) => void;
 }
+
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
