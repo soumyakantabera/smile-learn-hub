@@ -1,14 +1,61 @@
 import type { ContentData, ContentItem, Course, Module } from '@/types/content';
+import { supabase } from '@/integrations/supabase/client';
 
 let contentCache: ContentData | null = null;
 
-export async function loadContent(): Promise<ContentData> {
-  if (contentCache) return contentCache;
+async function loadBundledContent(): Promise<ContentData> {
   const response = await fetch(`${import.meta.env.BASE_URL}content/index.json`);
-  if (!response.ok) throw new Error('Failed to load content');
-  contentCache = await response.json();
+  if (!response.ok) throw new Error('Failed to load bundled content');
+  return response.json();
+}
+
+function isValidContent(data: unknown): data is ContentData {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Partial<ContentData>;
+  return (
+    !!d.courses &&
+    !!d.modules &&
+    !!d.items &&
+    !!d.batches &&
+    Object.keys(d.courses).length > 0
+  );
+}
+
+export async function loadContent(force = false): Promise<ContentData> {
+  if (contentCache && !force) return contentCache;
+  // Prefer live content from backend so admin publishes go out instantly.
+  try {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('data')
+      .eq('id', 'current')
+      .maybeSingle();
+    if (!error && data && isValidContent((data as any).data)) {
+      contentCache = (data as any).data as ContentData;
+      return contentCache!;
+    }
+  } catch {
+    // fall through to bundled
+  }
+  contentCache = await loadBundledContent();
   return contentCache!;
 }
+
+export async function refreshContent(): Promise<ContentData> {
+  contentCache = null;
+  return loadContent(true);
+}
+
+export async function publishLiveContent(content: ContentData): Promise<void> {
+  const { batches, courses, modules, items } = content;
+  const payload = { batches, courses, modules, items } as ContentData;
+  const { error } = await supabase
+    .from('site_content')
+    .upsert({ id: 'current', data: payload as any, updated_at: new Date().toISOString() });
+  if (error) throw new Error(error.message);
+  contentCache = payload;
+}
+
 
 /** Get all published courses visible to a learner given their enrollment list. */
 export function getEnrolledCourses(content: ContentData, enrolledCourseIds: string[]): Course[] {
