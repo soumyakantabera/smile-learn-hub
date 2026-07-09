@@ -1,77 +1,73 @@
 
-# Elegant redesign — Warm Boutique (LWS)
+## Audit findings
 
-A whole-app visual refresh in the "warm boutique" register: cream canvas, forest ink, amber + coral accents, tactile rounded cards, soft layered shadows, quiet motion. Typography stays Sora (display) + Manrope (body). Density = 3 (balanced — comfortable but not sparse).
+1. **Publishing is NOT one-click live.** Editor edits save to `localStorage`. "Publish" only shows a diff and downloads `index.json` — you must manually replace `public/content/index.json` in the repo, commit, and redeploy on GitHub Pages. Students never see the changes until a rebuild.
+2. **Users page create/reset flows work** but have rough edges:
+   - Password `soumya01`-style short strings are allowed (min 6). If HIBP is on, weak passwords silently sign in but flag "pwned". No strength/eye toggle.
+   - No "copy full welcome message" (email + password + login URL) — admin has to assemble it manually.
+   - Reset dialog auto-fills a random password but never shows old copy state, no visible confirmation the user was notified.
+   - `createUser` errors surface only inside the dialog; success closes it before the admin can copy the password.
+3. **Color scheme** is warm boutique but a bit heavy on amber/cream. Tweak to a slightly cooler, more elegant palette while keeping the LWS forest/mint identity.
 
-Only presentation code changes. No business logic, routes, data model, or auth changes.
+## Plan
 
-## Design commitments
+### 1. One-click live publish (backend-backed content)
 
-**Palette (locked to LWS)**
-- Canvas: cream `#FFF8EC`
-- Ink: forest `#0F3D2E`
-- Highlight: amber `#F5B921`
-- Alert / warm accent: coral `#F26B5E`
-- Soft surface: mint `#C8E6D3`
-- Dark mode: deep forest surfaces, mint primary, amber/coral kept as accents
+Move published content from `public/content/index.json` into the database so the "Publish" button pushes changes live instantly to every learner.
 
-**Type & rhythm**
-- Sora 700–800 for display / section headers, tighter tracking (-0.02em)
-- Manrope 400/500/600 body, 15–16px base, 1.55 line-height
-- One serif-free hierarchy; use size + weight, not color, for hierarchy
+- New table `public.site_content` (single row, `id='current'`, `data jsonb`, `updated_at`, `updated_by`).
+  - RLS: anyone (anon + authenticated) can SELECT the current row; only admins can INSERT/UPDATE.
+  - Seeded once with the current `public/content/index.json` on migration.
+- `loadContent()` fetches the row from the DB first, falls back to bundled JSON if the fetch fails (offline / first boot).
+- Editor "Publish" wizard becomes a real publish button:
+  - Shows the same diff summary.
+  - Primary action **"Publish live now"** upserts the draft into `site_content` (admin-only RLS).
+  - On success: toast "Live for all learners", `ContentContext` refetches, learners get new content on next navigation (or immediately via a lightweight version poll — optional, out of scope for v1).
+  - Keeps "Download JSON" as a secondary backup action.
+- Editor still uses localStorage for the working draft; "Save" = local draft, "Publish" = live to backend.
 
-**Surfaces**
-- Card radius 16–20, layered shadows: `0 1px 0 rgba(15,61,46,.04), 0 12px 32px -18px rgba(15,61,46,.22)`
-- Subtle 1px hairline borders in `forest / 8%`
-- Cream page bg with faint radial amber wash top-right, mint wash bottom-left (hero pages only)
+### 2. Users page fixes
 
-**Motion (quiet)**
-- 180–240ms cubic-bezier(.2,.7,.2,1) on hover/scale
-- Cards lift 2px + shadow deepen on hover
-- Route transitions: 200ms fade+2px rise
-- Respect `prefers-reduced-motion`
+- **Create user dialog**
+  - Show/hide password toggle; strength meter (length + variety); block < 8 chars.
+  - After successful creation, keep dialog open on a "User created" success step showing email + password + a **"Copy welcome message"** button that copies a ready-to-send template (name, login URL, email, temp password, note to change it).
+  - Better error surfacing (e.g. duplicate email, weak password from HIBP).
+- **Reset password dialog**
+  - Show/hide toggle, strength meter, same "Copy welcome message" step after success.
+- **Row actions**
+  - Replace `window.confirm` for delete with the existing `ConfirmDialog` component so it matches the theme.
+  - Small polish: show role chip color from tokens, show "Never logged in" if no `last_sign_in_at` (add to edge function response).
+- Ensure `admin-create-user` returns a clear message for password-too-weak/duplicate email; front-end maps them to friendly text.
 
-## Scope — screens touched
+### 3. Palette refresh (subtle)
 
-**Shell**
-- `AppLayout` sidebar: replace flat forest gradient header with cream header + small forest logo mark + amber dot; nav items get pill hover, active state = forest pill with cream text and amber left indicator (3px)
-- AppBar: cream translucent, hairline bottom border, page title in Sora 600
-- `MobileBottomNav`: cream with forest icons, active = amber underline + forest icon; reduce height to 60px
+Tweak brand tokens in `src/index.css` and `src/theme/muiTheme.ts` — keep the warm boutique DNA but pull cream slightly cooler and deepen the primary for more elegance:
 
-**Auth**
-- `Login`: keep split layout but soften — left panel goes cream-on-forest with an amber sun-arc motif, right form on paper with generous padding, primary CTA becomes forest→forest-dark gradient with amber focus ring
-- `ResetPassword`: matching card treatment
+```
+--brand-forest:      158 55% 18%   (from 61% 15%)   deeper, richer green
+--brand-mint:        152 42% 52%
+--brand-amber:       36  88% 58%   (slightly softer)
+--brand-coral:       12  78% 62%
+--surface-1:         42 30% 98%    (cooler cream)
+--surface-2:         42 25% 95%
+--hairline:          158 20% 88%   (tinted, not neutral)
+--gradient-primary:  linear-gradient(135deg, hsl(158 55% 18%), hsl(152 42% 42%))
+```
 
-**Learner surfaces**
-- `Dashboard`: hero greeting card (cream + amber wash, forest headline, coral streak chip), then a 3-up stat strip (icon dot + big Sora number), then Resume card and Recent items in a 2-col responsive grid
-- `Courses`: switch to a boutique card grid — cover image (or gradient placeholder), Sora title, Manrope meta row, progress rail in mint→amber
-- `CourseDetail` / `ModuleDetail`: editorial header (breadcrumb, Sora H1, meta chips), module list as tactile stacked cards with left rail color per item type (video=amber, pdf=coral, conversation=mint, quiz=forest)
-- `Viewer`: cream reading surface, sticky slim `ItemNavBar` (forest text, amber progress bar), `ModuleOutlineDrawer` gets rounded item chips
-- `RecentItemCard`, `ResumeCard`, `PageHeader`: unified card language
+Regenerate button gradient, sidebar tile, and hero wash from the new tokens (no per-component color hardcodes changed). Verify contrast on Login, Dashboard, Viewer, Users, Editor.
 
-**Admin & Editor**
-- `AdminDashboard`, `Users`, `Enrollments`, `ProgressOverview`: same boutique card + table treatment (cream table head, forest text, amber active row indicator)
-- `Editor` (`EditorDashboard`, `ItemEditor`, `QuizEditor`, `ConversationEditor`, `ModuleEditor`, `CourseEditor`, `BatchEditor`, `PublishWizard`): compact but elegant — sticky save pill becomes forest with amber label chip; tab bar gets underline indicator in amber; form sections wrapped in soft cards with Sora section titles
+### 4. Verification
 
-## Token & theme changes
-
-- `src/index.css`: refine gradients, shadows, add `--surface-1/2/3`, `--hairline`, hero wash utility classes; keep existing brand vars
-- `src/theme/muiTheme.ts`: tune `MuiCard`, `MuiButton` (add `contained-primary` warmer shadow), `MuiTab` (amber underline), `MuiChip` (soft mint/amber variants), `MuiTableCell` head, `MuiOutlinedInput` focus ring
-- No new fonts; already loaded
+- Type-check with `tsgo`.
+- Playwright walkthrough:
+  1. Sign in as admin → Editor → edit an item title → Publish → open a second incognito context → confirm learner sees the new title without a rebuild.
+  2. Users → New user → verify strength meter, welcome-message copy, created user can sign in.
+  3. Reset password on the new user → sign in with new password.
+- Screenshots of Login, Dashboard, Users, Editor (new palette) on desktop + mobile.
 
 ## Technical notes
 
-- All colors via semantic tokens / `hsl(var(--...))` — no hardcoded hex in components
-- Reuse existing shadcn/MUI primitives; only style overrides + small composition tweaks
-- Framer Motion already available for the quiet route + card hover transitions
-- Keep existing component APIs; edits are internal styling + minor JSX structure
-
-## Out of scope
-
-- No changes to data fetching, auth, RLS, edge functions, content JSON schema
-- No new features, no logo redraw, no image generation unless a hero placeholder is strictly needed
-
-## Verification
-
-- Playwright screenshots at 390×800 (mobile) and 1280×900 (desktop) for: Login, Dashboard, Courses, CourseDetail, Viewer, Editor, AdminDashboard
-- `bunx tsgo --noEmit` typecheck
+- Migration adds `site_content`, GRANTs (`SELECT` to `anon`+`authenticated`, ALL to `service_role`, `INSERT/UPDATE` to `authenticated` gated by `has_role(auth.uid(), 'admin')`), RLS policies, and seeds the current JSON.
+- Publish path uses the existing supabase client + `has_role`-based RLS — no new edge function required.
+- Content cache in `src/lib/content.ts` gets a `refreshContent()` export so `ContentContext` can force-refetch after publish (and after login).
+- No changes to learner-facing routing or auth. No new secrets.
