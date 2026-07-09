@@ -321,6 +321,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
         exportContent,
         importContent,
         resetToProduction,
+        publishLive,
         undo,
         redo,
         getSnapshots,
