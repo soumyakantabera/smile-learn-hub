@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { ContentData, Course, Module, ContentItem, Batch } from '@/types/content';
-import { loadContent } from '@/lib/content';
+import { loadContent, publishLiveContent, refreshContent } from '@/lib/content';
+
 import {
   saveDraft,
   loadDraft,
@@ -68,12 +69,14 @@ interface EditorContextType {
   exportContent: () => void;
   importContent: (data: ContentData) => void;
   resetToProduction: () => Promise<void>;
+  publishLive: () => Promise<void>;
 
   undo: () => void;
   redo: () => void;
   getSnapshots: () => Snapshot[];
   restoreFromSnapshot: (id: string) => void;
 }
+
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
@@ -230,7 +233,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
 
   const resetToProduction = useCallback(async () => {
     clearDraft();
-    const prod = await loadContent();
+    const prod = await refreshContent();
     past.current = [];
     future.current = [];
     skipHistory.current = true;
@@ -240,6 +243,13 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setLastSaved(null);
     setHistoryTick((t) => t + 1);
   }, []);
+
+  const publishLive = useCallback(async () => {
+    if (!content) throw new Error('Nothing to publish');
+    await publishLiveContent(content);
+    setProductionContent(content);
+  }, [content]);
+
 
   const undo = useCallback(() => {
     if (past.current.length === 0) return;
@@ -311,6 +321,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
         exportContent,
         importContent,
         resetToProduction,
+        publishLive,
         undo,
         redo,
         getSnapshots,

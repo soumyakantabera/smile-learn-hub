@@ -6,31 +6,32 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     ...(mode === 'light'
       ? {
           primary: {
-            main: '#0F3D2E',
-            light: '#C8E6D3',
-            dark: '#0a2c22',
-            contrastText: '#FFF8EC',
+            main: 'hsl(158, 55%, 18%)',
+            light: 'hsl(152, 38%, 84%)',
+            dark: 'hsl(158, 55%, 12%)',
+            contrastText: 'hsl(44, 40%, 97%)',
           },
           secondary: {
-            main: '#F5B921',
-            light: '#FFD873',
-            dark: '#C89112',
-            contrastText: '#0F3D2E',
+            main: 'hsl(36, 88%, 58%)',
+            light: 'hsl(36, 88%, 72%)',
+            dark: 'hsl(32, 92%, 46%)',
+            contrastText: 'hsl(158, 55%, 14%)',
           },
           background: {
-            default: '#FFF8EC',
+            default: 'hsl(44, 40%, 97%)',
             paper: '#ffffff',
           },
           text: {
-            primary: '#0F3D2E',
-            secondary: 'hsl(158, 20%, 35%)',
+            primary: 'hsl(158, 55%, 14%)',
+            secondary: 'hsl(158, 18%, 36%)',
           },
-          success: { main: 'hsl(152, 65%, 36%)' },
-          warning: { main: '#F5B921' },
-          info: { main: 'hsl(200, 80%, 45%)' },
-          error: { main: '#F26B5E' },
-          divider: 'hsl(140, 20%, 86%)',
+          success: { main: 'hsl(152, 55%, 38%)' },
+          warning: { main: 'hsl(36, 88%, 58%)' },
+          info: { main: 'hsl(200, 72%, 46%)' },
+          error: { main: 'hsl(12, 78%, 62%)' },
+          divider: 'hsl(158, 20%, 88%)',
         }
+
       : {
           primary: {
             main: 'hsl(140, 40%, 70%)',
