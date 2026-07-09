@@ -233,7 +233,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
 
   const resetToProduction = useCallback(async () => {
     clearDraft();
-    const prod = await loadContent();
+    const prod = await refreshContent();
     past.current = [];
     future.current = [];
     skipHistory.current = true;
@@ -243,6 +243,13 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     setLastSaved(null);
     setHistoryTick((t) => t + 1);
   }, []);
+
+  const publishLive = useCallback(async () => {
+    if (!content) throw new Error('Nothing to publish');
+    await publishLiveContent(content);
+    setProductionContent(content);
+  }, [content]);
+
 
   const undo = useCallback(() => {
     if (past.current.length === 0) return;
