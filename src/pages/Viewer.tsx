@@ -449,7 +449,7 @@ export default function ViewerPage() {
                 size="small"
                 variant="outlined"
                 startIcon={<OpenInNewIcon />}
-                href={item.url}
+                href={embed.openUrl || item.url}
                 target="_blank"
                 sx={{ borderColor: alpha(accent, 0.4), color: accent, '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) } }}
               >
@@ -457,13 +457,19 @@ export default function ViewerPage() {
               </Button>
             }
           >
-            <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
-              <iframe
-                src={getGoogleDocsViewerUrl(item.url!)}
-                style={{ width: '100%', height: '640px', border: 'none' }}
-                title={item.title}
-              />
-            </Box>
+            {embed.url ? (
+              <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)', boxShadow: 'var(--shadow-md)' }}>
+                <iframe
+                  src={embed.url}
+                  style={{ width: '100%', height: 'min(78vh, 720px)', border: 'none', display: 'block' }}
+                  title={item.title}
+                  loading="lazy"
+                  allow="autoplay"
+                />
+              </Box>
+            ) : (
+              embedFallback('No document link set for this resource yet.')
+            )}
           </ResourceShell>
         );
 
@@ -476,11 +482,11 @@ export default function ViewerPage() {
               <Button
                 variant="contained"
                 startIcon={<DownloadIcon />}
-                href={item.url}
+                href={embed.openUrl || item.url}
                 target="_blank"
                 sx={gradientPrimaryBtnSx}
               >
-                Download
+                Open original
               </Button>
               <Button
                 variant="outlined"
@@ -488,7 +494,7 @@ export default function ViewerPage() {
                 href={getGoogleDocsViewerUrl(item.url!)}
                 target="_blank"
               >
-                Google Docs
+                Google viewer
               </Button>
               <Button
                 variant="outlined"
@@ -496,18 +502,24 @@ export default function ViewerPage() {
                 href={getMicrosoftViewerUrl(item.url!)}
                 target="_blank"
               >
-                Microsoft Office
+                Office viewer
               </Button>
             </Stack>
-            <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
-              <iframe
-                src={getGoogleDocsViewerUrl(item.url!)}
-                style={{ width: '100%', height: '520px', border: 'none' }}
-                title={item.title}
-              />
-            </Box>
+            {embed.url ? (
+              <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)', boxShadow: 'var(--shadow-md)' }}>
+                <iframe
+                  src={embed.url}
+                  style={{ width: '100%', height: 'min(70vh, 640px)', border: 'none', display: 'block' }}
+                  title={item.title}
+                  loading="lazy"
+                />
+              </Box>
+            ) : (
+              embedFallback('No document link set for this resource yet.')
+            )}
           </ResourceShell>
         );
+
 
       case 'link':
         return (
