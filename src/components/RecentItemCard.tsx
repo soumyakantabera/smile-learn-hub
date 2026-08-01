@@ -100,7 +100,7 @@ export function RecentItemCard({ item }: RecentItemCardProps) {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
                 <Chip
-                  label={config.label}
+                  label={config.short}
                   size="small"
                   sx={{
                     bgcolor: `${config.color}15`,
