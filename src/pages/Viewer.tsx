@@ -72,6 +72,8 @@ import { StepQuizViewer } from '@/components/viewer/StepQuizViewer';
 import { ConversationViewer } from '@/components/viewer/ConversationViewer';
 import type { ItemType } from '@/types/content';
 import { itemIcons as typeIcons, itemColors as typeColors, itemLabels as typeLabels } from '@/lib/itemVisuals';
+import { resolveEmbed } from '@/lib/embed';
+
 
 // LWS palette: forest, amber, coral, mint — mirrors RecentItemCard
 /**
