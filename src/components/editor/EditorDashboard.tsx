@@ -17,17 +17,15 @@ import {
   School as SchoolIcon,
   Folder as FolderIcon,
   Description as ItemIcon,
-  Quiz as QuizIcon,
+  QuizRounded,
+  SmartDisplayRounded,
   Group as GroupIcon,
-  Assignment as HomeworkIcon,
-  YouTube as YouTubeIcon,
-  Audiotrack as AudioIcon,
   TrendingUp as TrendingIcon,
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import { useEditor } from '@/contexts/EditorContext';
-import type { ItemType } from '@/types/content';
-import { itemColors as typeColors } from '@/lib/itemVisuals';
+import { getItemVisual, ItemIconTile } from '@/lib/itemVisuals';
+
 
 
 export function EditorDashboard() {
