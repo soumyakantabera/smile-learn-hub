@@ -282,19 +282,64 @@ export default function ViewerPage() {
     const icon = typeIcons[item.type];
     const label = typeLabels[item.type];
 
-    const mediaFrame = (children: React.ReactNode) => (
+    /** Normalised, iframe-safe URL for this item (YouTube, Drive, Docs, PDF…) */
+    const embed = resolveEmbed(item.type, item.url, item.embedUrl);
+
+    /** 16:9 frame used for every video-ish embed. */
+    const videoFrame = (src: string) => (
       <Box
         sx={{
+          position: 'relative',
+          paddingTop: '56.25%',
           borderRadius: 2,
           overflow: 'hidden',
+          bgcolor: 'black',
           border: '1px solid',
           borderColor: 'var(--hairline)',
-          bgcolor: 'black',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
-        {children}
+        <iframe
+          src={src}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+          title={item.title}
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          allowFullScreen
+        />
       </Box>
     );
+
+    /** Empty / broken-link state so learners never see a blank frame. */
+    const embedFallback = (message: string) => (
+      <Stack alignItems="center" spacing={1.5} sx={{ py: 5, textAlign: 'center' }}>
+        <Box
+          sx={{
+            width: 64,
+            height: 64,
+            borderRadius: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: alpha(accent, 0.12),
+            color: accent,
+            '& svg': { fontSize: 32 },
+          }}
+        >
+          {icon}
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          {message}
+        </Typography>
+        {item.url && (
+          <Button size="small" variant="outlined" startIcon={<OpenInNewIcon />} href={item.url} target="_blank">
+            Open original
+          </Button>
+        )}
+      </Stack>
+    );
+
 
     switch (item.type) {
       case 'video':
