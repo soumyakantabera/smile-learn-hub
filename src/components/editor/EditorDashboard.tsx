@@ -27,19 +27,8 @@ import {
 } from '@mui/icons-material';
 import { useEditor } from '@/contexts/EditorContext';
 import type { ItemType } from '@/types/content';
+import { itemColors as typeColors } from '@/lib/itemVisuals';
 
-const typeColors: Record<string, string> = {
-  pdf: '#D32F2F',
-  video: '#1976D2',
-  doc: '#2196F3',
-  ppt: '#FF5722',
-  spreadsheet: '#4CAF50',
-  link: '#9C27B0',
-  homework: '#FF9800',
-  youtube: '#FF0000',
-  audio: '#E91E63',
-  quiz: '#673AB7',
-};
 
 export function EditorDashboard() {
   const { content, lastSaved } = useEditor();

@@ -57,6 +57,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { EmptyState } from './EmptyState';
 import { TagAutocomplete } from './TagAutocomplete';
 import { getAllItemTags } from '@/lib/editorStorage';
+import { itemColors as typeColors, ITEM_VISUALS } from '@/lib/itemVisuals';
 
 const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = [
   { value: 'pdf', label: 'PDF Document', icon: <PdfIcon /> },
@@ -72,19 +73,6 @@ const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = 
   { value: 'conversation', label: 'Conversation Practice', icon: <ConversationIcon /> },
 ];
 
-const typeColors: Record<ItemType, string> = {
-  pdf: '#D32F2F',
-  video: '#1976D2',
-  doc: '#2196F3',
-  ppt: '#FF5722',
-  spreadsheet: '#4CAF50',
-  link: '#9C27B0',
-  homework: '#FF9800',
-  youtube: '#FF0000',
-  audio: '#E91E63',
-  quiz: '#673AB7',
-  conversation: '#0F3D2E',
-};
 
 interface ItemFormData {
   moduleId: string;

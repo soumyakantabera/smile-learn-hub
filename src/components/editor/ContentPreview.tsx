@@ -44,34 +44,7 @@ import {
 import { useEditor } from '@/contexts/EditorContext';
 import type { ItemType, ContentItem } from '@/types/content';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
-
-const typeIcons: Record<ItemType, React.ReactNode> = {
-  pdf: <PdfIcon />,
-  video: <VideoIcon />,
-  doc: <DocIcon />,
-  ppt: <PptIcon />,
-  spreadsheet: <SpreadsheetIcon />,
-  link: <LinkIcon />,
-  homework: <HomeworkIcon />,
-  youtube: <YouTubeIcon />,
-  audio: <AudioIcon />,
-  quiz: <QuizIcon />,
-  conversation: <ConversationIcon />,
-};
-
-const typeLabels: Record<ItemType, string> = {
-  pdf: 'PDF',
-  video: 'Video',
-  doc: 'Document',
-  ppt: 'Presentation',
-  spreadsheet: 'Spreadsheet',
-  link: 'Link',
-  homework: 'Homework',
-  youtube: 'YouTube',
-  audio: 'Audio',
-  quiz: 'Quiz',
-  conversation: 'Conversation',
-};
+import { itemIcons as typeIcons, itemLabels as typeLabels } from '@/lib/itemVisuals';
 
 export function ContentPreview() {
   const { content } = useEditor();

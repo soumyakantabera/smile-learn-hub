@@ -71,50 +71,9 @@ import { QuizViewer } from '@/components/viewer/QuizViewer';
 import { StepQuizViewer } from '@/components/viewer/StepQuizViewer';
 import { ConversationViewer } from '@/components/viewer/ConversationViewer';
 import type { ItemType } from '@/types/content';
-
-const typeIcons: Record<ItemType, React.ReactNode> = {
-  pdf: <PdfIcon />,
-  video: <VideoIcon />,
-  doc: <DocIcon />,
-  ppt: <PptIcon />,
-  spreadsheet: <SpreadsheetIcon />,
-  link: <LinkIcon />,
-  homework: <HomeworkIcon />,
-  youtube: <YouTubeIcon />,
-  audio: <AudioIcon />,
-  quiz: <QuizIcon />,
-  conversation: <ConversationIcon />,
-};
+import { itemIcons as typeIcons, itemColors as typeColors, itemLabels as typeLabels } from '@/lib/itemVisuals';
 
 // LWS palette: forest, amber, coral, mint — mirrors RecentItemCard
-const typeColors: Record<ItemType, string> = {
-  pdf: '#F26B5E',          // coral
-  video: '#F5B921',        // amber
-  doc: '#0F3D2E',          // forest
-  ppt: '#F26B5E',          // coral
-  spreadsheet: '#3E8E5A',  // deep mint
-  link: '#0F3D2E',         // forest
-  homework: '#F5B921',     // amber
-  youtube: '#F26B5E',      // coral
-  audio: '#3E8E5A',        // deep mint
-  quiz: '#0F3D2E',         // forest
-  conversation: '#3E8E5A', // deep mint
-};
-
-const typeLabels: Record<ItemType, string> = {
-  pdf: 'PDF Document',
-  video: 'Video',
-  doc: 'Word Document',
-  ppt: 'Presentation',
-  spreadsheet: 'Spreadsheet',
-  link: 'External Link',
-  homework: 'Homework',
-  youtube: 'YouTube Video',
-  audio: 'Audio Recording',
-  quiz: 'Interactive Quiz',
-  conversation: 'Conversation Practice',
-};
-
 /**
  * Consistent shell used by every non-embedded resource type so PDF, video,
  * audio, docs, links and homework share the same header + spacing rhythm.

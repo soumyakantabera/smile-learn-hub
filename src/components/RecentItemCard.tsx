@@ -23,21 +23,9 @@ import {
   Forum as ConversationIcon,
 } from '@mui/icons-material';
 import type { ContentItem, ItemType } from '@/types/content';
+import { ITEM_VISUALS } from '@/lib/itemVisuals';
+const typeConfig = ITEM_VISUALS;
 
-// LWS palette: forest, amber, coral, mint
-const typeConfig: Record<ItemType, { icon: React.ReactNode; color: string; label: string }> = {
-  pdf: { icon: <PdfIcon />, color: '#F26B5E', label: 'PDF' },
-  video: { icon: <VideoIcon />, color: '#F5B921', label: 'Video' },
-  doc: { icon: <DocIcon />, color: '#0F3D2E', label: 'Document' },
-  ppt: { icon: <PptIcon />, color: '#F26B5E', label: 'Slides' },
-  spreadsheet: { icon: <SpreadsheetIcon />, color: '#3E8E5A', label: 'Spreadsheet' },
-  link: { icon: <LinkIcon />, color: '#0F3D2E', label: 'Link' },
-  homework: { icon: <HomeworkIcon />, color: '#F5B921', label: 'Homework' },
-  youtube: { icon: <YouTubeIcon />, color: '#F26B5E', label: 'YouTube' },
-  audio: { icon: <AudioIcon />, color: '#3E8E5A', label: 'Audio' },
-  quiz: { icon: <QuizIcon />, color: '#0F3D2E', label: 'Quiz' },
-  conversation: { icon: <ConversationIcon />, color: '#3E8E5A', label: 'Conversation' },
-};
 
 interface RecentItemCardProps {
   item: ContentItem;
