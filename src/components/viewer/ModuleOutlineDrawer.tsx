@@ -31,20 +31,7 @@ import {
 } from '@mui/icons-material';
 import type { SequenceEntry } from '@/lib/contentNavigation';
 import type { ItemType } from '@/types/content';
-
-const typeIcons: Record<ItemType, React.ReactNode> = {
-  pdf: <PdfIcon />,
-  video: <VideoIcon />,
-  doc: <DocIcon />,
-  ppt: <PptIcon />,
-  spreadsheet: <SpreadsheetIcon />,
-  link: <LinkIcon />,
-  homework: <HomeworkIcon />,
-  youtube: <YouTubeIcon />,
-  audio: <AudioIcon />,
-  quiz: <QuizIcon />,
-  conversation: <ConversationIcon />,
-};
+import { itemIcons as typeIcons } from '@/lib/itemVisuals';
 
 interface Props {
   open: boolean;

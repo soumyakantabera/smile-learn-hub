@@ -17,29 +17,16 @@ import {
   School as SchoolIcon,
   Folder as FolderIcon,
   Description as ItemIcon,
-  Quiz as QuizIcon,
+  QuizRounded,
+  SmartDisplayRounded,
   Group as GroupIcon,
-  Assignment as HomeworkIcon,
-  YouTube as YouTubeIcon,
-  Audiotrack as AudioIcon,
   TrendingUp as TrendingIcon,
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import { useEditor } from '@/contexts/EditorContext';
-import type { ItemType } from '@/types/content';
+import { getItemVisual, ItemIconTile } from '@/lib/itemVisuals';
 
-const typeColors: Record<string, string> = {
-  pdf: '#D32F2F',
-  video: '#1976D2',
-  doc: '#2196F3',
-  ppt: '#FF5722',
-  spreadsheet: '#4CAF50',
-  link: '#9C27B0',
-  homework: '#FF9800',
-  youtube: '#FF0000',
-  audio: '#E91E63',
-  quiz: '#673AB7',
-};
+
 
 export function EditorDashboard() {
   const { content, lastSaved } = useEditor();
@@ -72,9 +59,9 @@ export function EditorDashboard() {
     { label: 'Courses', value: courses.length, icon: <SchoolIcon fontSize="small" />, color: 'hsl(var(--brand-forest))' },
     { label: 'Modules', value: modules.length, icon: <FolderIcon fontSize="small" />, color: 'hsl(var(--brand-amber))' },
     { label: 'Items', value: items.length, icon: <ItemIcon fontSize="small" />, color: 'hsl(var(--brand-coral))' },
-    { label: 'Batches', value: batches.length, icon: <GroupIcon fontSize="small" />, color: '#9C27B0' },
-    { label: 'Quizzes', value: quizCount, icon: <QuizIcon fontSize="small" />, color: '#673AB7' },
-    { label: 'Videos', value: videoCount, icon: <YouTubeIcon fontSize="small" />, color: '#D32F2F' },
+    { label: 'Batches', value: batches.length, icon: <GroupIcon fontSize="small" />, color: 'hsl(var(--brand-mint))' },
+    { label: 'Quizzes', value: quizCount, icon: <QuizRounded fontSize="small" />, color: 'hsl(var(--brand-forest))' },
+    { label: 'Videos', value: videoCount, icon: <SmartDisplayRounded fontSize="small" />, color: 'hsl(var(--brand-coral))' },
   ];
 
   return (
@@ -85,9 +72,21 @@ export function EditorDashboard() {
           <Grid size={{ xs: 4, sm: 4, md: 2 }} key={stat.label}>
             <Card sx={{ textAlign: 'center' }}>
               <CardContent sx={{ py: { xs: 1.25, sm: 2 }, px: { xs: 0.75, sm: 1 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75, mb: 0.5 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color, flexShrink: 0 }} />
-                  <Box sx={{ color: stat.color, display: { xs: 'none', sm: 'inline-flex' } }}>{stat.icon}</Box>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    mx: 'auto',
+                    mb: 0.75,
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: stat.color,
+                    bgcolor: 'action.hover',
+                  }}
+                >
+                  {stat.icon}
                 </Box>
                 <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: '1.1rem', sm: '1.4rem' }, lineHeight: 1.1 }}>
                   {stat.value}
@@ -115,26 +114,31 @@ export function EditorDashboard() {
                   .sort(([, a], [, b]) => b - a)
                   .map(([type, count]) => {
                     const pct = Math.round((count / items.length) * 100);
+                    const v = getItemVisual(type);
                     return (
                       <Box key={type}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant="body2" textTransform="capitalize">
-                            {type}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Box sx={{ color: v.color, display: 'flex', '& svg': { fontSize: 18 } }}>{v.icon}</Box>
+                          <Typography variant="body2" sx={{ flexGrow: 1, fontWeight: 600 }}>
+                            {v.label}
                           </Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {count} ({pct}%)
+                          <Typography variant="body2" fontWeight={700} sx={{ color: v.color }}>
+                            {count}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            ({pct}%)
                           </Typography>
                         </Box>
                         <Box
                           sx={{
-                            height: 8, borderRadius: 1, bgcolor: 'action.hover',
+                            height: 8, borderRadius: 999, bgcolor: 'action.hover',
                             overflow: 'hidden',
                           }}
                         >
                           <Box
                             sx={{
-                              height: '100%', borderRadius: 1,
-                              bgcolor: typeColors[type] || 'primary.main',
+                              height: '100%', borderRadius: 999,
+                              background: `linear-gradient(90deg, ${v.color}, ${v.color}aa)`,
                               width: `${pct}%`, transition: 'width 0.5s ease',
                             }}
                           />
@@ -158,16 +162,22 @@ export function EditorDashboard() {
               <List dense disablePadding>
                 {recentItems.map((item, i) => (
                   <React.Fragment key={item.id}>
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 36, color: typeColors[item.type] }}>
-                        {item.type === 'quiz' ? <QuizIcon /> : item.type === 'homework' ? <HomeworkIcon /> :
-                          item.type === 'youtube' ? <YouTubeIcon /> : item.type === 'audio' ? <AudioIcon /> : <ItemIcon />}
-                      </ListItemIcon>
+                    <ListItem sx={{ px: 0, gap: 1.25 }}>
+                      <ItemIconTile type={item.type} size={36} />
                       <ListItemText
                         primary={item.title}
                         secondary={new Date(item.publishedAt).toLocaleDateString()}
+                        primaryTypographyProps={{ fontWeight: 600, noWrap: true }}
                       />
-                      <Chip label={item.type} size="small" />
+                      <Chip
+                        label={getItemVisual(item.type).short}
+                        size="small"
+                        sx={{
+                          bgcolor: getItemVisual(item.type).tint,
+                          color: getItemVisual(item.type).color,
+                          fontWeight: 700,
+                        }}
+                      />
                     </ListItem>
                     {i < recentItems.length - 1 && <Divider />}
                   </React.Fragment>
@@ -176,6 +186,7 @@ export function EditorDashboard() {
             </CardContent>
           </Card>
         </Grid>
+
 
         {/* Course Summary */}
         <Grid size={12}>

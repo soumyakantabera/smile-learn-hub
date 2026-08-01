@@ -47,6 +47,7 @@ import {
   DragIndicator as DragIcon,
   ContentCopy as DuplicateIcon,
   DriveFileMove as MoveIcon,
+  Visibility as PreviewIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useEditor } from '@/contexts/EditorContext';
@@ -57,34 +58,13 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { EmptyState } from './EmptyState';
 import { TagAutocomplete } from './TagAutocomplete';
 import { getAllItemTags } from '@/lib/editorStorage';
+import { resolveEmbed } from '@/lib/embed';
+import { itemColors as typeColors, ITEM_VISUALS } from '@/lib/itemVisuals';
 
-const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = [
-  { value: 'pdf', label: 'PDF Document', icon: <PdfIcon /> },
-  { value: 'video', label: 'Video (MP4)', icon: <VideoIcon /> },
-  { value: 'youtube', label: 'YouTube/Vimeo', icon: <YouTubeIcon /> },
-  { value: 'audio', label: 'Audio (MP3)', icon: <AudioIcon /> },
-  { value: 'doc', label: 'Word Document', icon: <DocIcon /> },
-  { value: 'ppt', label: 'Presentation', icon: <PptIcon /> },
-  { value: 'spreadsheet', label: 'Spreadsheet', icon: <SpreadsheetIcon /> },
-  { value: 'link', label: 'External Link', icon: <LinkIcon /> },
-  { value: 'homework', label: 'Homework', icon: <HomeworkIcon /> },
-  { value: 'quiz', label: 'Interactive Quiz', icon: <QuizIcon /> },
-  { value: 'conversation', label: 'Conversation Practice', icon: <ConversationIcon /> },
-];
+const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = (
+  Object.keys(ITEM_VISUALS) as ItemType[]
+).map((value) => ({ value, label: ITEM_VISUALS[value].label, icon: ITEM_VISUALS[value].icon }));
 
-const typeColors: Record<ItemType, string> = {
-  pdf: '#D32F2F',
-  video: '#1976D2',
-  doc: '#2196F3',
-  ppt: '#FF5722',
-  spreadsheet: '#4CAF50',
-  link: '#9C27B0',
-  homework: '#FF9800',
-  youtube: '#FF0000',
-  audio: '#E91E63',
-  quiz: '#673AB7',
-  conversation: '#0F3D2E',
-};
 
 interface ItemFormData {
   moduleId: string;
@@ -145,6 +125,13 @@ export function ItemEditor() {
   const allTags = useMemo(() => (content ? getAllItemTags(content) : []), [content]);
   const allModules = useMemo(() => (content ? Object.values(content.modules) : []), [content]);
 
+  // Normalised embed for the URL/embed field currently being typed, so authors
+  // immediately see exactly what learners will see.
+  const livePreview = useMemo(
+    () => resolveEmbed(formData.type, formData.url, formData.embedUrl),
+    [formData.type, formData.url, formData.embedUrl],
+  );
+
   if (!content) return null;
   const courses = Object.values(content.courses);
 
@@ -201,7 +188,8 @@ export function ItemEditor() {
       description: formData.description,
       type: formData.type,
       url: formData.url || undefined,
-      embedUrl: formData.embedUrl || undefined,
+      // Persist the normalised, iframe-safe URL so the viewer never has to guess.
+      embedUrl: livePreview.url || formData.embedUrl || undefined,
       instructions: formData.instructions || undefined,
       dueDate: formData.dueDate || undefined,
       tags: formData.tags,
@@ -510,49 +498,70 @@ export function ItemEditor() {
                 value={formData.url}
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                 fullWidth
-                placeholder="https://..."
+                placeholder="https://drive.google.com/file/d/…  ·  https://…/file.pdf"
+                helperText={
+                  livePreview.note ||
+                  'Paste any link — Google Drive, Docs, Sheets, Slides or a direct file. We build the embed for you.'
+                }
               />
             )}
 
             {formData.type === 'youtube' && (
-              <>
-                <TextField
-                  label="YouTube/Vimeo Embed URL"
-                  value={formData.embedUrl}
-                  onChange={(e) => setFormData({ ...formData, embedUrl: e.target.value })}
-                  fullWidth
-                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
-                  helperText="Use the embed URL format: youtube.com/embed/ID or player.vimeo.com/video/ID"
-                />
-                {formData.embedUrl && (
+              <TextField
+                label="Video link (YouTube, Vimeo or Drive)"
+                value={formData.embedUrl}
+                onChange={(e) => setFormData({ ...formData, embedUrl: e.target.value })}
+                fullWidth
+                placeholder="https://youtu.be/VIDEO_ID"
+                helperText={
+                  livePreview.note ||
+                  'Paste a normal watch/share link — watch?v=, youtu.be, /shorts/, Vimeo or Drive all work.'
+                }
+              />
+            )}
+
+            {livePreview.url && (
+              <Box>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                  <PreviewIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Live embed preview
+                  </Typography>
+                  <Chip size="small" label={livePreview.provider} sx={{ height: 20, fontSize: 11 }} />
+                </Stack>
+                {livePreview.isVideo ? (
                   <Box
                     sx={{
                       position: 'relative',
                       pb: '56.25%',
                       height: 0,
-                      borderRadius: 1,
+                      borderRadius: 2,
                       overflow: 'hidden',
                       border: 1,
                       borderColor: 'divider',
+                      bgcolor: 'black',
                     }}
                   >
                     <iframe
-                      src={formData.embedUrl}
-                      title="Preview"
+                      src={livePreview.url}
+                      title="Embed preview"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                       allowFullScreen
                     />
                   </Box>
+                ) : (
+                  <Box sx={{ height: 320, border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+                    <iframe
+                      src={livePreview.url}
+                      title="Embed preview"
+                      style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
+                    />
+                  </Box>
                 )}
-              </>
-            )}
-
-            {formData.type === 'pdf' && formData.url && (
-              <Box sx={{ height: 300, border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
-                <iframe src={formData.url} title="PDF preview" style={{ width: '100%', height: '100%', border: 0 }} />
               </Box>
             )}
+
 
             {formData.type === 'audio' && (
               <TextField

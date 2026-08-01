@@ -71,50 +71,11 @@ import { QuizViewer } from '@/components/viewer/QuizViewer';
 import { StepQuizViewer } from '@/components/viewer/StepQuizViewer';
 import { ConversationViewer } from '@/components/viewer/ConversationViewer';
 import type { ItemType } from '@/types/content';
+import { itemIcons as typeIcons, itemColors as typeColors, itemLabels as typeLabels } from '@/lib/itemVisuals';
+import { resolveEmbed } from '@/lib/embed';
 
-const typeIcons: Record<ItemType, React.ReactNode> = {
-  pdf: <PdfIcon />,
-  video: <VideoIcon />,
-  doc: <DocIcon />,
-  ppt: <PptIcon />,
-  spreadsheet: <SpreadsheetIcon />,
-  link: <LinkIcon />,
-  homework: <HomeworkIcon />,
-  youtube: <YouTubeIcon />,
-  audio: <AudioIcon />,
-  quiz: <QuizIcon />,
-  conversation: <ConversationIcon />,
-};
 
 // LWS palette: forest, amber, coral, mint — mirrors RecentItemCard
-const typeColors: Record<ItemType, string> = {
-  pdf: '#F26B5E',          // coral
-  video: '#F5B921',        // amber
-  doc: '#0F3D2E',          // forest
-  ppt: '#F26B5E',          // coral
-  spreadsheet: '#3E8E5A',  // deep mint
-  link: '#0F3D2E',         // forest
-  homework: '#F5B921',     // amber
-  youtube: '#F26B5E',      // coral
-  audio: '#3E8E5A',        // deep mint
-  quiz: '#0F3D2E',         // forest
-  conversation: '#3E8E5A', // deep mint
-};
-
-const typeLabels: Record<ItemType, string> = {
-  pdf: 'PDF Document',
-  video: 'Video',
-  doc: 'Word Document',
-  ppt: 'Presentation',
-  spreadsheet: 'Spreadsheet',
-  link: 'External Link',
-  homework: 'Homework',
-  youtube: 'YouTube Video',
-  audio: 'Audio Recording',
-  quiz: 'Interactive Quiz',
-  conversation: 'Conversation Practice',
-};
-
 /**
  * Consistent shell used by every non-embedded resource type so PDF, video,
  * audio, docs, links and homework share the same header + spacing rhythm.
@@ -323,50 +284,116 @@ export default function ViewerPage() {
     const icon = typeIcons[item.type];
     const label = typeLabels[item.type];
 
-    const mediaFrame = (children: React.ReactNode) => (
+    /** Normalised, iframe-safe URL for this item (YouTube, Drive, Docs, PDF…) */
+    const embed = resolveEmbed(item.type, item.url, item.embedUrl);
+
+    /** 16:9 frame used for every video-ish embed. */
+    const videoFrame = (src: string) => (
       <Box
         sx={{
+          position: 'relative',
+          paddingTop: '56.25%',
           borderRadius: 2,
           overflow: 'hidden',
+          bgcolor: 'black',
           border: '1px solid',
           borderColor: 'var(--hairline)',
-          bgcolor: 'black',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
-        {children}
+        <iframe
+          src={src}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+          title={item.title}
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          allowFullScreen
+        />
       </Box>
     );
 
+    /** Empty / broken-link state so learners never see a blank frame. */
+    const embedFallback = (message: string) => (
+      <Stack alignItems="center" spacing={1.5} sx={{ py: 5, textAlign: 'center' }}>
+        <Box
+          sx={{
+            width: 64,
+            height: 64,
+            borderRadius: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: alpha(accent, 0.12),
+            color: accent,
+            '& svg': { fontSize: 32 },
+          }}
+        >
+          {icon}
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          {message}
+        </Typography>
+        {item.url && (
+          <Button size="small" variant="outlined" startIcon={<OpenInNewIcon />} href={item.url} target="_blank">
+            Open original
+          </Button>
+        )}
+      </Stack>
+    );
+
+
     switch (item.type) {
       case 'video':
+        // A "video" item may be a direct MP4 or a Drive/YouTube link pasted by
+        // the author — embed whichever it actually is.
         return (
           <ResourceShell accent={accent} icon={icon} label={label}>
-            <Box sx={{ position: 'relative', paddingTop: '56.25%', bgcolor: 'black', borderRadius: 2, overflow: 'hidden' }}>
-              <video
-                controls
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                src={item.url}
-              >
-                Your browser does not support the video tag.
-              </video>
-            </Box>
+            {embed.provider === 'direct' || !embed.url ? (
+              <Box sx={{ position: 'relative', paddingTop: '56.25%', bgcolor: 'black', borderRadius: 2, overflow: 'hidden' }}>
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                  src={item.url}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </Box>
+            ) : (
+              videoFrame(embed.url)
+            )}
           </ResourceShell>
         );
 
       case 'youtube':
         return (
-          <ResourceShell accent={accent} icon={icon} label={label}>
-            <Box sx={{ position: 'relative', paddingTop: '56.25%', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
-              <iframe
-                src={item.embedUrl}
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                title={item.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </Box>
+          <ResourceShell
+            accent={accent}
+            icon={icon}
+            label={label}
+            actions={
+              embed.openUrl ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<OpenInNewIcon />}
+                  href={embed.openUrl}
+                  target="_blank"
+                  sx={{ borderColor: alpha(accent, 0.4), color: accent, '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) } }}
+                >
+                  Watch on source
+                </Button>
+              ) : undefined
+            }
+          >
+            {embed.url
+              ? videoFrame(embed.url)
+              : embedFallback('This video link could not be embedded. Ask your teacher to check it.')}
           </ResourceShell>
         );
+
 
       case 'audio':
         return (
@@ -424,7 +451,7 @@ export default function ViewerPage() {
                 size="small"
                 variant="outlined"
                 startIcon={<OpenInNewIcon />}
-                href={item.url}
+                href={embed.openUrl || item.url}
                 target="_blank"
                 sx={{ borderColor: alpha(accent, 0.4), color: accent, '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) } }}
               >
@@ -432,13 +459,19 @@ export default function ViewerPage() {
               </Button>
             }
           >
-            <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
-              <iframe
-                src={getGoogleDocsViewerUrl(item.url!)}
-                style={{ width: '100%', height: '640px', border: 'none' }}
-                title={item.title}
-              />
-            </Box>
+            {embed.url ? (
+              <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)', boxShadow: 'var(--shadow-md)' }}>
+                <iframe
+                  src={embed.url}
+                  style={{ width: '100%', height: 'min(78vh, 720px)', border: 'none', display: 'block' }}
+                  title={item.title}
+                  loading="lazy"
+                  allow="autoplay"
+                />
+              </Box>
+            ) : (
+              embedFallback('No document link set for this resource yet.')
+            )}
           </ResourceShell>
         );
 
@@ -451,11 +484,11 @@ export default function ViewerPage() {
               <Button
                 variant="contained"
                 startIcon={<DownloadIcon />}
-                href={item.url}
+                href={embed.openUrl || item.url}
                 target="_blank"
                 sx={gradientPrimaryBtnSx}
               >
-                Download
+                Open original
               </Button>
               <Button
                 variant="outlined"
@@ -463,7 +496,7 @@ export default function ViewerPage() {
                 href={getGoogleDocsViewerUrl(item.url!)}
                 target="_blank"
               >
-                Google Docs
+                Google viewer
               </Button>
               <Button
                 variant="outlined"
@@ -471,18 +504,24 @@ export default function ViewerPage() {
                 href={getMicrosoftViewerUrl(item.url!)}
                 target="_blank"
               >
-                Microsoft Office
+                Office viewer
               </Button>
             </Stack>
-            <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
-              <iframe
-                src={getGoogleDocsViewerUrl(item.url!)}
-                style={{ width: '100%', height: '520px', border: 'none' }}
-                title={item.title}
-              />
-            </Box>
+            {embed.url ? (
+              <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)', boxShadow: 'var(--shadow-md)' }}>
+                <iframe
+                  src={embed.url}
+                  style={{ width: '100%', height: 'min(70vh, 640px)', border: 'none', display: 'block' }}
+                  title={item.title}
+                  loading="lazy"
+                />
+              </Box>
+            ) : (
+              embedFallback('No document link set for this resource yet.')
+            )}
           </ResourceShell>
         );
+
 
       case 'link':
         return (
