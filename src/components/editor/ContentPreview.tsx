@@ -44,6 +44,7 @@ import {
 import { useEditor } from '@/contexts/EditorContext';
 import type { ItemType, ContentItem } from '@/types/content';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
+import { resolveEmbed } from '@/lib/embed';
 import { itemIcons as typeIcons, itemLabels as typeLabels } from '@/lib/itemVisuals';
 
 export function ContentPreview() {
@@ -157,7 +158,6 @@ export function ContentPreview() {
               </Box>
             )}
 
-            {['pdf', 'doc', 'ppt', 'spreadsheet', 'video', 'link'].includes(previewItem.type) && (
             {['pdf', 'doc', 'ppt', 'spreadsheet'].includes(previewItem.type) &&
               resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl).url && (
                 <Box sx={{ height: 420, border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
