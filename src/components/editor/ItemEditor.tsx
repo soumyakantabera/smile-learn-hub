@@ -498,49 +498,70 @@ export function ItemEditor() {
                 value={formData.url}
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                 fullWidth
-                placeholder="https://..."
+                placeholder="https://drive.google.com/file/d/…  ·  https://…/file.pdf"
+                helperText={
+                  livePreview.note ||
+                  'Paste any link — Google Drive, Docs, Sheets, Slides or a direct file. We build the embed for you.'
+                }
               />
             )}
 
             {formData.type === 'youtube' && (
-              <>
-                <TextField
-                  label="YouTube/Vimeo Embed URL"
-                  value={formData.embedUrl}
-                  onChange={(e) => setFormData({ ...formData, embedUrl: e.target.value })}
-                  fullWidth
-                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
-                  helperText="Use the embed URL format: youtube.com/embed/ID or player.vimeo.com/video/ID"
-                />
-                {formData.embedUrl && (
+              <TextField
+                label="Video link (YouTube, Vimeo or Drive)"
+                value={formData.embedUrl}
+                onChange={(e) => setFormData({ ...formData, embedUrl: e.target.value })}
+                fullWidth
+                placeholder="https://youtu.be/VIDEO_ID"
+                helperText={
+                  livePreview.note ||
+                  'Paste a normal watch/share link — watch?v=, youtu.be, /shorts/, Vimeo or Drive all work.'
+                }
+              />
+            )}
+
+            {livePreview.url && (
+              <Box>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                  <PreviewIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Live embed preview
+                  </Typography>
+                  <Chip size="small" label={livePreview.provider} sx={{ height: 20, fontSize: 11 }} />
+                </Stack>
+                {livePreview.isVideo ? (
                   <Box
                     sx={{
                       position: 'relative',
                       pb: '56.25%',
                       height: 0,
-                      borderRadius: 1,
+                      borderRadius: 2,
                       overflow: 'hidden',
                       border: 1,
                       borderColor: 'divider',
+                      bgcolor: 'black',
                     }}
                   >
                     <iframe
-                      src={formData.embedUrl}
-                      title="Preview"
+                      src={livePreview.url}
+                      title="Embed preview"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                       allowFullScreen
                     />
                   </Box>
+                ) : (
+                  <Box sx={{ height: 320, border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+                    <iframe
+                      src={livePreview.url}
+                      title="Embed preview"
+                      style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
+                    />
+                  </Box>
                 )}
-              </>
-            )}
-
-            {formData.type === 'pdf' && formData.url && (
-              <Box sx={{ height: 300, border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
-                <iframe src={formData.url} title="PDF preview" style={{ width: '100%', height: '100%', border: 0 }} />
               </Box>
             )}
+
 
             {formData.type === 'audio' && (
               <TextField
