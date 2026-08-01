@@ -61,19 +61,9 @@ import { getAllItemTags } from '@/lib/editorStorage';
 import { resolveEmbed } from '@/lib/embed';
 import { itemColors as typeColors, ITEM_VISUALS } from '@/lib/itemVisuals';
 
-const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = [
-  { value: 'pdf', label: 'PDF Document', icon: <PdfIcon /> },
-  { value: 'video', label: 'Video (MP4)', icon: <VideoIcon /> },
-  { value: 'youtube', label: 'YouTube/Vimeo', icon: <YouTubeIcon /> },
-  { value: 'audio', label: 'Audio (MP3)', icon: <AudioIcon /> },
-  { value: 'doc', label: 'Word Document', icon: <DocIcon /> },
-  { value: 'ppt', label: 'Presentation', icon: <PptIcon /> },
-  { value: 'spreadsheet', label: 'Spreadsheet', icon: <SpreadsheetIcon /> },
-  { value: 'link', label: 'External Link', icon: <LinkIcon /> },
-  { value: 'homework', label: 'Homework', icon: <HomeworkIcon /> },
-  { value: 'quiz', label: 'Interactive Quiz', icon: <QuizIcon /> },
-  { value: 'conversation', label: 'Conversation Practice', icon: <ConversationIcon /> },
-];
+const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = (
+  Object.keys(ITEM_VISUALS) as ItemType[]
+).map((value) => ({ value, label: ITEM_VISUALS[value].label, icon: ITEM_VISUALS[value].icon }));
 
 
 interface ItemFormData {
