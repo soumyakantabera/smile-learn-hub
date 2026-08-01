@@ -343,34 +343,55 @@ export default function ViewerPage() {
 
     switch (item.type) {
       case 'video':
+        // A "video" item may be a direct MP4 or a Drive/YouTube link pasted by
+        // the author — embed whichever it actually is.
         return (
           <ResourceShell accent={accent} icon={icon} label={label}>
-            <Box sx={{ position: 'relative', paddingTop: '56.25%', bgcolor: 'black', borderRadius: 2, overflow: 'hidden' }}>
-              <video
-                controls
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                src={item.url}
-              >
-                Your browser does not support the video tag.
-              </video>
-            </Box>
+            {embed.provider === 'direct' || !embed.url ? (
+              <Box sx={{ position: 'relative', paddingTop: '56.25%', bgcolor: 'black', borderRadius: 2, overflow: 'hidden' }}>
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                  src={item.url}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </Box>
+            ) : (
+              videoFrame(embed.url)
+            )}
           </ResourceShell>
         );
 
       case 'youtube':
         return (
-          <ResourceShell accent={accent} icon={icon} label={label}>
-            <Box sx={{ position: 'relative', paddingTop: '56.25%', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)' }}>
-              <iframe
-                src={item.embedUrl}
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                title={item.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </Box>
+          <ResourceShell
+            accent={accent}
+            icon={icon}
+            label={label}
+            actions={
+              embed.openUrl ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<OpenInNewIcon />}
+                  href={embed.openUrl}
+                  target="_blank"
+                  sx={{ borderColor: alpha(accent, 0.4), color: accent, '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) } }}
+                >
+                  Watch on source
+                </Button>
+              ) : undefined
+            }
+          >
+            {embed.url
+              ? videoFrame(embed.url)
+              : embedFallback('This video link could not be embedded. Ask your teacher to check it.')}
           </ResourceShell>
         );
+
 
       case 'audio':
         return (
