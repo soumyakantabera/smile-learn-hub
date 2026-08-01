@@ -47,6 +47,7 @@ import {
   DragIndicator as DragIcon,
   ContentCopy as DuplicateIcon,
   DriveFileMove as MoveIcon,
+  Visibility as PreviewIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useEditor } from '@/contexts/EditorContext';
@@ -57,6 +58,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { EmptyState } from './EmptyState';
 import { TagAutocomplete } from './TagAutocomplete';
 import { getAllItemTags } from '@/lib/editorStorage';
+import { resolveEmbed } from '@/lib/embed';
 import { itemColors as typeColors, ITEM_VISUALS } from '@/lib/itemVisuals';
 
 const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = [
@@ -133,6 +135,13 @@ export function ItemEditor() {
   const allTags = useMemo(() => (content ? getAllItemTags(content) : []), [content]);
   const allModules = useMemo(() => (content ? Object.values(content.modules) : []), [content]);
 
+  // Normalised embed for the URL/embed field currently being typed, so authors
+  // immediately see exactly what learners will see.
+  const livePreview = useMemo(
+    () => resolveEmbed(formData.type, formData.url, formData.embedUrl),
+    [formData.type, formData.url, formData.embedUrl],
+  );
+
   if (!content) return null;
   const courses = Object.values(content.courses);
 
@@ -189,7 +198,8 @@ export function ItemEditor() {
       description: formData.description,
       type: formData.type,
       url: formData.url || undefined,
-      embedUrl: formData.embedUrl || undefined,
+      // Persist the normalised, iframe-safe URL so the viewer never has to guess.
+      embedUrl: livePreview.url || formData.embedUrl || undefined,
       instructions: formData.instructions || undefined,
       dueDate: formData.dueDate || undefined,
       tags: formData.tags,
