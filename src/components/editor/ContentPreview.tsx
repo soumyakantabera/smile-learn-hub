@@ -158,8 +158,20 @@ export function ContentPreview() {
             )}
 
             {['pdf', 'doc', 'ppt', 'spreadsheet', 'video', 'link'].includes(previewItem.type) && (
+            {['pdf', 'doc', 'ppt', 'spreadsheet'].includes(previewItem.type) &&
+              resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl).url && (
+                <Box sx={{ height: 420, border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+                  <iframe
+                    src={resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl).url!}
+                    title={previewItem.title}
+                    style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
+                  />
+                </Box>
+              )}
+
+            {previewItem.type === 'link' && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Box sx={{ fontSize: 64, mb: 2 }}>{typeIcons[previewItem.type]}</Box>
+                <Box sx={{ fontSize: 64, mb: 2, color: 'primary.main' }}>{typeIcons[previewItem.type]}</Box>
                 <Typography variant="body1" gutterBottom>{previewItem.description}</Typography>
                 {previewItem.url && (
                   <Button variant="contained" href={previewItem.url} target="_blank">
@@ -169,6 +181,7 @@ export function ContentPreview() {
               </Box>
             )}
           </CardContent>
+
         </Card>
       )}
 
