@@ -20,6 +20,38 @@ export type EmbedProvider =
   | 'direct'
   | 'unknown';
 
+/** Attributes every embed iframe should carry (security + performance). */
+export interface EmbedIframeAttrs {
+  sandbox: string;
+  referrerPolicy: 'strict-origin-when-cross-origin';
+  loading: 'lazy';
+  allow: string;
+  allowFullScreen: boolean;
+}
+
+const VIDEO_ALLOW =
+  'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
+const DOC_ALLOW = 'fullscreen';
+
+/**
+ * Shared sandbox allowlist. `allow-same-origin` is required for Google's viewers
+ * and YouTube to run at all; popups are allowed so "open in new tab" links
+ * inside an embed escape the frame instead of dying silently. Notably absent:
+ * `allow-top-navigation`, so an embed can never hijack the LMS page.
+ */
+const SANDBOX =
+  'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-presentation allow-downloads';
+
+export function iframeAttrs(isVideo: boolean): EmbedIframeAttrs {
+  return {
+    sandbox: SANDBOX,
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    loading: 'lazy',
+    allow: isVideo ? VIDEO_ALLOW : DOC_ALLOW,
+    allowFullScreen: true,
+  };
+}
+
 export interface EmbedInfo {
   /** URL safe to put in an iframe src, or null when the link can't be embedded. */
   url: string | null;
@@ -30,9 +62,23 @@ export interface EmbedInfo {
   openUrl: string | null;
   /** Human hint shown under the field in the editor. */
   note?: string;
+  /** False when the link must be opened in a new tab instead of framed. */
+  embeddable: boolean;
+  /** Attributes to spread onto the iframe element. */
+  iframe: EmbedIframeAttrs;
 }
 
 const clean = (raw?: string | null) => (raw || '').trim();
+
+/** Fills in the security attributes + embeddable flag for a partial result. */
+function embed(info: Omit<EmbedInfo, 'embeddable' | 'iframe'>): EmbedInfo {
+  return {
+    ...info,
+    embeddable: Boolean(info.url) && info.provider !== 'unknown',
+    iframe: iframeAttrs(info.isVideo),
+  };
+}
+
 
 /* ------------------------------------------------------------------ YouTube */
 
