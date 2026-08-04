@@ -59,6 +59,8 @@ import { EmptyState } from './EmptyState';
 import { TagAutocomplete } from './TagAutocomplete';
 import { getAllItemTags } from '@/lib/editorStorage';
 import { resolveEmbed } from '@/lib/embed';
+import { EmbedFrame } from '@/components/viewer/EmbedFrame';
+
 import { itemColors as typeColors, ITEM_VISUALS } from '@/lib/itemVisuals';
 
 const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = (

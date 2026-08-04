@@ -3,22 +3,16 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// GitHub Pages Configuration:
-// ============================
-// For GitHub PROJECT Pages (https://username.github.io/repo-name/):
-//   Set base to: '/<repo-name>/'
-//   Example: base: '/learn-with-smile-moodle/'
-//
-// For GitHub USER/ORG Pages (https://username.github.io/):
-//   Set base to: '/'
-//
-// For local development:
-//   The base setting doesn't affect local dev server
+// Base path configuration:
+// ========================
+// Vercel / Lovable / any root-domain host:  leave VITE_BASE_PATH unset (defaults to "/")
+// GitHub PROJECT Pages (https://user.github.io/repo/): set VITE_BASE_PATH=/repo/
+// Local development: base is always "/"
 
 export default defineConfig(({ mode }) => ({
-  // Change this to your repository name for GitHub Pages deployment
-  // Example: base: '/learn-with-smile-moodle/'
-  base: mode === "production" ? "/learn-with-smile-moodle/" : "/",
+  base: mode === "production" ? (process.env.VITE_BASE_PATH || "/") : "/",
+
+
   
   server: {
     host: "::",
