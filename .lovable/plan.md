@@ -1,73 +1,32 @@
+# Embed hardening, graceful fallbacks, and Vercel deployment
 
-## Audit findings
+## 1. Harden every embed iframe
 
-1. **Publishing is NOT one-click live.** Editor edits save to `localStorage`. "Publish" only shows a diff and downloads `index.json` — you must manually replace `public/content/index.json` in the repo, commit, and redeploy on GitHub Pages. Students never see the changes until a rebuild.
-2. **Users page create/reset flows work** but have rough edges:
-   - Password `soumya01`-style short strings are allowed (min 6). If HIBP is on, weak passwords silently sign in but flag "pwned". No strength/eye toggle.
-   - No "copy full welcome message" (email + password + login URL) — admin has to assemble it manually.
-   - Reset dialog auto-fills a random password but never shows old copy state, no visible confirmation the user was notified.
-   - `createUser` errors surface only inside the dialog; success closes it before the admin can copy the password.
-3. **Color scheme** is warm boutique but a bit heavy on amber/cream. Tweak to a slightly cooler, more elegant palette while keeping the LWS forest/mint identity.
+Today only one of the five iframes in the app sets a referrer policy, and none set `sandbox`. Centralize this so every embed shares the same safe defaults.
 
-## Plan
+- Add shared iframe attributes to `src/lib/embed.ts`: a `sandbox` allowlist (`allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-presentation`), `referrerPolicy="strict-origin-when-cross-origin"`, `loading="lazy"`, and provider-appropriate `allow` (fullscreen/autoplay only for video providers).
+- Extend `EmbedInfo` with an `embeddable` flag plus these attributes, so consumers stop hand-rolling them.
+- Apply in all four iframe sites: `src/pages/Viewer.tsx` (video, document, and secondary frames), `src/components/editor/ItemEditor.tsx` (live preview), `src/components/editor/ContentPreview.tsx`.
+- Opening behavior: every embed gets an explicit "Open in new tab" action using `openUrl`, with `target="_blank" rel="noopener noreferrer"`. Providers known not to allow framing (unknown/direct non-media links, and links flagged as non-embeddable) render the open-in-new-tab card instead of an iframe.
 
-### 1. One-click live publish (backend-backed content)
+## 2. Graceful fallback UI
 
-Move published content from `public/content/index.json` into the database so the "Publish" button pushes changes live instantly to every learner.
+- New component `src/components/viewer/EmbedFallback.tsx`: LWS-styled card with the content-type icon, a short reason ("This resource can't be previewed here" / "Preview failed to load"), the original URL shown as a truncated chip, a primary "Open resource" button (new tab), and a "Retry preview" button.
+- Two triggers:
+  - **Resolve failure** — `resolveEmbed` returns no URL, so the fallback renders immediately.
+  - **Load failure** — wrap each iframe in a small `EmbedFrame` component that tracks `onLoad`, plus a timeout (~8s) with no load event; on failure it swaps to `EmbedFallback`. Retry remounts the iframe with a fresh key.
+- Show a lightweight skeleton/spinner while the frame loads, so blank frames never look broken.
+- Use `EmbedFrame` in Viewer, ItemEditor preview, and ContentPreview so learners and admins see the same behavior. In the editor, the note from `resolveEmbed` (e.g. Drive sharing hint) is surfaced in the fallback.
 
-- New table `public.site_content` (single row, `id='current'`, `data jsonb`, `updated_at`, `updated_by`).
-  - RLS: anyone (anon + authenticated) can SELECT the current row; only admins can INSERT/UPDATE.
-  - Seeded once with the current `public/content/index.json` on migration.
-- `loadContent()` fetches the row from the DB first, falls back to bundled JSON if the fetch fails (offline / first boot).
-- Editor "Publish" wizard becomes a real publish button:
-  - Shows the same diff summary.
-  - Primary action **"Publish live now"** upserts the draft into `site_content` (admin-only RLS).
-  - On success: toast "Live for all learners", `ContentContext` refetches, learners get new content on next navigation (or immediately via a lightweight version poll — optional, out of scope for v1).
-  - Keeps "Download JSON" as a secondary backup action.
-- Editor still uses localStorage for the working draft; "Save" = local draft, "Publish" = live to backend.
+## 3. Vercel deployment
 
-### 2. Users page fixes
+- Add `vercel.json` with SPA rewrite (`/(.*)` → `/index.html`) and long-cache headers for `/assets/*`.
+- Fix the base path: `vite.config.ts` currently hardcodes `base: '/learn-with-smile-moodle/'` in production, which breaks Vercel. Change to read `process.env.VITE_BASE_PATH` (defaulting to `/`), so Vercel works out of the box while GitHub Pages can still set the subpath.
+- Update `.github/workflows/deploy.yml` to pass `VITE_BASE_PATH=/learn-with-smile-moodle/` for the Pages build so that deploy keeps working.
+- Document in `README.md`: import repo into Vercel, framework Vite, build `npm run build`, output `dist`, and the env vars to set (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`).
 
-- **Create user dialog**
-  - Show/hide password toggle; strength meter (length + variety); block < 8 chars.
-  - After successful creation, keep dialog open on a "User created" success step showing email + password + a **"Copy welcome message"** button that copies a ready-to-send template (name, login URL, email, temp password, note to change it).
-  - Better error surfacing (e.g. duplicate email, weak password from HIBP).
-- **Reset password dialog**
-  - Show/hide toggle, strength meter, same "Copy welcome message" step after success.
-- **Row actions**
-  - Replace `window.confirm` for delete with the existing `ConfirmDialog` component so it matches the theme.
-  - Small polish: show role chip color from tokens, show "Never logged in" if no `last_sign_in_at` (add to edge function response).
-- Ensure `admin-create-user` returns a clear message for password-too-weak/duplicate email; front-end maps them to friendly text.
+Note: the backend (database, auth, functions) stays on Lovable Cloud; Vercel hosts only the frontend, and the Lovable "Publish" flow keeps working unchanged.
 
-### 3. Palette refresh (subtle)
+## Verification
 
-Tweak brand tokens in `src/index.css` and `src/theme/muiTheme.ts` — keep the warm boutique DNA but pull cream slightly cooler and deepen the primary for more elegance:
-
-```
---brand-forest:      158 55% 18%   (from 61% 15%)   deeper, richer green
---brand-mint:        152 42% 52%
---brand-amber:       36  88% 58%   (slightly softer)
---brand-coral:       12  78% 62%
---surface-1:         42 30% 98%    (cooler cream)
---surface-2:         42 25% 95%
---hairline:          158 20% 88%   (tinted, not neutral)
---gradient-primary:  linear-gradient(135deg, hsl(158 55% 18%), hsl(152 42% 42%))
-```
-
-Regenerate button gradient, sidebar tile, and hero wash from the new tokens (no per-component color hardcodes changed). Verify contrast on Login, Dashboard, Viewer, Users, Editor.
-
-### 4. Verification
-
-- Type-check with `tsgo`.
-- Playwright walkthrough:
-  1. Sign in as admin → Editor → edit an item title → Publish → open a second incognito context → confirm learner sees the new title without a rebuild.
-  2. Users → New user → verify strength meter, welcome-message copy, created user can sign in.
-  3. Reset password on the new user → sign in with new password.
-- Screenshots of Login, Dashboard, Users, Editor (new palette) on desktop + mobile.
-
-## Technical notes
-
-- Migration adds `site_content`, GRANTs (`SELECT` to `anon`+`authenticated`, ALL to `service_role`, `INSERT/UPDATE` to `authenticated` gated by `has_role(auth.uid(), 'admin')`), RLS policies, and seeds the current JSON.
-- Publish path uses the existing supabase client + `has_role`-based RLS — no new edge function required.
-- Content cache in `src/lib/content.ts` gets a `refreshContent()` export so `ContentContext` can force-refetch after publish (and after login).
-- No changes to learner-facing routing or auth. No new secrets.
+- Typecheck, then drive the running preview with Playwright: confirm a YouTube embed and a Google-viewer PDF still load with the new sandbox attributes, and that a deliberately broken URL renders the fallback card with a working external link.
