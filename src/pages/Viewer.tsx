@@ -73,6 +73,8 @@ import { ConversationViewer } from '@/components/viewer/ConversationViewer';
 import type { ItemType } from '@/types/content';
 import { itemIcons as typeIcons, itemColors as typeColors, itemLabels as typeLabels } from '@/lib/itemVisuals';
 import { resolveEmbed } from '@/lib/embed';
+import { EmbedFrame, EmbedFallback } from '@/components/viewer/EmbedFrame';
+
 
 
 // LWS palette: forest, amber, coral, mint — mirrors RecentItemCard
@@ -287,60 +289,24 @@ export default function ViewerPage() {
     /** Normalised, iframe-safe URL for this item (YouTube, Drive, Docs, PDF…) */
     const embed = resolveEmbed(item.type, item.url, item.embedUrl);
 
-    /** 16:9 frame used for every video-ish embed. */
-    const videoFrame = (src: string) => (
-      <Box
-        sx={{
-          position: 'relative',
-          paddingTop: '56.25%',
-          borderRadius: 2,
-          overflow: 'hidden',
-          bgcolor: 'black',
-          border: '1px solid',
-          borderColor: 'var(--hairline)',
-          boxShadow: 'var(--shadow-md)',
-        }}
-      >
-        <iframe
-          src={src}
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-          title={item.title}
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-          allowFullScreen
-        />
-      </Box>
+    /** Hardened frame + graceful fallback for every embeddable resource. */
+    const frame = (opts?: { height?: string | number; emptyMessage?: string }) => (
+      <EmbedFrame
+        embed={embed}
+        title={item.title}
+        accent={accent}
+        icon={icon}
+        fallbackUrl={item.url}
+        height={opts?.height}
+        emptyMessage={opts?.emptyMessage ?? 'This resource can’t be previewed here.'}
+      />
     );
 
     /** Empty / broken-link state so learners never see a blank frame. */
     const embedFallback = (message: string) => (
-      <Stack alignItems="center" spacing={1.5} sx={{ py: 5, textAlign: 'center' }}>
-        <Box
-          sx={{
-            width: 64,
-            height: 64,
-            borderRadius: 3,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: alpha(accent, 0.12),
-            color: accent,
-            '& svg': { fontSize: 32 },
-          }}
-        >
-          {icon}
-        </Box>
-        <Typography variant="body2" color="text.secondary">
-          {message}
-        </Typography>
-        {item.url && (
-          <Button size="small" variant="outlined" startIcon={<OpenInNewIcon />} href={item.url} target="_blank">
-            Open original
-          </Button>
-        )}
-      </Stack>
+      <EmbedFallback accent={accent} icon={icon} message={message} hint={embed.note} openUrl={embed.openUrl || item.url} />
     );
+
 
 
     switch (item.type) {
@@ -362,7 +328,8 @@ export default function ViewerPage() {
                 </video>
               </Box>
             ) : (
-              videoFrame(embed.url)
+              frame()
+
             )}
           </ResourceShell>
         );
@@ -381,6 +348,8 @@ export default function ViewerPage() {
                   startIcon={<OpenInNewIcon />}
                   href={embed.openUrl}
                   target="_blank"
+                  rel="noopener noreferrer"
+
                   sx={{ borderColor: alpha(accent, 0.4), color: accent, '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) } }}
                 >
                   Watch on source
@@ -388,9 +357,8 @@ export default function ViewerPage() {
               ) : undefined
             }
           >
-            {embed.url
-              ? videoFrame(embed.url)
-              : embedFallback('This video link could not be embedded. Ask your teacher to check it.')}
+            {frame({ emptyMessage: 'This video link could not be embedded.' })}
+
           </ResourceShell>
         );
 
@@ -453,25 +421,14 @@ export default function ViewerPage() {
                 startIcon={<OpenInNewIcon />}
                 href={embed.openUrl || item.url}
                 target="_blank"
+                rel="noopener noreferrer"
                 sx={{ borderColor: alpha(accent, 0.4), color: accent, '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) } }}
               >
                 Open
               </Button>
             }
           >
-            {embed.url ? (
-              <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)', boxShadow: 'var(--shadow-md)' }}>
-                <iframe
-                  src={embed.url}
-                  style={{ width: '100%', height: 'min(78vh, 720px)', border: 'none', display: 'block' }}
-                  title={item.title}
-                  loading="lazy"
-                  allow="autoplay"
-                />
-              </Box>
-            ) : (
-              embedFallback('No document link set for this resource yet.')
-            )}
+            {frame({ emptyMessage: 'No document link set for this resource yet.' })}
           </ResourceShell>
         );
 
@@ -486,78 +443,53 @@ export default function ViewerPage() {
                 startIcon={<DownloadIcon />}
                 href={embed.openUrl || item.url}
                 target="_blank"
+                rel="noopener noreferrer"
                 sx={gradientPrimaryBtnSx}
               >
                 Open original
               </Button>
-              <Button
-                variant="outlined"
-                startIcon={<OpenInNewIcon />}
-                href={getGoogleDocsViewerUrl(item.url!)}
-                target="_blank"
-              >
-                Google viewer
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<OpenInNewIcon />}
-                href={getMicrosoftViewerUrl(item.url!)}
-                target="_blank"
-              >
-                Office viewer
-              </Button>
+              {item.url && (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<OpenInNewIcon />}
+                    href={getGoogleDocsViewerUrl(item.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Google viewer
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<OpenInNewIcon />}
+                    href={getMicrosoftViewerUrl(item.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Office viewer
+                  </Button>
+                </>
+              )}
             </Stack>
-            {embed.url ? (
-              <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'var(--hairline)', boxShadow: 'var(--shadow-md)' }}>
-                <iframe
-                  src={embed.url}
-                  style={{ width: '100%', height: 'min(70vh, 640px)', border: 'none', display: 'block' }}
-                  title={item.title}
-                  loading="lazy"
-                />
-              </Box>
-            ) : (
-              embedFallback('No document link set for this resource yet.')
-            )}
+            {frame({ height: 'min(70vh, 640px)', emptyMessage: 'No document link set for this resource yet.' })}
           </ResourceShell>
         );
+
 
 
       case 'link':
         return (
           <ResourceShell accent={accent} icon={icon} label={label} title="External Resource">
-            <Stack alignItems="center" spacing={2} sx={{ py: 3, textAlign: 'center' }}>
-              <Box
-                sx={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 3,
-                  bgcolor: alpha(accent, 0.12),
-                  color: accent,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  '& svg': { fontSize: 34 },
-                }}
-              >
-                <LinkIcon />
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                This link will open in a new tab.
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<OpenInNewIcon />}
-                href={item.url}
-                target="_blank"
-                size="large"
-                sx={gradientPrimaryBtnSx}
-              >
-                Open Link
-              </Button>
-            </Stack>
+            <EmbedFallback
+              accent={accent}
+              icon={<LinkIcon />}
+              message="External resource"
+              hint="This link opens in a new tab for security reasons."
+              openUrl={embed.openUrl || item.url}
+            />
           </ResourceShell>
         );
+
 
       case 'homework':
         return (

@@ -59,6 +59,8 @@ import { EmptyState } from './EmptyState';
 import { TagAutocomplete } from './TagAutocomplete';
 import { getAllItemTags } from '@/lib/editorStorage';
 import { resolveEmbed } from '@/lib/embed';
+import { EmbedFrame } from '@/components/viewer/EmbedFrame';
+
 import { itemColors as typeColors, ITEM_VISUALS } from '@/lib/itemVisuals';
 
 const ITEM_TYPES: { value: ItemType; label: string; icon: React.ReactNode }[] = (
@@ -520,7 +522,7 @@ export function ItemEditor() {
               />
             )}
 
-            {livePreview.url && (
+            {(livePreview.url || formData.url || formData.embedUrl) && (
               <Box>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
                   <PreviewIcon fontSize="small" sx={{ color: 'text.secondary' }} />
@@ -529,38 +531,17 @@ export function ItemEditor() {
                   </Typography>
                   <Chip size="small" label={livePreview.provider} sx={{ height: 20, fontSize: 11 }} />
                 </Stack>
-                {livePreview.isVideo ? (
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      pb: '56.25%',
-                      height: 0,
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      border: 1,
-                      borderColor: 'divider',
-                      bgcolor: 'black',
-                    }}
-                  >
-                    <iframe
-                      src={livePreview.url}
-                      title="Embed preview"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                      allowFullScreen
-                    />
-                  </Box>
-                ) : (
-                  <Box sx={{ height: 320, border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
-                    <iframe
-                      src={livePreview.url}
-                      title="Embed preview"
-                      style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
-                    />
-                  </Box>
-                )}
+                <EmbedFrame
+                  embed={livePreview}
+                  title="Embed preview"
+                  accent="#0F3D2E"
+                  height={320}
+                  fallbackUrl={formData.url || formData.embedUrl}
+                  emptyMessage="This link can’t be previewed in a frame"
+                />
               </Box>
             )}
+
 
 
             {formData.type === 'audio' && (

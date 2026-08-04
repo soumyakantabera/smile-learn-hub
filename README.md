@@ -22,13 +22,28 @@ npm run build      # Production build
 
 **Demo passcodes**: `123`, `456`, or `demo`
 
+## Vercel Deployment
+
+1. Import the repository at vercel.com/new (framework preset: **Vite**).
+2. Build command `npm run build`, output directory `dist` — already declared in `vercel.json`.
+3. Add these Environment Variables (Production + Preview), copied from `.env`:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - `VITE_SUPABASE_PROJECT_ID`
+4. Deploy. `vercel.json` adds the SPA rewrite so deep links such as `/view/item-1` work on refresh.
+
+Leave `VITE_BASE_PATH` unset on Vercel (the app is served from the domain root).
+The backend (database, auth, edge functions) stays hosted on Lovable Cloud, so no
+extra server setup is required.
+
 ## GitHub Pages Deployment
 
-1. Update `vite.config.ts` base path to `"/your-repo-name/"`
+1. Set `VITE_BASE_PATH` in `.github/workflows/deploy.yml` to `/your-repo-name/`
 2. Push to `main` branch
 3. Enable GitHub Pages with "GitHub Actions" source
 
 The included `.github/workflows/deploy.yml` handles automatic deployment.
+
 
 ## Adding Content
 

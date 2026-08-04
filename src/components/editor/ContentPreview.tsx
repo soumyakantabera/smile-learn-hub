@@ -45,6 +45,8 @@ import { useEditor } from '@/contexts/EditorContext';
 import type { ItemType, ContentItem } from '@/types/content';
 import { QuizViewer } from '@/components/viewer/QuizViewer';
 import { resolveEmbed } from '@/lib/embed';
+import { EmbedFrame } from '@/components/viewer/EmbedFrame';
+
 import { itemIcons as typeIcons, itemLabels as typeLabels } from '@/lib/itemVisuals';
 
 export function ContentPreview() {
@@ -114,21 +116,16 @@ export function ContentPreview() {
             </Box>
             <Divider sx={{ mb: 2 }} />
 
-            {(previewItem.type === 'youtube' || previewItem.type === 'video') &&
-              resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl).url && (
-                <Box sx={{ position: 'relative', pb: '56.25%', height: 0, borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
-                  <iframe
-                    src={resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl).url!}
-                    title={previewItem.title}
-                    style={{
-                      position: 'absolute', top: 0, left: 0,
-                      width: '100%', height: '100%', border: 0,
-                    }}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                    allowFullScreen
-                  />
-                </Box>
-              )}
+            {(previewItem.type === 'youtube' || previewItem.type === 'video') && (
+              <EmbedFrame
+                embed={resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl)}
+                title={previewItem.title}
+                accent="#0F3D2E"
+                fallbackUrl={previewItem.url}
+                emptyMessage="This video link can’t be previewed"
+              />
+            )}
+
 
 
             {previewItem.type === 'audio' && previewItem.url && (
@@ -158,23 +155,24 @@ export function ContentPreview() {
               </Box>
             )}
 
-            {['pdf', 'doc', 'ppt', 'spreadsheet'].includes(previewItem.type) &&
-              resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl).url && (
-                <Box sx={{ height: 420, border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
-                  <iframe
-                    src={resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl).url!}
-                    title={previewItem.title}
-                    style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
-                  />
-                </Box>
-              )}
+            {['pdf', 'doc', 'ppt', 'spreadsheet'].includes(previewItem.type) && (
+              <EmbedFrame
+                embed={resolveEmbed(previewItem.type, previewItem.url, previewItem.embedUrl)}
+                title={previewItem.title}
+                accent="#0F3D2E"
+                height={420}
+                fallbackUrl={previewItem.url}
+                emptyMessage="No document link set for this resource yet."
+              />
+            )}
+
 
             {previewItem.type === 'link' && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Box sx={{ fontSize: 64, mb: 2, color: 'primary.main' }}>{typeIcons[previewItem.type]}</Box>
                 <Typography variant="body1" gutterBottom>{previewItem.description}</Typography>
                 {previewItem.url && (
-                  <Button variant="contained" href={previewItem.url} target="_blank">
+                  <Button variant="contained" href={previewItem.url} target="_blank" rel="noopener noreferrer">
                     Open Resource
                   </Button>
                 )}
