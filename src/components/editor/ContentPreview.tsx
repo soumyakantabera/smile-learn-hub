@@ -172,7 +172,7 @@ export function ContentPreview() {
                 <Box sx={{ fontSize: 64, mb: 2, color: 'primary.main' }}>{typeIcons[previewItem.type]}</Box>
                 <Typography variant="body1" gutterBottom>{previewItem.description}</Typography>
                 {previewItem.url && (
-                  <Button variant="contained" href={previewItem.url} target="_blank">
+                  <Button variant="contained" href={previewItem.url} target="_blank" rel="noopener noreferrer">
                     Open Resource
                   </Button>
                 )}
