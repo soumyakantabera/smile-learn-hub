@@ -146,68 +146,68 @@ const OFFICE = 'https://view.officeapps.live.com/op/embed.aspx?src=';
 /** Normalises any video link (YouTube / Vimeo / direct file). */
 export function resolveVideoEmbed(raw?: string | null): EmbedInfo {
   const url = clean(raw);
-  if (!url) return { url: null, provider: 'unknown', isVideo: true, openUrl: null };
+  if (!url) return embed({ url: null, provider: 'unknown', isVideo: true, openUrl: null });
 
   const yt = getYouTubeId(url);
   if (yt) {
     const start = youTubeStart(url);
     const params = new URLSearchParams({ rel: '0', modestbranding: '1', playsinline: '1' });
     if (start) params.set('start', String(start));
-    return {
+    return embed({
       url: `https://www.youtube-nocookie.com/embed/${yt}?${params.toString()}`,
       provider: 'youtube',
       isVideo: true,
       openUrl: `https://www.youtube.com/watch?v=${yt}`,
       note: 'YouTube video detected — embed link generated automatically.',
-    };
+    });
   }
 
   const vimeo = getVimeoId(url);
   if (vimeo) {
-    return {
+    return embed({
       url: `https://player.vimeo.com/video/${vimeo}`,
       provider: 'vimeo',
       isVideo: true,
       openUrl: `https://vimeo.com/${vimeo}`,
       note: 'Vimeo video detected — embed link generated automatically.',
-    };
+    });
   }
 
   // Google Drive hosted video files preview fine in an iframe.
   const driveId = getGoogleFileId(url);
   if (driveId && /drive\.google\.com/i.test(url)) {
-    return {
+    return embed({
       url: `https://drive.google.com/file/d/${driveId}/preview`,
       provider: 'google-drive',
       isVideo: true,
       openUrl: `https://drive.google.com/file/d/${driveId}/view`,
       note: 'Google Drive video detected. Set sharing to “Anyone with the link”.',
-    };
+    });
   }
 
   if (/^https?:\/\//i.test(url)) {
-    return { url, provider: 'direct', isVideo: true, openUrl: url };
+    return embed({ url, provider: 'direct', isVideo: true, openUrl: url });
   }
-  return { url: null, provider: 'unknown', isVideo: true, openUrl: null, note: 'Not a recognised video link.' };
+  return embed({ url: null, provider: 'unknown', isVideo: true, openUrl: null, note: 'Not a recognised video link.' });
 }
 
 /** Normalises any document link (Drive, Docs/Sheets/Slides, raw PDF/Office file). */
 export function resolveDocumentEmbed(raw?: string | null, type?: ItemType): EmbedInfo {
   const url = clean(raw);
-  if (!url) return { url: null, provider: 'unknown', isVideo: false, openUrl: null };
+  if (!url) return embed({ url: null, provider: 'unknown', isVideo: false, openUrl: null });
 
   const kind = googleKind(url);
   const id = getGoogleFileId(url);
 
   if (kind && id) {
     if (kind === 'google-drive') {
-      return {
+      return embed({
         url: `https://drive.google.com/file/d/${id}/preview`,
         provider: 'google-drive',
         isVideo: false,
         openUrl: `https://drive.google.com/file/d/${id}/view`,
         note: 'Google Drive file detected. Set sharing to “Anyone with the link” so learners can view it.',
-      };
+      });
     }
     const base =
       kind === 'google-doc'
@@ -215,36 +215,36 @@ export function resolveDocumentEmbed(raw?: string | null, type?: ItemType): Embe
         : kind === 'google-sheet'
           ? `https://docs.google.com/spreadsheets/d/${id}`
           : `https://docs.google.com/presentation/d/${id}`;
-    return {
+    return embed({
       url: kind === 'google-slide' ? `${base}/embed?start=false&loop=false` : `${base}/preview`,
       provider: kind,
       isVideo: false,
       openUrl: `${base}/view`,
       note: 'Google Workspace file detected — preview link generated automatically.',
-    };
+    });
   }
 
   if (/^https?:\/\//i.test(url)) {
     const isOffice = /\.(docx?|xlsx?|pptx?)($|\?)/i.test(url);
     if (isOffice || type === 'doc' || type === 'ppt' || type === 'spreadsheet') {
-      return {
+      return embed({
         url: `${isOffice ? OFFICE : GVIEW}${encodeURIComponent(url)}${isOffice ? '' : '&embedded=true'}`,
         provider: 'gview',
         isVideo: false,
         openUrl: url,
-      };
+      });
     }
     // PDFs and everything else: Google's viewer handles it, and browsers can
     // render a same-origin PDF natively.
-    return {
+    return embed({
       url: `${GVIEW}${encodeURIComponent(url)}&embedded=true`,
       provider: 'gview',
       isVideo: false,
       openUrl: url,
-    };
+    });
   }
 
-  return { url: null, provider: 'unknown', isVideo: false, openUrl: null, note: 'Not a recognised document link.' };
+  return embed({ url: null, provider: 'unknown', isVideo: false, openUrl: null, note: 'Not a recognised document link.' });
 }
 
 /**
@@ -261,10 +261,15 @@ export function resolveEmbed(
   if (type === 'pdf' || type === 'doc' || type === 'ppt' || type === 'spreadsheet') {
     return resolveDocumentEmbed(preferred, type);
   }
+  // Plain links (and anything else) are never framed — they open in a new tab.
   return {
-    url: preferred || null,
-    provider: preferred ? 'direct' : 'unknown',
-    isVideo: false,
-    openUrl: preferred || null,
+    ...embed({
+      url: preferred || null,
+      provider: preferred ? 'direct' : 'unknown',
+      isVideo: false,
+      openUrl: preferred || null,
+    }),
+    embeddable: false,
   };
 }
+
