@@ -287,60 +287,24 @@ export default function ViewerPage() {
     /** Normalised, iframe-safe URL for this item (YouTube, Drive, Docs, PDF…) */
     const embed = resolveEmbed(item.type, item.url, item.embedUrl);
 
-    /** 16:9 frame used for every video-ish embed. */
-    const videoFrame = (src: string) => (
-      <Box
-        sx={{
-          position: 'relative',
-          paddingTop: '56.25%',
-          borderRadius: 2,
-          overflow: 'hidden',
-          bgcolor: 'black',
-          border: '1px solid',
-          borderColor: 'var(--hairline)',
-          boxShadow: 'var(--shadow-md)',
-        }}
-      >
-        <iframe
-          src={src}
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-          title={item.title}
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-          allowFullScreen
-        />
-      </Box>
+    /** Hardened frame + graceful fallback for every embeddable resource. */
+    const frame = (opts?: { height?: string | number; emptyMessage?: string }) => (
+      <EmbedFrame
+        embed={embed}
+        title={item.title}
+        accent={accent}
+        icon={icon}
+        fallbackUrl={item.url}
+        height={opts?.height}
+        emptyMessage={opts?.emptyMessage ?? 'This resource can’t be previewed here.'}
+      />
     );
 
     /** Empty / broken-link state so learners never see a blank frame. */
     const embedFallback = (message: string) => (
-      <Stack alignItems="center" spacing={1.5} sx={{ py: 5, textAlign: 'center' }}>
-        <Box
-          sx={{
-            width: 64,
-            height: 64,
-            borderRadius: 3,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: alpha(accent, 0.12),
-            color: accent,
-            '& svg': { fontSize: 32 },
-          }}
-        >
-          {icon}
-        </Box>
-        <Typography variant="body2" color="text.secondary">
-          {message}
-        </Typography>
-        {item.url && (
-          <Button size="small" variant="outlined" startIcon={<OpenInNewIcon />} href={item.url} target="_blank">
-            Open original
-          </Button>
-        )}
-      </Stack>
+      <EmbedFallback accent={accent} icon={icon} message={message} hint={embed.note} openUrl={embed.openUrl || item.url} />
     );
+
 
 
     switch (item.type) {
