@@ -326,7 +326,8 @@ export default function ViewerPage() {
                 </video>
               </Box>
             ) : (
-              videoFrame(embed.url)
+              frame()
+
             )}
           </ResourceShell>
         );
@@ -345,6 +346,8 @@ export default function ViewerPage() {
                   startIcon={<OpenInNewIcon />}
                   href={embed.openUrl}
                   target="_blank"
+                  rel="noopener noreferrer"
+
                   sx={{ borderColor: alpha(accent, 0.4), color: accent, '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) } }}
                 >
                   Watch on source
@@ -352,9 +355,8 @@ export default function ViewerPage() {
               ) : undefined
             }
           >
-            {embed.url
-              ? videoFrame(embed.url)
-              : embedFallback('This video link could not be embedded. Ask your teacher to check it.')}
+            {frame({ emptyMessage: 'This video link could not be embedded.' })}
+
           </ResourceShell>
         );
 
