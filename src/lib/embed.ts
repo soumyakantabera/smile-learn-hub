@@ -265,6 +265,9 @@ export function resolveDocumentEmbed(raw?: string | null, type?: ItemType): Embe
   const url = clean(raw);
   if (!url) return embed({ url: null, provider: 'unknown', isVideo: false, openUrl: null });
 
+  if (isGoogleFormUrl(url)) return resolveGoogleFormEmbed(url);
+  if (isOfficeOnlineUrl(url)) return resolveOfficeOnlineEmbed(url);
+
   const kind = googleKind(url);
   const id = getGoogleFileId(url);
 
@@ -330,7 +333,11 @@ export function resolveEmbed(
   if (type === 'pdf' || type === 'doc' || type === 'ppt' || type === 'spreadsheet') {
     return resolveDocumentEmbed(preferred, type);
   }
-  // Plain links (and anything else) are never framed — they open in a new tab.
+  // Google Forms and Office Online links are framed even when saved as a plain
+  // link item — they render fine under the same hardened iframe attributes.
+  if (isGoogleFormUrl(preferred)) return resolveGoogleFormEmbed(preferred);
+  if (isOfficeOnlineUrl(preferred)) return resolveOfficeOnlineEmbed(preferred);
+  // Other plain links are never framed — they open in a new tab.
   return {
     ...embed({
       url: preferred || null,
