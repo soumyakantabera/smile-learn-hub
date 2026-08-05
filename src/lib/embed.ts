@@ -22,6 +22,25 @@ export type EmbedProvider =
   | 'direct'
   | 'unknown';
 
+/** Human-friendly provider names, used in previews and failure diagnostics. */
+export const EMBED_PROVIDER_LABELS: Record<EmbedProvider, string> = {
+  youtube: 'YouTube',
+  vimeo: 'Vimeo',
+  'google-drive': 'Google Drive',
+  'google-doc': 'Google Docs',
+  'google-sheet': 'Google Sheets',
+  'google-slide': 'Google Slides',
+  'google-form': 'Google Forms',
+  'office-online': 'Office Online',
+  gview: 'Google Viewer',
+  direct: 'Direct link',
+  unknown: 'Unrecognised source',
+};
+
+export function embedProviderLabel(provider: EmbedProvider): string {
+  return EMBED_PROVIDER_LABELS[provider] ?? 'Unknown source';
+}
+
 /** Attributes every embed iframe should carry (security + performance). */
 export interface EmbedIframeAttrs {
   sandbox: string;
