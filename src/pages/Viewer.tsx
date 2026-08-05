@@ -478,15 +478,45 @@ export default function ViewerPage() {
 
 
       case 'link':
+        // Google Forms and Office Online links render inline under the same
+        // hardened iframe attributes; anything else opens in a new tab.
         return (
-          <ResourceShell accent={accent} icon={icon} label={label} title="External Resource">
-            <EmbedFallback
-              accent={accent}
-              icon={<LinkIcon />}
-              message="External resource"
-              hint="This link opens in a new tab for security reasons."
-              openUrl={embed.openUrl || item.url}
-            />
+          <ResourceShell
+            accent={accent}
+            icon={icon}
+            label={label}
+            title={
+              embed.provider === 'google-form'
+                ? 'Interactive Form'
+                : embed.provider === 'office-online'
+                  ? 'Office Online Document'
+                  : 'External Resource'
+            }
+          >
+            {embed.embeddable ? (
+              <Stack spacing={1.5}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<OpenInNewIcon />}
+                  href={embed.openUrl || item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ alignSelf: 'flex-start' }}
+                >
+                  Open in new tab
+                </Button>
+                {frame({ height: 'min(80vh, 780px)' })}
+              </Stack>
+            ) : (
+              <EmbedFallback
+                accent={accent}
+                icon={<LinkIcon />}
+                message="External resource"
+                hint="This link opens in a new tab for security reasons."
+                openUrl={embed.openUrl || item.url}
+              />
+            )}
           </ResourceShell>
         );
 

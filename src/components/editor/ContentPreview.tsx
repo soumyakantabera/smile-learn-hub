@@ -167,17 +167,26 @@ export function ContentPreview() {
             )}
 
 
-            {previewItem.type === 'link' && (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Box sx={{ fontSize: 64, mb: 2, color: 'primary.main' }}>{typeIcons[previewItem.type]}</Box>
-                <Typography variant="body1" gutterBottom>{previewItem.description}</Typography>
-                {previewItem.url && (
-                  <Button variant="contained" href={previewItem.url} target="_blank" rel="noopener noreferrer">
-                    Open Resource
-                  </Button>
-                )}
-              </Box>
-            )}
+            {previewItem.type === 'link' &&
+              (resolveEmbed('link', previewItem.url, previewItem.embedUrl).embeddable ? (
+                <EmbedFrame
+                  embed={resolveEmbed('link', previewItem.url, previewItem.embedUrl)}
+                  title={previewItem.title}
+                  accent="#0F3D2E"
+                  height={480}
+                  fallbackUrl={previewItem.url}
+                />
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Box sx={{ fontSize: 64, mb: 2, color: 'primary.main' }}>{typeIcons[previewItem.type]}</Box>
+                  <Typography variant="body1" gutterBottom>{previewItem.description}</Typography>
+                  {previewItem.url && (
+                    <Button variant="contained" href={previewItem.url} target="_blank" rel="noopener noreferrer">
+                      Open Resource
+                    </Button>
+                  )}
+                </Box>
+              ))}
           </CardContent>
 
         </Card>

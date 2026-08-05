@@ -16,6 +16,8 @@ export type EmbedProvider =
   | 'google-doc'
   | 'google-sheet'
   | 'google-slide'
+  | 'google-form'
+  | 'office-online'
   | 'gview'
   | 'direct'
   | 'unknown';
@@ -131,11 +133,78 @@ export function getGoogleFileId(raw?: string | null): string | null {
 }
 
 function googleKind(url: string): EmbedProvider | null {
+  if (/docs\.google\.com\/forms/i.test(url)) return 'google-form';
   if (/docs\.google\.com\/document/i.test(url)) return 'google-doc';
   if (/docs\.google\.com\/spreadsheets/i.test(url)) return 'google-sheet';
   if (/docs\.google\.com\/presentation/i.test(url)) return 'google-slide';
   if (/drive\.google\.com/i.test(url)) return 'google-drive';
   return null;
+}
+
+/** True for Google Forms links (both /d/e/<id>/viewform and short forms.gle). */
+export function isGoogleFormUrl(raw?: string | null): boolean {
+  const url = clean(raw);
+  return /docs\.google\.com\/forms\//i.test(url) || /forms\.gle\//i.test(url);
+}
+
+/**
+ * True for OneDrive / SharePoint / Office Online share links, which Office
+ * renders inside an iframe when `action=embedview` is present.
+ */
+export function isOfficeOnlineUrl(raw?: string | null): boolean {
+  const url = clean(raw);
+  return (
+    /(?:onedrive\.live\.com|1drv\.ms)\//i.test(url) ||
+    /[\w-]+\.sharepoint\.com\//i.test(url) ||
+    /(?:office\.com|officeapps\.live\.com)\//i.test(url)
+  );
+}
+
+/** Normalises a Google Forms link into its embeddable viewform URL. */
+export function resolveGoogleFormEmbed(raw?: string | null): EmbedInfo {
+  const url = clean(raw);
+  if (!url) return embed({ url: null, provider: 'unknown', isVideo: false, openUrl: null });
+
+  // forms.gle short links can't be rewritten reliably — frame them as-is.
+  let src = url.split('#')[0];
+  src = src.replace(/\/(?:edit|viewform|formResponse)(?:\?.*)?$/i, '/viewform');
+  if (/docs\.google\.com\/forms\//i.test(src) && !/\/viewform/i.test(src)) {
+    src = `${src.replace(/\/$/, '')}/viewform`;
+  }
+  const embedded = src.includes('?') ? `${src}&embedded=true` : `${src}?embedded=true`;
+  return embed({
+    url: embedded,
+    provider: 'google-form',
+    isVideo: false,
+    openUrl: src,
+    note: 'Google Form detected — responses are accepted directly inside the lesson.',
+  });
+}
+
+/** Normalises a OneDrive / SharePoint / Office Online link for framing. */
+export function resolveOfficeOnlineEmbed(raw?: string | null): EmbedInfo {
+  const url = clean(raw);
+  if (!url) return embed({ url: null, provider: 'unknown', isVideo: false, openUrl: null });
+
+  let src = url;
+  if (/officeapps\.live\.com/i.test(src)) {
+    // Already an Office viewer link — make sure it uses the embed endpoint.
+    src = src.replace(/\/op\/view\.aspx/i, '/op/embed.aspx');
+  } else if (/action=embedview/i.test(src)) {
+    // leave as-is
+  } else {
+    src = src.replace(/([?&])action=(?:default|view|edit)/i, '$1action=embedview');
+    if (!/action=embedview/i.test(src)) {
+      src = `${src}${src.includes('?') ? '&' : '?'}action=embedview`;
+    }
+  }
+  return embed({
+    url: src,
+    provider: 'office-online',
+    isVideo: false,
+    openUrl: url,
+    note: 'Office Online file detected. Share it with “Anyone with the link” so learners can open it.',
+  });
 }
 
 const GVIEW = 'https://docs.google.com/gview?url=';
@@ -195,6 +264,9 @@ export function resolveVideoEmbed(raw?: string | null): EmbedInfo {
 export function resolveDocumentEmbed(raw?: string | null, type?: ItemType): EmbedInfo {
   const url = clean(raw);
   if (!url) return embed({ url: null, provider: 'unknown', isVideo: false, openUrl: null });
+
+  if (isGoogleFormUrl(url)) return resolveGoogleFormEmbed(url);
+  if (isOfficeOnlineUrl(url)) return resolveOfficeOnlineEmbed(url);
 
   const kind = googleKind(url);
   const id = getGoogleFileId(url);
@@ -261,7 +333,11 @@ export function resolveEmbed(
   if (type === 'pdf' || type === 'doc' || type === 'ppt' || type === 'spreadsheet') {
     return resolveDocumentEmbed(preferred, type);
   }
-  // Plain links (and anything else) are never framed — they open in a new tab.
+  // Google Forms and Office Online links are framed even when saved as a plain
+  // link item — they render fine under the same hardened iframe attributes.
+  if (isGoogleFormUrl(preferred)) return resolveGoogleFormEmbed(preferred);
+  if (isOfficeOnlineUrl(preferred)) return resolveOfficeOnlineEmbed(preferred);
+  // Other plain links are never framed — they open in a new tab.
   return {
     ...embed({
       url: preferred || null,
