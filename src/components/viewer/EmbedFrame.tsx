@@ -4,8 +4,11 @@ import {
   OpenInNewRounded as OpenInNewIcon,
   RefreshRounded as RefreshIcon,
   ReportGmailerrorredRounded as WarningIcon,
+  ContentCopyRounded as CopyIcon,
+  ExpandMoreRounded as ExpandIcon,
 } from '@mui/icons-material';
-import type { EmbedInfo } from '@/lib/embed';
+import { Chip, Collapse, Divider, IconButton, Tooltip } from '@mui/material';
+import { embedProviderLabel, type EmbedInfo } from '@/lib/embed';
 
 /** How long we wait for the frame's load event before showing the fallback. */
 const LOAD_TIMEOUT_MS = 9000;
@@ -20,10 +23,68 @@ interface EmbedFallbackProps {
   /** Original resource link, opened in a new tab. */
   openUrl?: string | null;
   onRetry?: () => void;
+  /** Embed diagnostics: what we detected and what we actually tried to frame. */
+  diagnostics?: {
+    provider: EmbedInfo['provider'];
+    embedUrl?: string | null;
+    reason?: string;
+    elapsedMs?: number;
+  };
+}
+
+function DiagRow({
+  label,
+  value,
+  onCopy,
+  copied,
+}: {
+  label: string;
+  value: string;
+  onCopy?: () => void;
+  copied?: boolean;
+}) {
+  return (
+    <Stack direction="row" alignItems="flex-start" spacing={1}>
+      <Typography variant="caption" sx={{ minWidth: 88, color: 'text.secondary', fontWeight: 700 }}>
+        {label}
+      </Typography>
+      <Typography variant="caption" sx={{ flex: 1, wordBreak: 'break-all', color: 'text.primary' }}>
+        {value}
+      </Typography>
+      {onCopy && (
+        <Tooltip title={copied ? 'Copied' : 'Copy'}>
+          <IconButton size="small" onClick={onCopy} aria-label={`Copy ${label.toLowerCase()}`}>
+            <CopyIcon sx={{ fontSize: 15 }} />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Stack>
+  );
 }
 
 /** Graceful, on-brand state shown whenever an embed can't be displayed. */
-export function EmbedFallback({ accent, icon, message, hint, openUrl, onRetry }: EmbedFallbackProps) {
+export function EmbedFallback({
+  accent,
+  icon,
+  message,
+  hint,
+  openUrl,
+  onRetry,
+  diagnostics,
+}: EmbedFallbackProps) {
+  const [showDetails, setShowDetails] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copy = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* clipboard unavailable — the URL is visible on screen anyway */
+    }
+  };
+
   return (
     <Stack
       alignItems="center"
@@ -80,6 +141,61 @@ export function EmbedFallback({ accent, icon, message, hint, openUrl, onRetry }:
           {openUrl}
         </Typography>
       )}
+      {diagnostics && (
+        <Stack spacing={1} sx={{ width: '100%', maxWidth: 520 }}>
+          <Stack direction="row" spacing={0.75} justifyContent="center" flexWrap="wrap" sx={{ rowGap: 0.75 }}>
+            <Chip
+              size="small"
+              label={`Detected: ${embedProviderLabel(diagnostics.provider)}`}
+              sx={{ bgcolor: alpha(accent, 0.12), color: accent, fontWeight: 600 }}
+            />
+            {diagnostics.reason && (
+              <Chip size="small" variant="outlined" label={diagnostics.reason} sx={{ borderColor: alpha(accent, 0.4) }} />
+            )}
+            <Button
+              size="small"
+              endIcon={<ExpandIcon sx={{ transform: showDetails ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />}
+              onClick={() => setShowDetails((v) => !v)}
+              sx={{ color: 'text.secondary', textTransform: 'none' }}
+            >
+              {showDetails ? 'Hide details' : 'Technical details'}
+            </Button>
+          </Stack>
+          <Collapse in={showDetails} unmountOnExit>
+            <Stack
+              spacing={0.75}
+              sx={{
+                textAlign: 'left',
+                p: 1.25,
+                borderRadius: 2,
+                bgcolor: 'action.hover',
+                fontFamily: 'ui-monospace, monospace',
+              }}
+            >
+              <DiagRow label="Provider" value={embedProviderLabel(diagnostics.provider)} />
+              <Divider />
+              <DiagRow
+                label="Embed URL"
+                value={diagnostics.embedUrl || '— none resolved —'}
+                onCopy={diagnostics.embedUrl ? () => copy(diagnostics.embedUrl!) : undefined}
+                copied={copied}
+              />
+              {openUrl && (
+                <>
+                  <Divider />
+                  <DiagRow label="Original link" value={openUrl} onCopy={() => copy(openUrl)} copied={copied} />
+                </>
+              )}
+              {typeof diagnostics.elapsedMs === 'number' && (
+                <>
+                  <Divider />
+                  <DiagRow label="Waited" value={`${(diagnostics.elapsedMs / 1000).toFixed(1)}s before giving up`} />
+                </>
+              )}
+            </Stack>
+          </Collapse>
+        </Stack>
+      )}
       <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent="center" sx={{ rowGap: 1 }}>
         {openUrl && (
           <Button
@@ -134,7 +250,10 @@ export function EmbedFrame({
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [reason, setReason] = useState<string>();
   const timer = useRef<number>();
+  const startedAt = useRef<number>(Date.now());
+  const [elapsedMs, setElapsedMs] = useState<number>();
 
   const src = embed.embeddable ? embed.url : null;
   const openUrl = embed.openUrl || fallbackUrl || null;
@@ -142,8 +261,15 @@ export function EmbedFrame({
   useEffect(() => {
     setLoaded(false);
     setFailed(false);
+    setReason(undefined);
+    setElapsedMs(undefined);
+    startedAt.current = Date.now();
     if (!src) return;
-    timer.current = window.setTimeout(() => setFailed(true), LOAD_TIMEOUT_MS);
+    timer.current = window.setTimeout(() => {
+      setElapsedMs(Date.now() - startedAt.current);
+      setReason('Load timed out');
+      setFailed(true);
+    }, LOAD_TIMEOUT_MS);
     return () => window.clearTimeout(timer.current);
   }, [src, attempt]);
 
@@ -163,6 +289,11 @@ export function EmbedFrame({
         message={emptyMessage}
         hint={embed.note}
         openUrl={openUrl}
+        diagnostics={{
+          provider: embed.provider,
+          embedUrl: embed.url,
+          reason: embed.embeddable ? 'No embed URL resolved' : 'Source not embeddable',
+        }}
       />
     );
   }
@@ -179,6 +310,12 @@ export function EmbedFrame({
         }
         openUrl={openUrl}
         onRetry={retry}
+        diagnostics={{
+          provider: embed.provider,
+          embedUrl: src,
+          reason: reason || 'Frame error',
+          elapsedMs,
+        }}
       />
     );
   }
@@ -189,7 +326,12 @@ export function EmbedFrame({
       src={src}
       title={title}
       onLoad={handleLoaded}
-      onError={() => setFailed(true)}
+      onError={() => {
+        window.clearTimeout(timer.current);
+        setElapsedMs(Date.now() - startedAt.current);
+        setReason('Frame reported an error');
+        setFailed(true);
+      }}
       sandbox={embed.iframe.sandbox}
       referrerPolicy={embed.iframe.referrerPolicy}
       loading={embed.iframe.loading}
